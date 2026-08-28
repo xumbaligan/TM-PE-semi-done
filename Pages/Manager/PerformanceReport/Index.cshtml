@@ -33,14 +33,21 @@
             </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label fw-semibold" for="DepartmentId">Department</label>
-            <select class="form-select" id="DepartmentId" name="DepartmentId">
-                <option value="">All Departments</option>
-                @foreach (var d in Model.DepartmentOptions)
-                {
-                    <option value="@d.DepartmentId" selected="@(Model.DepartmentId == d.DepartmentId)">@d.DepartmentName</option>
-                }
-            </select>
+            <label class="form-label fw-semibold" for="departmentDropdownBtn">Department</label>
+            <div class="dropdown">
+                <button class="btn status-dropdown-btn dropdown-toggle w-100" type="button" id="departmentDropdownBtn"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    @(Model.DepartmentId == null ? "All Departments" : (Model.DepartmentOptions.FirstOrDefault(d => d.DepartmentId == Model.DepartmentId)?.DepartmentName ?? "All Departments"))
+                </button>
+                <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="departmentDropdownBtn">
+                    <li><a class="dropdown-item @(Model.DepartmentId == null ? "active" : "")" href="#" data-value="">All Departments</a></li>
+                    @foreach (var d in Model.DepartmentOptions)
+                    {
+                        <li><a class="dropdown-item @(Model.DepartmentId == d.DepartmentId ? "active" : "")" href="#" data-value="@d.DepartmentId">@d.DepartmentName</a></li>
+                    }
+                </ul>
+            </div>
+            <input type="hidden" id="DepartmentId" name="DepartmentId" value="@Model.DepartmentId" />
         </div>
         <div class="col-md-4">
             <div class="d-flex gap-2">
@@ -256,6 +263,15 @@
             // doesn't have to remember to press Generate Report.
             form.querySelectorAll('select').forEach(select => {
                 select.addEventListener('change', function () {
+                    refreshExportLink();
+                    form.submit();
+                });
+            });
+
+            document.querySelectorAll('[aria-labelledby="departmentDropdownBtn"] .dropdown-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    deptSelect.value = item.dataset.value;
                     refreshExportLink();
                     form.submit();
                 });

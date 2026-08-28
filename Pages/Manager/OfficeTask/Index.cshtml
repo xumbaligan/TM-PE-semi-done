@@ -3,6 +3,17 @@
 @{
     ViewData["Title"] = "Tasks";
     Layout = "_Layout";
+
+    var statusOptions = new (string Value, string Label)[]
+    {
+        ("", "All Statuses"),
+        ("Pending", "Pending"),
+        ("In Progress", "In Progress"),
+        ("Completed", "Completed"),
+        ("Completed Late", "Completed Late"),
+        ("Overdue", "Overdue"),
+    };
+    var currentStatusLabel = statusOptions.FirstOrDefault(o => o.Value == (Model.StatusFilter ?? "")).Label ?? "All Statuses";
 }
 <div class="mb-3">
     <h2 class="mb-1"><i class="bi bi-card-checklist"></i> Task Assignments</h2>
@@ -16,14 +27,23 @@
         <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
                value="@Model.Search" placeholder="Search by employee, task #, or task name..." />
     </div>
-    <select class="form-select" name="status" id="liveStatus" style="max-width:220px;">
-        <option value="">All Statuses</option>
-        <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
-        <option value="In Progress" selected="@(Model.StatusFilter == "In Progress")">In Progress</option>
-        <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
-        <option value="Completed Late" selected="@(Model.StatusFilter == "Completed Late")">Completed Late</option>
-        <option value="Overdue" selected="@(Model.StatusFilter == "Overdue")">Overdue</option>
-    </select>
+    <div class="dropdown">
+        <button class="btn status-dropdown-btn dropdown-toggle" type="button" id="statusDropdownBtn"
+                data-bs-toggle="dropdown" aria-expanded="false" style="max-width:220px;">
+            @currentStatusLabel
+        </button>
+        <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="statusDropdownBtn">
+            @foreach (var opt in statusOptions)
+            {
+                <li>
+                    <a class="dropdown-item @((Model.StatusFilter ?? "") == opt.Value ? "active" : "")" href="#" data-value="@opt.Value">
+                        @opt.Label
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+    <input type="hidden" name="status" id="liveStatus" value="@Model.StatusFilter" />
     <a asp-page="Create" class="btn btn-navy ms-auto">
         <i class="bi bi-plus-lg"></i> Create New
     </a>
@@ -342,12 +362,14 @@ else if (Model.ActivityFilter == "rejected")
 @section Scripts {
     <script>
         const searchInput = document.getElementById('liveSearch');
-        const statusSelect = document.getElementById('liveStatus');
+        const statusInput = document.getElementById('liveStatus');
+        const statusDropdownBtn = document.getElementById('statusDropdownBtn');
+        const statusItems = document.querySelectorAll('.status-dropdown-menu .dropdown-item');
         const rows = document.querySelectorAll('tbody tr[data-taskid]');
 
         function filterTable() {
             const searchVal = searchInput.value.toLowerCase().trim();
-            const statusVal = statusSelect.value.toLowerCase().trim();
+            const statusVal = statusInput.value.toLowerCase().trim();
             let visibleCount = 0;
 
             rows.forEach(row => {
@@ -374,7 +396,16 @@ else if (Model.ActivityFilter == "rejected")
         }
 
         searchInput.addEventListener('input', filterTable);
-        statusSelect.addEventListener('change', filterTable);
+        statusItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                statusItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                statusInput.value = item.dataset.value;
+                statusDropdownBtn.textContent = item.textContent.trim();
+                filterTable();
+            });
+        });
 
         // Apply immediately on load too, so a link that arrives with
         // ?status=... (e.g. from the Dashboard) actually filters the table

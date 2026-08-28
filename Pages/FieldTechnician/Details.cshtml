@@ -165,34 +165,34 @@
                 <div class="row g-2">
                     <div class="col-sm-4">
                         <label class="form-label small">Status</label>
-                        <select id="statusSelect" name="status" class="form-select">
-                            @foreach (var opt in TM_PE.Pages.FieldTechnician.DetailsModel.StatusOptions)
-                            {
-                                @* Once work has left Pending it can never go back, so Pending is
-                                   only offered while it's still the current status — an Overdue
-                                   ticket is just an expired Pending one, so it counts too. Reschedule
-                                   Request can be selected by the team leader at any time — doing so
-                                   locks the ticket from further field-technician edits until the
-                                   manager approves/acts on the request. *@
-                                if (opt == "Pending" && !Model.JobTicket.IsPendingOrOverdue)
+                        <div class="dropdown">
+                            <button class="btn status-dropdown-btn dropdown-toggle w-100" type="button" id="statusDropdownBtn"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                @Model.PendingStatus
+                            </button>
+                            <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="statusDropdownBtn">
+                                @foreach (var opt in TM_PE.Pages.FieldTechnician.DetailsModel.StatusOptions)
                                 {
-                                    continue;
-                                }
+                                    @* Once work has left Pending it can never go back, so Pending is
+                                       only offered while it's still the current status — an Overdue
+                                       ticket is just an expired Pending one, so it counts too. Reschedule
+                                       Request can be selected by the team leader at any time — doing so
+                                       locks the ticket from further field-technician edits until the
+                                       manager approves/acts on the request. *@
+                                    if (opt == "Pending" && !Model.JobTicket.IsPendingOrOverdue)
+                                    {
+                                        continue;
+                                    }
 
-                                @* Prefilled from PendingStatus (an unsaved selection carried
-                                   through a photo-upload reload) rather than the saved
-                                   JobTicket.Status, so an in-progress edit isn't lost — but
-                                   nothing here is written to the database until Save. *@
-                                if (opt == Model.PendingStatus)
-                                {
-                                    <option value="@opt" selected>@opt</option>
+                                    @* Prefilled from PendingStatus (an unsaved selection carried
+                                       through a photo-upload reload) rather than the saved
+                                       JobTicket.Status, so an in-progress edit isn't lost — but
+                                       nothing here is written to the database until Save. *@
+                                    <li><a class="dropdown-item @(opt == Model.PendingStatus ? "active" : "")" href="#" data-value="@opt">@opt</a></li>
                                 }
-                                else
-                                {
-                                    <option value="@opt">@opt</option>
-                                }
-                            }
-                        </select>
+                            </ul>
+                        </div>
+                        <input type="hidden" id="statusSelect" name="status" value="@Model.PendingStatus" />
                         <div id="fileRequirementWarning"
                              class="alert alert-warning small mt-2 d-none">
                             <i class="bi bi-exclamation-triangle me-1"></i>
@@ -537,6 +537,7 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
     document.addEventListener("DOMContentLoaded", function () {
 
         const statusSelect = document.getElementById("statusSelect");
+        const statusDropdownBtn = document.getElementById("statusDropdownBtn");
         const remarksInput = document.getElementById("remarksInput");
         const submittedFilesSection = document.getElementById("submittedFilesSection");
         const submissionFileInput = document.getElementById("submissionFileInput");
@@ -544,6 +545,25 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
         const uploadSpinner = document.getElementById("uploadSpinner");
         const uploadStatus = document.getElementById("uploadStatus");
         const uploadRemarks = document.getElementById("uploadRemarks");
+
+    // The status control is a custom dropdown (not a native <select>) so its
+    // open-list highlight color can actually be styled - clicking an item
+    // updates the hidden #statusSelect input and dispatches a real "change"
+    // event on it, so every listener below that expects a native select's
+    // change event keeps working unmodified.
+    if (statusSelect && statusDropdownBtn) {
+        document.querySelectorAll('[aria-labelledby="statusDropdownBtn"] .dropdown-item').forEach(item => {
+            item.addEventListener("click", function (e) {
+                e.preventDefault();
+                document.querySelectorAll('[aria-labelledby="statusDropdownBtn"] .dropdown-item')
+                    .forEach(i => i.classList.remove("active"));
+                item.classList.add("active");
+                statusSelect.value = item.dataset.value;
+                statusDropdownBtn.textContent = item.textContent.trim();
+                statusSelect.dispatchEvent(new Event("change"));
+            });
+        });
+    }
 
     // Keep the upload form synchronized with the values currently selected
     // in the Status + Remarks form.

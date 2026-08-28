@@ -38,26 +38,26 @@
             <div class="nav-section-label">Overview</div>
             <nav class="nav flex-column">
                 <a class="nav-link text-white @(IsActive("/") ? "active" : "")" asp-page="/Index"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a class="nav-link text-white @(IsActive("/Manager/WorkLoadMonitoring") ? "active" : "")" asp-page="/Manager/WorkLoadMonitoring/Index"><i class="bi bi-bar-chart-line"></i> Workload</a>
+                <a class="nav-link text-white @(IsActive("/Manager/PerformanceReport") ? "active" : "")" asp-page="/Manager/PerformanceReport/Index"><i class="bi bi-file-earmark-text"></i> Reports</a>
             </nav>
 
-            <div class="nav-section-label">Work Management</div>
+            <div class="nav-section-label">Operations</div>
             <nav class="nav flex-column">
                 <a class="nav-link text-white @(IsActive("/Manager/JobTickets") ? "active" : "")" asp-page="/Manager/JobTickets/Index"><i class="bi bi-tools"></i> Job Tickets</a>
-                <a class="nav-link text-white @(IsActive("/Manager/OfficeTask") ? "active" : "")" asp-page="/Manager/OfficeTask/Index"><i class="bi bi-card-checklist"></i> Task Assignments</a>
-                <a class="nav-link text-white @(IsActive("/Manager/WorkLoadMonitoring") ? "active" : "")" asp-page="/Manager/WorkLoadMonitoring/Index"><i class="bi bi-bar-chart-line"></i> Workload Monitoring</a>
+                <a class="nav-link text-white @(IsActive("/Manager/OfficeTask") ? "active" : "")" asp-page="/Manager/OfficeTask/Index"><i class="bi bi-card-checklist"></i> Tasks</a>
             </nav>
 
             <div class="nav-section-label">Performance</div>
             <nav class="nav flex-column">
-                <a class="nav-link text-white @(IsActive("/Manager/PerformanceEvaluation") ? "active" : "")" asp-page="/Manager/PerformanceEvaluation/Index"><i class="bi bi-clipboard-data"></i> Performance Evaluation</a>
-                <a class="nav-link text-white @(IsActive("/Manager/PerformanceReport") ? "active" : "")" asp-page="/Manager/PerformanceReport/Index"><i class="bi bi-file-earmark-text"></i> Performance Reports</a>
+                <a class="nav-link text-white @(IsActive("/Manager/PerformanceEvaluation") ? "active" : "")" asp-page="/Manager/PerformanceEvaluation/Index"><i class="bi bi-clipboard-data"></i> Evaluations</a>
+                <a class="nav-link text-white @(IsActive("/Manager/Criteria") ? "active" : "")" asp-page="/Manager/Criteria/Index"><i class="bi bi-list-check"></i> Criteria</a>
             </nav>
 
-            <div class="nav-section-label">Management</div>
+            <div class="nav-section-label">Administration</div>
             <nav class="nav flex-column">
                 <a class="nav-link text-white @(IsActive("/Manager/Employees") ? "active" : "")" asp-page="/Manager/Employees/Index"><i class="bi bi-people"></i> Employees</a>
                 <a class="nav-link text-white @(IsActive("/Manager/Departments") ? "active" : "")" asp-page="/Manager/Departments/Index"><i class="bi bi-building"></i> Departments</a>
-                <a class="nav-link text-white @(IsActive("/Manager/Criteria") ? "active" : "")" asp-page="/Manager/Criteria/Index"><i class="bi bi-list-check"></i> Criteria</a>
             </nav>
 
             <div class="mt-auto pt-3">

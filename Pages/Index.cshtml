@@ -12,7 +12,7 @@
 <hr class="page-divider" />
 
 @* ===================== 1. PERIOD SELECTOR ===================== *@
-<form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-4">
+<form method="get" id="periodForm" class="d-flex flex-wrap align-items-center gap-2 mb-4">
     <div class="role-filter">
         <a class="role-filter-btn @(Model.PeriodType == "month" ? "active" : "")"
            href="?PeriodType=month&amp;Month=@Model.SelectedMonth&amp;Year=@Model.SelectedYear">This Month</a>
@@ -24,29 +24,50 @@
 
     @if (Model.PeriodType == "quarter")
     {
-        <select name="Quarter" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
-            @for (int q = 1; q <= 4; q++)
-            {
-                <option value="@q" selected="@(q == Model.SelectedQuarter)">Q@q</option>
-            }
-        </select>
+        <div class="dropdown">
+            <button class="btn status-dropdown-btn dropdown-toggle" type="button" id="quarterDropdownBtn"
+                    data-bs-toggle="dropdown" aria-expanded="false" style="min-width:110px;">
+                Q@Model.SelectedQuarter
+            </button>
+            <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="quarterDropdownBtn">
+                @for (int q = 1; q <= 4; q++)
+                {
+                    <li><a class="dropdown-item @(q == Model.SelectedQuarter ? "active" : "")" href="#" data-value="@q">Q@q</a></li>
+                }
+            </ul>
+        </div>
+        <input type="hidden" name="Quarter" id="periodValueInput" value="@Model.SelectedQuarter" />
     }
     else
     {
-        <select name="Month" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
-            @for (int m = 1; m <= 12; m++)
-            {
-                <option value="@m" selected="@(m == Model.SelectedMonth)">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
-            }
-        </select>
+        <div class="dropdown">
+            <button class="btn status-dropdown-btn dropdown-toggle" type="button" id="monthDropdownBtn"
+                    data-bs-toggle="dropdown" aria-expanded="false" style="min-width:160px;">
+                @(new DateTime(2000, Model.SelectedMonth, 1).ToString("MMMM"))
+            </button>
+            <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="monthDropdownBtn">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <li><a class="dropdown-item @(m == Model.SelectedMonth ? "active" : "")" href="#" data-value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</a></li>
+                }
+            </ul>
+        </div>
+        <input type="hidden" name="Month" id="periodValueInput" value="@Model.SelectedMonth" />
     }
 
-    <select name="Year" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
-        @foreach (var y in Model.YearOptions)
-        {
-            <option value="@y" selected="@(y == Model.SelectedYear)">@y</option>
-        }
-    </select>
+    <div class="dropdown">
+        <button class="btn status-dropdown-btn dropdown-toggle" type="button" id="yearDropdownBtn"
+                data-bs-toggle="dropdown" aria-expanded="false" style="min-width:110px;">
+            @Model.SelectedYear
+        </button>
+        <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="yearDropdownBtn">
+            @foreach (var y in Model.YearOptions)
+            {
+                <li><a class="dropdown-item @(y == Model.SelectedYear ? "active" : "")" href="#" data-value="@y">@y</a></li>
+            }
+        </ul>
+    </div>
+    <input type="hidden" name="Year" id="yearValueInput" value="@Model.SelectedYear" />
 
     <span class="text-muted small ms-2">Viewing <strong>@Model.PeriodLabel</strong></span>
 </form>
@@ -219,4 +240,26 @@
 @section Scripts {
     <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
     <script src="~/js/dashboard-charts.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const form = document.getElementById('periodForm');
+
+            function wireDropdown(menuAriaId, inputId) {
+                const input = document.getElementById(inputId);
+                const menu = document.querySelector('[aria-labelledby="' + menuAriaId + '"]');
+                if (!input || !menu) return;
+                menu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        input.value = item.dataset.value;
+                        form.submit();
+                    });
+                });
+            }
+
+            wireDropdown('quarterDropdownBtn', 'periodValueInput');
+            wireDropdown('monthDropdownBtn', 'periodValueInput');
+            wireDropdown('yearDropdownBtn', 'yearValueInput');
+        })();
+    </script>
 }

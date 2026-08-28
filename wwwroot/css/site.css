@@ -521,6 +521,69 @@ body {
     color: #000331;
 }
 
+/*
+   Status filter (Manager > Job Tickets/Task Assignments) - a custom
+   Bootstrap dropdown in place of a native <select>. A native select's open
+   list is OS-drawn in Chrome/Edge on Windows, so its hover/selected
+   highlight color can't be restyled with CSS at all - only a custom
+   dropdown-menu gives real control over that highlight color.
+*/
+.status-dropdown-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    border: 1px solid rgba(2,2,54,.35);
+    color: #020236;
+    background: #fff;
+    text-align: left;
+    min-width: 220px;
+}
+
+    /* Bootstrap renders the caret as this pseudo-element right after the
+       button's text by default - margin-left: auto (on top of the flex
+       layout above) is what actually pins it to the far end of the button. */
+    .status-dropdown-btn::after {
+        margin-left: auto;
+    }
+
+    .status-dropdown-btn:hover,
+    .status-dropdown-btn:focus,
+    .status-dropdown-btn:active,
+    .status-dropdown-btn.show {
+        border-color: #020236 !important;
+        color: #020236 !important;
+        background: #fff !important;
+        box-shadow: 0 0 0 .2rem rgba(2,2,54,.15) !important;
+    }
+
+.status-dropdown-menu .dropdown-item:hover,
+.status-dropdown-menu .dropdown-item:focus {
+    background: rgba(2,2,54,.08);
+    color: #020236;
+}
+
+.status-dropdown-menu .dropdown-item.active {
+    background: #020236;
+    color: #fff;
+}
+
+/*
+   Plain native <select> dropdowns elsewhere (Field Technician status
+   update, Dashboard period selectors, Reports department filter) - same
+   navy border/focus-ring treatment as .status-dropdown-btn, without the
+   custom dropdown-menu markup those two needed for a stylable open-list
+   highlight.
+*/
+.form-select-navy {
+    border: 1px solid rgba(2,2,54,.35);
+}
+
+    .form-select-navy:focus {
+        border-color: #020236;
+        box-shadow: 0 0 0 .2rem rgba(2,2,54,.15);
+    }
+
 /* Solid navy highlight pill (e.g. "(You)" tags on assignee lists) instead of Bootstrap's default blue .bg-primary. */
 .badge-navy {
     background: #020236;
