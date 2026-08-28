@@ -1,0 +1,189 @@
+﻿@page "{id:int}"
+@model TM_PE.Pages.Manager.PerformanceEvaluation.EditModel
+@{
+    ViewData["Title"] = "Edit Performance Evaluation";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-clipboard-data"></i> Edit Performance Evaluation</h2>
+    <a class="btn btn-outline-secondary" asp-page="Index"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+@* ===================== Employee performance snapshot ===================== *@
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-check2-circle"></i></div>
+            <div>
+                <div class="stat-label">Completed Job/Task</div>
+                <div class="stat-value">@Model.Stats.CompletedJobsTasks</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="stat-label">On-time Rate</div>
+                <div class="stat-value">@Model.Stats.OnTimeRate.ToString("0")%</div>
+            </div>
+        </div>
+    </div>
+    @* Office Staff office tasks never use the Rescheduled/Cancelled job ticket
+       statuses, so those tiles would always read 0 for them - show the
+       equivalents that actually apply instead. *@
+    @if (Model.Employee?.RoleType == TM_PE.Model.RoleType.OfficeStaff)
+    {
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-hand-thumbs-down"></i></div>
+                <div>
+                    <div class="stat-label">Rejected Activities</div>
+                    <div class="stat-value">@Model.Stats.RejectedActivities</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-triangle"></i></div>
+                <div>
+                    <div class="stat-label">Overdue Task</div>
+                    <div class="stat-value">@Model.Stats.OverdueTasks</div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-arrow-repeat"></i></div>
+                <div>
+                    <div class="stat-label">Rescheduled</div>
+                    <div class="stat-value">@Model.Stats.Rescheduled</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-x-circle"></i></div>
+                <div>
+                    <div class="stat-label">Cancelled</div>
+                    <div class="stat-value">@Model.Stats.Cancelled</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<form method="post" id="evalForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <input type="hidden" asp-for="Evaluation.EvaluationID" />
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4">
+                <h5 class="mb-3">Evaluation Details</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Employee</label>
+                        <input class="form-control" value="@(Model.Employee?.FullName) (@Model.Employee?.RoleType)" disabled />
+                        <div class="form-text">The employee on an evaluation can't be changed — create a new evaluation instead.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Evaluator</label>
+                        <input class="form-control" value="@Model.Evaluation.EvaluatorName" disabled />
+                        <div class="form-text">Set automatically when this evaluation was created — not editable.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Evaluation Period</label>
+                        <input class="form-control" value="@Model.Evaluation.EvaluationPeriod" disabled />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Evaluation Date <span class="text-danger">*</span></label>
+                        <input asp-for="Evaluation.EvaluationDate" type="date" class="form-control"
+                               value="@Model.Evaluation.EvaluationDate.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="Evaluation.EvaluationDate" class="text-danger"></span>
+                        <div class="form-text">Also used as the appraisal date.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4 mb-4">
+                <h5 class="mb-1">@Model.Employee?.RoleType Criteria</h5>
+                <div class="text-muted small mb-3">Rate each criterion from 0.5 to 4 stars — click the left half of a star for a half rating. Click the same rating again to clear it.</div>
+                <partial name="_CriteriaStarRows" model="Model.Rows" />
+            </div>
+
+            <div class="card p-4">
+                <label class="form-label fw-semibold">Feedback</label>
+                <textarea asp-for="Evaluation.GeneralFeedback" class="form-control" rows="3" maxlength="1000"
+                          placeholder="Overall feedback for this evaluation period..."></textarea>
+                <div class="form-text">Covers both the evaluation and the appraisal decision.</div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card p-4 mb-3 sticky-top" style="top:1rem">
+                <h6 class="text-muted">Overall Score (preview)</h6>
+                <div class="display-6 fw-bold" id="overallScorePreview">@Model.Evaluation.OverallScore.ToString("0.#")</div>
+                <div class="text-muted small">out of 4</div>
+                <div class="mt-2 d-flex align-items-center gap-2">
+                    <span id="overallStarsPreview"></span>
+                    <span class="badge bg-primary-subtle text-primary" id="overallRatingPreview">@Model.Evaluation.OverallRating</span>
+                </div>
+
+                <hr />
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-outline-secondary" asp-page-handler="SaveDraft" asp-route-id="@Model.Evaluation.EvaluationID">
+                        <i class="bi bi-save"></i> Save as Draft
+                    </button>
+                    <button type="submit" class="btn btn-primary" asp-page-handler="Finalize" asp-route-id="@Model.Evaluation.EvaluationID"
+                            onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
+                        <i class="bi bi-check2-circle"></i> Finalize Evaluation
+                    </button>
+                </div>
+                <div class="form-text mt-2">A draft can still be edited later; finalizing locks it.</div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/star-rating.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const scorePreview = document.getElementById('overallScorePreview');
+            const ratingPreview = document.getElementById('overallRatingPreview');
+            const starsPreview = document.getElementById('overallStarsPreview');
+
+            const bands = [[3.6, 'Excellent'], [3.2, 'Very Good'], [2.8, 'Good'], [2.4, 'Needs Improvement'], [0, 'Poor']];
+
+            function ratingFor(score) {
+                for (const [min, label] of bands) { if (score >= min) return label; }
+                return 'Poor';
+            }
+
+            function recalcPreview() {
+                let total = 0;
+                document.querySelectorAll('.star-value-input:not(:disabled)').forEach(input => {
+                    const weight = parseFloat(input.dataset.weight || '0');
+                    const stars = window.StarRating.snap(input.value || '0');
+                    total += weight / 100 * stars;
+                });
+                scorePreview.textContent = total.toFixed(1);
+                ratingPreview.textContent = ratingFor(total);
+                starsPreview.innerHTML = window.StarRating.render(total);
+            }
+
+            document.addEventListener('change', function (e) {
+                if (e.target.classList.contains('star-value-input')) recalcPreview();
+            });
+
+            window.StarRating.initAll(document);
+            recalcPreview();
+        })();
+    </script>
+}

@@ -1,0 +1,384 @@
+﻿@page
+@model TM_PE.Pages.Manager.OfficeTask.IndexModel
+@{
+    ViewData["Title"] = "Tasks";
+    Layout = "_Layout";
+}
+<div class="mb-3">
+    <h2 class="mb-1"><i class="bi bi-card-checklist"></i> Task Assignments</h2>
+    <p class="text-muted mb-0">Office task assignments and progress tracking.</p>
+</div>
+<hr class="page-divider" />
+
+<form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="input-group shadow-sm flex-grow-1" style="max-width:480px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
+               value="@Model.Search" placeholder="Search by employee, task #, or task name..." />
+    </div>
+    <select class="form-select" name="status" id="liveStatus" style="max-width:220px;">
+        <option value="">All Statuses</option>
+        <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+        <option value="In Progress" selected="@(Model.StatusFilter == "In Progress")">In Progress</option>
+        <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
+        <option value="Completed Late" selected="@(Model.StatusFilter == "Completed Late")">Completed Late</option>
+        <option value="Overdue" selected="@(Model.StatusFilter == "Overdue")">Overdue</option>
+    </select>
+    <a asp-page="Create" class="btn btn-navy ms-auto">
+        <i class="bi bi-plus-lg"></i> Create New
+    </a>
+    @if (!string.IsNullOrEmpty(Model.ActivityFilter))
+    {
+        <input type="hidden" name="activity" value="@Model.ActivityFilter" />
+    }
+</form>
+
+@if (Model.ActivityFilter == "pending-review")
+{
+    <div class="alert alert-info d-flex justify-content-between align-items-center py-2">
+        <span>Showing tasks with at least one activity awaiting review.</span>
+        <a asp-page="./Index" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" class="small">Clear filter</a>
+    </div>
+}
+else if (Model.ActivityFilter == "rejected")
+{
+    <div class="alert alert-warning d-flex justify-content-between align-items-center py-2">
+        <span>Showing tasks with at least one rejected activity awaiting resubmission.</span>
+        <a asp-page="./Index" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" class="small">Clear filter</a>
+    </div>
+}
+
+<div class="table-responsive wlm-card">
+    <table class="table align-middle table-hover wlm-table mb-0">
+        <thead>
+            <tr>
+                <th>Task #</th>
+                <th>Task</th>
+                <th>Assignees</th>
+                <th>Activities</th>
+                <th>Status</th>
+                <th style="min-width:160px;">Progress</th>
+                <th>Due</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.OfficeTask.Any())
+            {
+                <tr id="emptyRow">
+                    <td colspan="8" class="text-center text-muted py-4">No tasks found</td>
+                </tr>
+            }
+            else
+            {
+                <tr id="emptyRow" style="display:none;">
+                    <td colspan="8" class="text-center text-muted py-4">No tasks found</td>
+                </tr>
+            }
+            @foreach (var item in Model.OfficeTask)
+            {
+                var assigneeNames = string.Join(" ", item.Assignments?.Where(a => a.Employee != null).Select(a => a.Employee!.FullName.ToLower()) ?? Enumerable.Empty<string>());
+                <tr data-employee="@assigneeNames"
+                    data-taskid="@item.TaskNumber.ToLower()"
+                    data-taskname="@item.TaskName.ToLower()"
+                    data-status="@item.DisplayStatus.ToLower()">
+                    <td class="text-muted">
+                        @item.TaskNumber
+                    </td>
+
+                    <td>
+                        <div class="fw-semibold">@item.TaskName</div>
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <div class="text-muted small">@item.Description</div>
+                        }
+                    </td>
+
+                    <td>
+                        @if (item.Assignments != null && item.Assignments.Any())
+                        {
+                    @string.Join(", ", item.Assignments
+                                        .Where(a => a.Employee != null)
+                                        .Select(a => $"{a.Employee!.FullName}"))
+                                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+
+                    <td>
+                        <span class="text-primary fw-semibold">
+                            @(item.Activities?.Count(a => a.Status == "Approved") ?? 0)/@(item.Activities?.Count ?? 0)
+                        </span>
+                    </td>
+
+                    <td>
+                        @{
+                            var badgeClass = item.DisplayStatus switch
+                            {
+                                "Completed" => "bg-success-subtle text-success",
+                                "Completed Late" => "bg-warning-subtle text-warning-emphasis",
+                                "In Progress" => "bg-info-subtle text-info",
+                                "Overdue" => "bg-danger-subtle text-danger",
+                                _ => "bg-secondary-subtle text-secondary"
+                            };
+                        }
+                        <span class="status-badge @badgeClass">
+                            @item.DisplayStatus
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:6px;">
+                                <div class="progress-bar progress-bar-brand" role="progressbar"
+                                     style="width:@(item.Progress)%;"
+                                     aria-valuenow="@item.Progress"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <span class="text-muted small">@item.Progress%</span>
+                        </div>
+                    </td>
+
+                    <td class="text-muted">
+                        @item.DueDate.ToString("M/d/yyyy")
+                    </td>
+
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-navy" title="View"
+                                data-bs-toggle="modal" data-bs-target="#viewModal-@item.OfficeTaskID">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        @if (item.Status != "Completed")
+                        {
+                            <a asp-page="./Edit" asp-route-id="@item.OfficeTaskID"
+                               class="btn btn-sm btn-outline-navy" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        }
+                        @*  <form method="post" asp-page-handler="Delete" asp-route-id="@item.OfficeTaskID"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Delete this task? This cannot be undone.');">
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-1" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form> *@
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* ===================== VIEW MODALS ===================== *@
+@* Placed outside the <table> to keep markup valid; one modal per task, populated server-side. *@
+@foreach (var item in Model.OfficeTask)
+{
+    var modalBadgeClass = item.DisplayStatus switch
+    {
+        "Completed" => "bg-success-subtle text-success",
+        "Completed Late" => "bg-warning-subtle text-warning-emphasis",
+        "In Progress" => "bg-info-subtle text-info",
+        "Overdue" => "bg-danger-subtle text-danger",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    <div class="modal fade" id="viewModal-@item.OfficeTaskID" tabindex="-1"
+         aria-labelledby="viewModalLabel-@item.OfficeTaskID" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="viewModalLabel-@item.OfficeTaskID">
+                            @item.TaskName
+                        </h5>
+                        <div class="text-muted small">Task #@item.TaskNumber</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    @if (!string.IsNullOrWhiteSpace(item.Description))
+                    {
+                        <p class="mb-3">@item.Description</p>
+                    }
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Status</div>
+                            <span class="status-badge @modalBadgeClass">
+                                @item.DisplayStatus
+                            </span>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Progress</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:6px; min-width:80px;">
+                                    <div class="progress-bar progress-bar-brand" role="progressbar"
+                                         style="width:@(item.Progress)%;"
+                                         aria-valuenow="@item.Progress"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <span class="text-muted small">@item.Progress%</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Due Date</div>
+                            <div>@item.DueDate.ToString("M/d/yyyy")</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Date Created</div>
+                            <div>@item.DateCreated.ToString("M/d/yyyy")</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Date Completed</div>
+                            <div>@(item.DateCompleted?.ToString("M/d/yyyy") ?? "—")</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Assigned By</div>
+                            <div>@(item.AssignedByEmployee?.FullName ?? "—")</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="text-muted small mb-2">Assignees</div>
+                        @if (item.Assignments != null && item.Assignments.Any())
+                        {
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var a in item.Assignments.Where(a => a.Employee != null))
+                                {
+                                    <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
+                                        @a.Employee!.FullName
+                                    </span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No assignees</span>
+                        }
+                    </div>
+
+                    <div>
+                        <div class="text-muted small mb-2">
+                            Activities
+                            <span class="badge bg-primary-subtle text-primary rounded-pill ms-1">
+                                @(item.Activities?.Count(a => a.Status == "Approved") ?? 0)/@(item.Activities?.Count ?? 0) Approved
+                            </span>
+                        </div>
+
+                        @if (item.Activities != null && item.Activities.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr class="text-muted small">
+                                            <th>Activity</th>
+                                            <th>Status</th>
+                                            <th>Feedback</th>
+                                            <th>Created</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var activity in item.Activities)
+                                        {
+                                            var activityBadgeClass = activity.Status switch
+                                            {
+                                                "Approved" => "bg-success-subtle text-success",
+                                                "Revised" => "bg-info-subtle text-info",
+                                                _ => "bg-secondary-subtle text-secondary"
+                                            };
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold">@activity.ActivityName</div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge rounded-pill @activityBadgeClass px-2 py-1">
+                                                        @activity.Status
+                                                    </span>
+                                                </td>
+                                                <td class="text-muted small">
+                                                    @if (!string.IsNullOrWhiteSpace(activity.FeedBack))
+                                                    {
+                                                        @activity.FeedBack
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td class="text-muted small">
+                                                    @activity.DateCreated.ToString("M/d/yyyy")
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No activities recorded for this task.</span>
+                        }
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <a asp-page="./Details" asp-route-id="@item.OfficeTaskID" class="btn btn-outline-navy btn-sm">
+                        Open Full Details
+                    </a>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('liveSearch');
+        const statusSelect = document.getElementById('liveStatus');
+        const rows = document.querySelectorAll('tbody tr[data-taskid]');
+
+        function filterTable() {
+            const searchVal = searchInput.value.toLowerCase().trim();
+            const statusVal = statusSelect.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const employee = row.dataset.employee || '';
+                const taskId = row.dataset.taskid || '';
+                const taskName = row.dataset.taskname || '';
+                const status = row.dataset.status || '';
+
+                const matchesSearch = employee.includes(searchVal) || taskId.includes(searchVal) || taskName.includes(searchVal);
+                const matchesStatus = statusVal === '' || status === statusVal;
+
+                if (matchesSearch && matchesStatus) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('emptyRow');
+            if (emptyRow) {
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+        }
+
+        searchInput.addEventListener('input', filterTable);
+        statusSelect.addEventListener('change', filterTable);
+
+        // Apply immediately on load too, so a link that arrives with
+        // ?status=... (e.g. from the Dashboard) actually filters the table
+        // instead of only pre-selecting the dropdown.
+        filterTable();
+    </script>
+}

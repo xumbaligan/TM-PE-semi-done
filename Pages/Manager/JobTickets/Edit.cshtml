@@ -1,0 +1,380 @@
+﻿@page "{id:int}"
+@model TM_PE.Pages.Manager.JobTickets.EditModel
+
+@{
+    ViewData["Title"] = "Edit Job Ticket";
+    Layout = "_Layout";
+
+    string FiberPlanDisplay(string name) =>
+        System.Text.RegularExpressions.Regex.IsMatch(name, @"^\d+$") ? $"₱{name} / month" : name;
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <h3 class="fw-bold">Edit Job Ticket</h3>
+        <p class="text-muted">
+            Update the job details below. Assigned field technicians can't be added or removed here.
+        </p>
+
+        <form method="post" id="ticketForm">
+
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="JobTicket.JobTicketID" />
+
+            <!-- Task Number + Date Created -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold"># Task Number</label>
+                    <input class="form-control" value="@Model.JobTicket.TicketNumber" disabled />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Date Created</label>
+                    <input type="date" class="form-control" value="@Model.JobTicket.DateCreated.ToString("yyyy-MM-dd")" disabled />
+                </div>
+            </div>
+
+            <!-- Assigned By -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Assigned By</label>
+                    <input class="form-control" value="@(Model.JobTicket.AssignedByEmployee?.FullName ?? "—")" disabled />
+                </div>
+            </div>
+
+            <!-- Job Type -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Job Type <span class="text-danger">*</span></label>
+                <select asp-for="JobTicket.JobType" id="jobTypeSelect" class="form-select">
+                    @foreach (var type in Model.JobTypeOptions)
+                    {
+                        <option value="@type" selected="@(type == Model.JobTicket.JobType)">@type</option>
+                    }
+                </select>
+                <span asp-validation-for="JobTicket.JobType" class="text-danger"></span>
+            </div>
+
+            <!-- Client Info (auto-cleared/hidden when Job Type = Maintenance) -->
+            <div class="row mb-3" id="clientInfoGroup">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Full Name (Client) <span class="text-danger">*</span></label>
+                    <input asp-for="JobTicket.ClientFullName" id="clientFullNameInput" class="form-control" />
+                    <span asp-validation-for="JobTicket.ClientFullName" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Primary Number <span class="text-danger">*</span></label>
+                    <input asp-for="JobTicket.PrimaryNumber" id="primaryNumberInput" class="form-control" inputmode="numeric" maxlength="11" />
+                    <span asp-validation-for="JobTicket.PrimaryNumber" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Secondary Number</label>
+                    <input asp-for="JobTicket.SecondaryNumber" id="secondaryNumberInput" class="form-control" inputmode="numeric" maxlength="11" />
+                    <span asp-validation-for="JobTicket.SecondaryNumber" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Fiber Plan (Installation) / Description (Repair, Maintenance, Inspection) + Date -->
+            <div class="row mb-3">
+                <div class="col-md-6" id="fiberPlanGroup">
+                    <label class="form-label fw-semibold">Fiber Plan <span class="text-danger">*</span></label>
+                    <select asp-for="JobTicket.FiberPlan" id="fiberPlanSelect" class="form-select">
+                        <option value="">Select a plan</option>
+                        @foreach (var plan in Model.FiberPlanOptions)
+                        {
+                            <option value="@plan.PlanName" selected="@(plan.PlanName == Model.JobTicket.FiberPlan)">@FiberPlanDisplay(plan.PlanName)</option>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.JobTicket.FiberPlan) && !Model.FiberPlanOptions.Any(p => p.PlanName == Model.JobTicket.FiberPlan))
+                        {
+                            <!-- This ticket's plan was later removed from the manager-maintained list;
+                                 still show it here so the current value isn't silently lost. -->
+                            <option value="@Model.JobTicket.FiberPlan" selected="selected">@FiberPlanDisplay(Model.JobTicket.FiberPlan) (no longer offered)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="JobTicket.FiberPlan" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 d-none" id="descriptionGroup">
+                    <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+                    <textarea asp-for="JobTicket.Description" id="descriptionInput" class="form-control" rows="1" maxlength="500"></textarea>
+                    <span asp-validation-for="JobTicket.Description" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" id="serviceDateLabel">Date of Installation <span class="text-danger">*</span></label>
+                    <input asp-for="JobTicket.ServiceDate" type="date" id="serviceDateInput"
+                           value="@Model.JobTicket.ServiceDate.ToString("yyyy-MM-dd")"
+                           class="form-control" />
+                    <input type="hidden" id="originalServiceDate" value="@Model.OriginalServiceDate.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="JobTicket.ServiceDate" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mt-3">
+                    <label class="form-label fw-semibold">Due Date <span class="text-danger">*</span></label>
+                    <input asp-for="JobTicket.DateOfCompletion" type="date" id="dateOfCompletionInput"
+                           value="@(Model.JobTicket.DateOfCompletion?.ToString("yyyy-MM-dd"))"
+                           class="form-control" />
+                    <div class="form-text">
+                        The deadline for this job to be finished. If this date passes and the job still isn't done, it's automatically marked Overdue.
+                    </div>
+                    <span asp-validation-for="JobTicket.DateOfCompletion" class="text-danger"></span>
+                </div>
+            </div>
+
+            @if (Model.JobTicket.Status == "Reschedule Request")
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-hourglass-split me-1"></i>
+                    Changing the date will mark this job order as
+                    <strong>Rescheduled</strong> and start a new technician cycle.
+                    The assigned field technician's current remarks and photos/files
+                    will be archived so they can start fresh for the new date.
+                </div>
+            }
+            <!-- Location -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="fw-semibold mb-2">📍 Job Location <span class="text-danger">*</span></h5>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Address</label>
+                        <input asp-for="JobTicket.LocationAddress" id="locationAddressInput" class="form-control" placeholder="Enter the job site address" />
+                        <span asp-validation-for="JobTicket.LocationAddress" class="text-danger"></span>
+                    </div>
+
+                    <div>
+                        <label class="form-label fw-semibold">Nearest Landmark</label>
+                        <input asp-for="JobTicket.NearestLandmark" id="nearestLandmarkInput" class="form-control" placeholder="e.g. Near the barangay hall" />
+                        <span asp-validation-for="JobTicket.NearestLandmark" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignees (fixed team; leader can be changed only while Pending) -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="fw-semibold mb-3">👷 Assigned Field Technicians</h5>
+                    @if (Model.JobTicket.Assignments != null && Model.JobTicket.Assignments.Any())
+                    {
+                        @if (Model.JobTicket.CanReassignLeader)
+                        {
+                            <p class="text-muted small mb-3">
+                                Choose who leads this job order. The assigned team itself can't be
+                                added to or removed from here — only who leads them.
+                            </p>
+                            <div id="assignedEmployees" class="d-flex flex-column gap-2">
+                                @foreach (var a in Model.JobTicket.Assignments.Where(a => a.Employee != null))
+                                {
+                                    <div class="d-flex align-items-center gap-2 border rounded p-2" data-employee-id="@a.EmployeeID">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input leaderRadio" type="radio"
+                                                   name="LeaderEmployeeId" id="leaderRadio-@a.EmployeeID"
+                                                   value="@a.EmployeeID"
+                                                   checked="@(Model.LeaderEmployeeId == a.EmployeeID)" />
+                                            <label class="form-check-label small" for="leaderRadio-@a.EmployeeID"></label>
+                                        </div>
+                                        <span class="flex-grow-1" id="empName-@a.EmployeeID">
+                                            @a.Employee!.FullName
+                                            <span class="badge bg-primary ms-1 leaderTag @(Model.LeaderEmployeeId == a.EmployeeID ? "" : "d-none")">Leader</span>
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var a in Model.JobTicket.Assignments.Where(a => a.Employee != null))
+                                {
+                                    <span class="badge rounded-pill @(a.IsLeader ? "bg-primary" : "bg-light text-dark border") px-3 py-2">
+                                        @a.Employee!.FullName @(a.IsLeader ? "(Leader)" : "")
+                                    </span>
+                                }
+                            </div>
+                            <p class="text-muted small mt-2 mb-0">The leader can only be changed while this job order is Pending or In Progress.</p>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">No assignees</span>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Leader Remarks
+                        </label>
+
+                        <textarea class="form-control bg-light text-muted"
+                                  rows="3"
+                                  readonly
+                                  style="opacity:.75;">@Model.JobTicket.Remarks</textarea>
+
+                        <div class="form-text">
+                            Remarks submitted by the field technician leader.
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Assignees are fixed at creation and can't be added or removed from this page.</p>
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="text-end">
+                <a asp-page="Index" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script src="~/js/address-autocomplete.js"></script>
+    <script>
+        (function () {
+            // ---------------- ADDRESS AUTOCOMPLETE ----------------
+            // Biased toward Cebu/Philippines; users can still search anywhere.
+            // initAddressAutocomplete(document.getElementById('locationAddressInput'), { lat: 10.3157, lon: 123.8854 });
+            // initAddressAutocomplete(document.getElementById('nearestLandmarkInput'), { lat: 10.3157, lon: 123.8854 });
+
+            // ---------------- JOB TYPE TOGGLE ----------------
+            const jobTypeSelect = document.getElementById('jobTypeSelect');
+            const fiberPlanGroup = document.getElementById('fiberPlanGroup');
+            const fiberPlanSelect = document.getElementById('fiberPlanSelect');
+            const descriptionGroup = document.getElementById('descriptionGroup');
+            const descriptionInput = document.getElementById('descriptionInput');
+            const serviceDateLabel = document.getElementById('serviceDateLabel');
+            const serviceDateInput = document.getElementById('serviceDateInput');
+
+            // Client Info (Full Name / Primary / Secondary) — only collected for
+            // non-Maintenance jobs. Switching to Maintenance clears whatever was typed;
+            // switching away from Maintenance brings the fields back (empty, to be filled in).
+            const clientInfoGroup = document.getElementById('clientInfoGroup');
+            const clientFullNameInput = document.getElementById('clientFullNameInput');
+            const primaryNumberInput = document.getElementById('primaryNumberInput');
+            const secondaryNumberInput = document.getElementById('secondaryNumberInput');
+
+            // Philippine mobile numbers only: digits only, capped at 11
+            // (e.g. 09171234567), matching JobTicket.PrimaryNumber/SecondaryNumber.
+            function restrictToPhMobile(input) {
+                input.addEventListener('input', function () {
+                    input.value = input.value.replace(/\D/g, '').slice(0, 11);
+                });
+            }
+            restrictToPhMobile(primaryNumberInput);
+            restrictToPhMobile(secondaryNumberInput);
+
+            function applyClientInfoVisibility(type) {
+                if (type === 'Maintenance') {
+                    clientInfoGroup.classList.add('d-none');
+                    clientFullNameInput.value = '';
+                    primaryNumberInput.value = '';
+                    secondaryNumberInput.value = '';
+                    clientFullNameInput.removeAttribute('required');
+                    primaryNumberInput.removeAttribute('required');
+                } else {
+                    clientInfoGroup.classList.remove('d-none');
+                    clientFullNameInput.setAttribute('required', 'required');
+                    primaryNumberInput.setAttribute('required', 'required');
+                }
+            }
+
+              function applyJobType() {
+                const type = jobTypeSelect.value;
+                if (type === 'Installation') {
+                    fiberPlanGroup.classList.remove('d-none');
+                    descriptionGroup.classList.add('d-none');
+                    fiberPlanSelect.setAttribute('required', 'required');
+                    descriptionInput.removeAttribute('required');
+                    serviceDateLabel.innerHTML = 'Date of Installation <span class="text-danger">*</span>';
+                } else if (type === 'Repair') {
+                    fiberPlanGroup.classList.add('d-none');
+                    descriptionGroup.classList.remove('d-none');
+                    fiberPlanSelect.removeAttribute('required');
+                    descriptionInput.setAttribute('required', 'required');
+                    serviceDateLabel.innerHTML = 'Date of Repair <span class="text-danger">*</span>';
+                } else if (type === 'Inspection') {
+                    fiberPlanGroup.classList.add('d-none');
+                    descriptionGroup.classList.remove('d-none');
+                    fiberPlanSelect.removeAttribute('required');
+                    descriptionInput.setAttribute('required', 'required');
+                    serviceDateLabel.innerHTML = 'Date of Inspection <span class="text-danger">*</span>';
+                } else if (type === 'Maintenance') {
+                    fiberPlanGroup.classList.add('d-none');
+                    descriptionGroup.classList.remove('d-none');
+                    fiberPlanSelect.removeAttribute('required');
+                    descriptionInput.setAttribute('required', 'required');
+                    serviceDateLabel.innerHTML = 'Date of Maintenance <span class="text-danger">*</span>';
+                } else {
+                    fiberPlanGroup.classList.remove('d-none');
+                    descriptionGroup.classList.add('d-none');
+                    serviceDateLabel.innerHTML = 'Date <span class="text-danger">*</span>';
+                }
+                applyClientInfoVisibility(type);
+            }
+
+            jobTypeSelect.addEventListener('change', applyJobType);
+            applyJobType();
+
+            // ---------------- SERVICE DATE (reschedule) ----------------
+            // A reschedule can never move into the past - but an existing
+            // ticket's ServiceDate can already be in the past on load (e.g.
+            // still Pending days after the originally scheduled date), and
+            // that stored value must still submit cleanly if left untouched.
+            // So the "no past dates" floor only kicks in once the manager
+            // actually changes the field, not from a static min at load
+            // (which would make the browser reject an untouched, already-past
+            // date on submit).
+            const todayStr = new Date().toISOString().slice(0, 10);
+            serviceDateInput.addEventListener('change', function () {
+                if (serviceDateInput.value && serviceDateInput.value < todayStr) {
+                    serviceDateInput.value = todayStr;
+                }
+                serviceDateInput.min = todayStr;
+            });
+
+            // ---------------- DATE OF COMPLETION ----------------
+            const dateOfCompletionInput = document.getElementById('dateOfCompletionInput');
+            function addDaysToDateString(dateStr, days) {
+                const d = new Date(dateStr + 'T00:00:00');
+                d.setDate(d.getDate() + days);
+                return d.toISOString().slice(0, 10);
+            }
+            function applyDateOfCompletionMin() {
+                if (!serviceDateInput.value) return;
+                dateOfCompletionInput.min = serviceDateInput.value;
+                // Bump the deadline two days past the new service date rather
+                // than same-day, matching the Create page's default - a
+                // reschedule shouldn't leave the job due (or already overdue)
+                // the moment the new service date arrives.
+                if (dateOfCompletionInput.value && dateOfCompletionInput.value < serviceDateInput.value) {
+                    dateOfCompletionInput.value = addDaysToDateString(serviceDateInput.value, 2);
+                }
+            }
+            serviceDateInput.addEventListener('change', applyDateOfCompletionMin);
+            applyDateOfCompletionMin();
+
+            // ---------------- LEADER SELECTION (Pending only) ----------------
+            // Moves the "Leader" badge next to whichever assigned technician is
+            // currently selected — mirrors the Create page's behavior, just
+            // without the ability to add/remove technicians here.
+            document.querySelectorAll('.leaderRadio').forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    document.querySelectorAll('.leaderTag').forEach(function (tag) {
+                        tag.classList.add('d-none');
+                    });
+                    var nameSpan = document.getElementById('empName-' + radio.value);
+                    if (nameSpan) {
+                        var tag = nameSpan.querySelector('.leaderTag');
+                        if (tag) tag.classList.remove('d-none');
+                    }
+                });
+            });
+        })();
+    </script>
+}

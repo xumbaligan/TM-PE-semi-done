@@ -1,0 +1,358 @@
+﻿@page "{id:int}"
+@model TM_PE.Pages.Manager.OfficeTask.DetailsModel
+@{
+    ViewData["Title"] = "Task Records";
+    Layout = "_Layout";
+    var badgeClass = Model.OfficeTask.DisplayStatus switch
+    {
+        "Completed" => "bg-success-subtle text-success",
+        "Completed Late" => "bg-warning-subtle text-warning-emphasis",
+        "In Progress" => "bg-info-subtle text-info",
+        "Overdue" => "bg-danger-subtle text-danger",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+}
+
+
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        <i class="bi bi-clipboard-data me-1"></i>@Model.OfficeTask.TaskName
+                        <span class="badge bg-light text-dark border ms-1">TSK-@Model.OfficeTask.OfficeTaskID.ToString("D5")</span>
+                    </h5>
+                    <div class="text-muted small">View task details and manage assignees and activities.</div>
+                </div>
+              
+            </div>
+
+            <hr />
+
+            <div class="row g-3 mb-2">
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Status</div>
+                    <span class="badge rounded-pill @badgeClass px-3 py-2">@Model.OfficeTask.DisplayStatus</span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Progress</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height:8px; min-width:80px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width:@(Model.OfficeTask.Progress)%;"
+                                 aria-valuenow="@Model.OfficeTask.Progress" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <span class="text-muted small">@Model.OfficeTask.Progress%</span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Approved</div>
+                    <div class="fw-semibold">
+                        @(Model.OfficeTask.Activities?.Count(a => a.Status == "Approved") ?? 0)/@(Model.OfficeTask.Activities?.Count ?? 0)
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Date Assigned</div>
+                    <div>@Model.OfficeTask.DateCreated.ToString("M/d/yyyy")</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Due Date</div>
+                    <div>@Model.OfficeTask.DueDate.ToString("M/d/yyyy")</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Assigned By</div>
+                    <div>@(Model.OfficeTask.AssignedByEmployee?.FullName ?? "—")</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.OfficeTask.Description))
+            {
+                <div class="mt-2">
+                    <div class="text-muted small">Description</div>
+                    <div>@Model.OfficeTask.Description</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ===================== ASSIGNED EMPLOYEES ===================== *@
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3"><i class="bi bi-people me-1"></i> Assigned Employees</h6>
+
+            <div class="d-flex flex-wrap gap-2">
+                @if (Model.OfficeTask.Assignments != null && Model.OfficeTask.Assignments.Any())
+                {
+                    @foreach (var a in Model.OfficeTask.Assignments.Where(a => a.Employee != null))
+                    {
+                        <span class="badge rounded-pill bg-light text-dark border px-3 py-2 d-inline-flex align-items-center gap-2">
+                            @a.Employee!.FullName
+                        </span>
+                    }
+                }
+                else
+                {
+                    <span class="text-muted small">No employees assigned yet.</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ===================== ACTIVITIES & SUBMISSIONS ===================== *@
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3"><i class="bi bi-arrow-return-right me-1"></i> Activities &amp; Submissions</h6>
+
+            <form method="post" asp-page-handler="Save" id="detailsForm">
+                <input type="hidden" name="officeTaskId" value="@Model.OfficeTask.OfficeTaskID" />
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>Activity</th>
+                                <th style="width:120px;">Status</th>
+                                <th style="width:160px;">Submission</th>
+                                <th style="width:200px;">Action</th>
+                                <th style="width:220px;">Feedback</th>
+                                <th style="width:110px;">History</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var assignedCount = Model.OfficeTask.Assignments?.Count ?? 0;
+                            }
+                            @if (Model.OfficeTask.Activities != null && Model.OfficeTask.Activities.Any())
+                            {
+                                @foreach (var activity in Model.OfficeTask.Activities)
+                                {
+                                    var statusTextClass = activity.Status switch
+                                    {
+                                        "Approved" => "text-success",
+                                        "Rejected" => "text-danger",
+                                        "Submitted" => "text-info",
+                                        _ => "text-secondary"
+                                    };
+                                    Model.LatestSubmissions.TryGetValue(activity.ActivityID, out var submission);
+                                    var history = Model.SubmissionHistory.GetValueOrDefault(activity.ActivityID) ?? new List<TM_PE.Model.ActivitySubmission>();
+                                    var isLocked = activity.Status == "Approved";
+
+                                    <tr data-activity-row data-has-submission="@(submission != null ? "true" : "false")"
+                                        data-activity-name="@activity.ActivityName">
+                                        <td class="fw-semibold">
+                                            @activity.ActivityName
+                                            @if (isLocked)
+                                            {
+                                                <i class="bi text-success ms-1" title="Approved activities can no longer be changed"></i>
+                                            }
+                                        </td>
+                                        <td>
+                                            <input type="hidden" name="activityIds" value="@activity.ActivityID" />
+                                            @* Staged, client-side only, until the Save button actually posts this
+                                               form - Approve/Reject never submit anything by themselves (see the
+                                               script below). Cancel navigates away without posting at all, so
+                                               nothing staged here is ever persisted unless Save is clicked. *@
+                                            <input type="hidden" name="statuses" value="@activity.Status" class="activity-status-hidden" />
+                                            <div class="fw-semibold @statusTextClass activity-status-label">
+                                                @(activity.Status == "Submitted" ? "Submitted" : activity.Status)
+                                            </div>
+                                            <div class="text-muted small activity-rejection-count" style="@(activity.Status == "Rejected" && activity.RejectionCount > 0 ? "" : "display:none;")">
+                                                Rejected @(activity.RejectionCount == 1 ? "1 attempt" : $"{activity.RejectionCount} attempts")
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @if (submission != null)
+                                                {
+                                                    <a asp-page-handler="Download" asp-route-submissionId="@submission.SubmissionID"
+                                                       class="small text-truncate" style="max-width:110px;" title="@submission.FileName">
+                                                        @submission.FileName
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">No file</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="activity-action-cell">
+                                        @* The manager can only Approve or Reject a Submitted activity - Pending
+                                               (nothing uploaded yet) and Approved/Rejected (already decided) each
+                                               just show what's actually happening instead of an action. Clicking
+                                               either button only stages the change (see script below) - it isn't
+                                               written to the database until Save is clicked. *@
+                                        @if (activity.Status == "Submitted")
+                                        {
+                                            <div class="d-flex gap-1 activity-action-buttons">
+                                                <button type="button" class="btn btn-sm btn-outline-success activity-approve-btn">
+                                                    <i class="bi bi-check-lg"></i> Approve
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger activity-reject-btn">
+                                                    <i class="bi bi-x-lg"></i> Reject
+                                                </button>
+                                            </div>
+                                        }
+                                        else if (activity.Status == "Approved")
+                                        {
+                                            <span class="text-muted small">Locked</span>
+                                        }
+                                        else if (activity.Status == "Rejected")
+                                        {
+                                            <span class="text-muted small">Waiting re-upload</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Nothing to review</span>
+                                        }
+                                        </td>
+
+                                        <td>
+                                            <input type="text" name="feedbacks" value="@activity.FeedBack"
+                                                   class="form-control form-control-sm activity-feedback-input" placeholder="Add feedback..." maxlength="500"
+                                                   readonly="@(isLocked ? "readonly" : null)" />
+                                        </td>
+                                    <td>
+                                        @if (history.Any())
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#historyModal-@activity.ActivityID">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">—</span>
+                                        }
+                                    </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-muted text-center py-3">No activities yet.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+
+            <div class="text-muted small mt-2">
+                Task status updates automatically from activity statuses: all Approved marks the task Completed;
+                any Submitted or Approved sets it to In Progress.
+            </div>
+        </div>
+    </div>
+
+    @* ===================== HISTORY OF SUBMISSION MODALS ===================== *@
+    @* One per activity, placed outside the form/table to keep markup valid. *@
+    @if (Model.OfficeTask.Activities != null)
+    {
+        @foreach (var activity in Model.OfficeTask.Activities)
+        {
+            var activityHistory = Model.SubmissionHistory.GetValueOrDefault(activity.ActivityID) ?? new List<TM_PE.Model.ActivitySubmission>();
+            if (activityHistory.Any())
+            {
+                <partial name="_ActivitySubmissionHistoryModal" model="new TM_PE.Pages.Shared.ActivitySubmissionHistoryViewModel { Activity = activity, Attempts = activityHistory }" />
+            }
+        }
+    }
+
+    @* ===================== SAVE / CANCEL ===================== *@
+    <div class="d-flex justify-content-end gap-2 mb-4">
+        <a asp-page="./Index" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" form="detailsForm" asp-page-handler="Save" class="btn btn-primary">Save</button>
+    </div>
+
+<script>
+    (function () {
+        const form = document.getElementById('detailsForm');
+        if (!form) return;
+
+        // Approve/Reject are plain buttons, not submits - clicking one only
+        // stages the change in this row's hidden "statuses" input and updates
+        // what's on screen to preview the outcome. Nothing reaches the server
+        // until the Save button at the bottom actually posts the form; Cancel
+        // navigates away without posting at all, so nothing staged here ever
+        // gets saved unless Save is clicked.
+        form.querySelectorAll('tr[data-activity-row]').forEach(function (row) {
+            const approveBtn = row.querySelector('.activity-approve-btn');
+            const rejectBtn = row.querySelector('.activity-reject-btn');
+            if (!approveBtn && !rejectBtn) return;
+
+            const statusInput = row.querySelector('.activity-status-hidden');
+            const statusLabel = row.querySelector('.activity-status-label');
+            const rejectionCount = row.querySelector('.activity-rejection-count');
+            const actionCell = row.querySelector('.activity-action-cell');
+            const feedbackInput = row.querySelector('.activity-feedback-input');
+            const activityName = row.dataset.activityName || 'This activity';
+            const hasSubmission = row.dataset.hasSubmission === 'true';
+
+            function stage(newStatus) {
+                statusInput.value = newStatus;
+                statusLabel.textContent = newStatus;
+                statusLabel.classList.remove('text-info', 'text-success', 'text-danger', 'text-secondary');
+                statusLabel.classList.add(newStatus === 'Approved' ? 'text-success' : 'text-danger');
+                if (rejectionCount) rejectionCount.style.display = 'none';
+                actionCell.innerHTML = newStatus === 'Approved'
+                    ? '<span class="text-muted small">Locked</span>'
+                    : '<span class="text-muted small">Waiting re-upload</span>';
+            }
+
+            if (approveBtn) {
+                approveBtn.addEventListener('click', function () {
+                    if (!hasSubmission) {
+                        alert(`"${activityName}" cannot be approved until the employee attaches a file.`);
+                        return;
+                    }
+                    stage('Approved');
+                });
+            }
+
+            if (rejectBtn) {
+                rejectBtn.addEventListener('click', function () {
+                    if (!hasSubmission) {
+                        alert(`"${activityName}" cannot be rejected until the employee attaches a file.`);
+                        return;
+                    }
+                    if (!feedbackInput.value.trim()) {
+                        alert(`"${activityName}" was rejected, so feedback is required.`);
+                        return;
+                    }
+                    stage('Rejected');
+                });
+            }
+        });
+
+        // Final check right before Save actually posts - catches a row staged
+        // as Rejected whose feedback was cleared afterward (the server checks
+        // this too, but this avoids the round trip).
+        form.addEventListener('submit', function (e) {
+            const errors = [];
+
+            form.querySelectorAll('tr[data-activity-row]').forEach(function (row) {
+                const statusInput = row.querySelector('.activity-status-hidden');
+                const feedbackInput = row.querySelector('.activity-feedback-input');
+                if (!statusInput) return;
+
+                if (statusInput.value === 'Rejected' && feedbackInput && !feedbackInput.value.trim()) {
+                    errors.push(`"${row.dataset.activityName || 'This activity'}" was rejected, so feedback is required.`);
+                }
+            });
+
+            if (errors.length > 0) {
+                e.preventDefault();
+                alert(errors.join('\n'));
+            }
+        });
+    })();
+</script>

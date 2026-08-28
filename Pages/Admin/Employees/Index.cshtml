@@ -1,0 +1,145 @@
+@page
+@model TM_PE.Pages.Admin.Employees.IndexModel
+@{
+    ViewData["Title"] = "Employees";
+    Layout = "_Admin";
+}
+
+<div class="mb-3">
+    <h2 class="mb-1">Employees</h2>
+    <p class="text-muted mb-0">Workforce profiles and deployment status.</p>
+</div>
+<hr class="page-divider" />
+
+<form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="input-group shadow-sm flex-grow-1" style="max-width:400px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
+               value="@Model.Search" placeholder="Search by name or email..." />
+    </div>
+    <input type="hidden" name="role" id="liveRole" value="@Model.Role" />
+    <div class="role-filter" id="roleFilter">
+        <button type="button" class="role-filter-btn @(string.IsNullOrEmpty(Model.Role) ? "active" : "")" data-value="">All Roles</button>
+        <button type="button" class="role-filter-btn @(Model.Role == "OfficeStaff" ? "active" : "")" data-value="OfficeStaff">Office Staff</button>
+        <button type="button" class="role-filter-btn @(Model.Role == "FieldTechnician" ? "active" : "")" data-value="FieldTechnician">Field Technician</button>
+    </div>
+    <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Employee</a>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover table-spaced mb-0">
+        <thead>
+            <tr>
+                <th class="text-uppercase small text-muted">Name</th>
+                <th class="text-uppercase small text-muted">Department</th>
+                <th class="text-uppercase small text-muted">Role</th>
+                <th class="text-uppercase small text-muted">Date Hired</th>
+                <th class="text-uppercase small text-muted">Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Employees.Any())
+            {
+                <tr id="emptyRow">
+                    <td colspan="6" class="text-center text-muted py-4">No employees found</td>
+                </tr>
+            }
+            else
+            {
+                <tr id="emptyRow" style="display:none;">
+                    <td colspan="6" class="text-center text-muted py-4">No employees found</td>
+                </tr>
+            }
+
+            @foreach (var e in Model.Employees)
+            {
+                <tr data-name="@e.FullName.ToLower()"
+                    data-email="@e.Email.ToLower()"
+                    data-role="@e.RoleType.ToString()">
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-circle">
+                                @(string.Join("", e.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
+                            </div>
+                            <div class="d-flex flex-column">
+                                <strong>@e.FullName</strong>
+                                <small class="text-muted">@e.Email</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>@e.Department?.DepartmentName</td>
+                    <td>
+                        <span class="badge rounded-pill @(e.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "role-badge-office-staff" : "role-badge-field-technician")">
+                            @(e.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "Office Staff" : "Field Technician")
+                        </span>
+                    </td>
+                    <td>@e.HiredAt.ToString("MM/dd/yyyy")</td>
+                    <td>
+                        @if (e.IsActive)
+                        {
+                            <span class="status-badge status-badge-active">Active</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-badge-inactive">Inactive</span>
+                        }
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-navy" asp-page="Edit" asp-route-id="@e.EmployeeId">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+  </div>
+</div>
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('liveSearch');
+        const roleInput = document.getElementById('liveRole');
+        const roleFilter = document.getElementById('roleFilter');
+        const roleButtons = roleFilter.querySelectorAll('.role-filter-btn');
+        const rows = document.querySelectorAll('tbody tr[data-name]');
+
+        function filterTable() {
+            const searchVal = searchInput.value.toLowerCase().trim();
+            const roleVal = roleInput.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                const email = row.dataset.email || '';
+                const role = row.dataset.role || '';
+
+                const matchesSearch = name.includes(searchVal) || email.includes(searchVal);
+                const matchesRole = roleVal === '' || role.toLowerCase() === roleVal.toLowerCase();
+
+                if (matchesSearch && matchesRole) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('emptyRow');
+            if (emptyRow) {
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+        }
+
+        searchInput.addEventListener('input', filterTable);
+        roleButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                roleButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                roleInput.value = btn.dataset.value;
+                filterTable();
+            });
+        });
+    </script>
+}

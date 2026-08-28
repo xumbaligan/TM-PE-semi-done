@@ -1,0 +1,269 @@
+﻿@page
+@model TM_PE.Pages.Manager.PerformanceReport.IndexModel
+@{
+    ViewData["Title"] = "Performance Report";
+    Layout = Model.LayoutName;
+    var periodLabel = Model.PeriodLabel;
+    var averageClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(
+        TM_PE.Model.EvaluationScoring.RatingFor(Model.AverageScore));
+}
+
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-file-earmark-text"></i> Performance Report</h2>
+            <p class="text-muted mb-0">Built entirely from existing records — Employees, Performance Evaluations, Job Tickets and Office Tasks.</p>
+        </div>
+        <span class="text-muted small">Generated @DateTime.Now.ToString("MMMM d, yyyy")</span>
+    </div>
+</div>
+<hr class="page-divider" />
+
+@* ===================== Filters ===================== *@
+<form method="get" class="wlm-card p-3 mb-4" id="reportFilters">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold" for="Period">Report Period</label>
+            <select class="form-select" id="Period" name="Period">
+                <option value="">All Periods</option>
+                @foreach (var p in Model.PeriodOptions)
+                {
+                    <option value="@p.Value" selected="@(Model.Period == p.Value)">@p.Label</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold" for="DepartmentId">Department</label>
+            <select class="form-select" id="DepartmentId" name="DepartmentId">
+                <option value="">All Departments</option>
+                @foreach (var d in Model.DepartmentOptions)
+                {
+                    <option value="@d.DepartmentId" selected="@(Model.DepartmentId == d.DepartmentId)">@d.DepartmentName</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex gap-2">
+                @if (!Model.IsAdmin)
+                {
+                    <button type="submit" class="btn btn-navy flex-fill">
+                        <i class="bi bi-bar-chart-line"></i> Generate Report
+                    </button>
+                }
+                @* A link, not a submit button: on a GET form the browser
+                   would overwrite ?handler=ExportCsv with the form's own
+                   query string, so the handler would never be reached. *@
+                <a class="btn btn-outline-success text-nowrap @(Model.IsAdmin ? "flex-fill" : "")" id="exportCsvBtn"
+                   asp-page-handler="ExportCsv"
+                   asp-route-Period="@Model.Period"
+                   asp-route-DepartmentId="@Model.DepartmentId">
+                    <i class="bi bi-filetype-csv"></i> Export CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="alert alert-light border small d-flex align-items-center gap-2 mb-4">
+    <i class="bi bi-funnel"></i>
+    Showing <strong>@periodLabel</strong>
+    for <strong>@(Model.DepartmentId == null ? "All Departments" : Model.DepartmentOptions.FirstOrDefault(d => d.DepartmentId == Model.DepartmentId)?.DepartmentName)</strong>
+    &mdash; @Model.EmployeeCount employee@(Model.EmployeeCount == 1 ? "" : "s"),
+    @Model.EvaluatedEmployeeCount with an evaluation in this period.
+    @if (!Model.HasData)
+    {
+        <text>Nothing to chart until at least one evaluation falls inside these filters.</text>
+    }
+</div>
+
+@* ===================== Summary tiles ===================== *@
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-people"></i></div>
+            <div>
+                <div class="stat-label">Employees</div>
+                <div class="stat-value">@Model.EmployeeCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-clipboard-check"></i></div>
+            <div>
+                <div class="stat-label">Appraisals in Period</div>
+                <div class="stat-value">@Model.AppraisalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-star"></i></div>
+            <div>
+                <div class="stat-label">Average Score</div>
+                <div class="stat-value">@Model.AverageScore.ToString("0.##")</div>
+                <div class="d-flex align-items-center gap-1">
+                    <partial name="_Stars" model="Model.AverageStars" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-check2-circle"></i></div>
+            <div>
+                <div class="stat-label">Completed Work Items</div>
+                <div class="stat-value">@Model.CompletedWorkItems</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===================== Charts ===================== *@
+@*
+    The chart data is emitted as a JSON <script> block rather than interpolated
+    straight into JavaScript. Razor never has to parse anything inside the JS,
+    and the payload is inspectable in dev tools when a chart looks wrong.
+*@
+<script type="application/json" id="reportChartData">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+        scoreByEmployee = Model.ScoreByEmployee,
+                ratingDistribution = Model.RatingDistribution
+        }))
+</script>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card p-4 h-100">
+            <h5 class="mb-3">Average Score per Employee</h5>
+            <div class="chart-box">
+                <canvas id="scoreByEmployeeChart"></canvas>
+                <div class="chart-message d-none" id="scoreByEmployeeMessage"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4 h-100">
+            <h5 class="mb-3">Rating Distribution</h5>
+            <div class="chart-box">
+                <canvas id="ratingDistributionChart"></canvas>
+                <div class="chart-message d-none" id="ratingDistributionMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===================== Report table ===================== *@
+<div class="wlm-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle wlm-table mb-0">
+            <thead>
+                <tr>
+                    <th>Employee Name</th>
+                    <th style="width:150px">Role</th>
+                    <th style="width:170px">Department</th>
+                    <th style="width:110px" class="text-center">Average</th>
+                    <th style="width:210px">Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Rows.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No employees match the current filters.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var r in Model.Rows)
+                    {
+                        var ratingClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(r.Rating);
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="wlm-avatar">
+                                        @(string.Join("", r.EmployeeName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
+                                    </div>
+                                    <strong>@r.EmployeeName</strong>
+                                </div>
+                            </td>
+                            <td>
+                                @if (r.RoleType == TM_PE.Model.RoleType.FieldTechnician)
+                                {
+                                    <span class="badge rounded-pill role-badge-field-technician">Field Technician</span>
+                                }
+                                else
+                                {
+                                    <span class="badge rounded-pill role-badge-office-staff">Office Staff</span>
+                                }
+                            </td>
+                            <td class="fw-bold">@r.DepartmentName</td>
+                            <td class="text-center">
+                                @if (r.Appraisals == 0)
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                                else
+                                {
+                                    <span class="fw-semibold">@r.AverageScore.ToString("0.##")</span>
+                                }
+                            </td>
+                            <td>
+                                @if (r.Appraisals == 0)
+                                {
+                                    <span class="text-muted small">Not yet evaluated</span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center gap-2">
+                                        <partial name="_Stars" model="r.Stars" />
+                                        <span class="badge bg-@(ratingClass)-subtle text-@(ratingClass)-emphasis">@r.Rating</span>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const form = document.getElementById('reportFilters');
+            const periodSelect = document.getElementById('Period');
+            const deptSelect = document.getElementById('DepartmentId');
+            const exportBtn = document.getElementById('exportCsvBtn');
+
+            // Keep the export link pointing at whatever the dropdowns currently
+            // say, so the download always matches what's on screen even if the
+            // report hasn't been regenerated yet.
+            function refreshExportLink() {
+                if (!exportBtn) return;
+                const params = new URLSearchParams();
+                params.set('handler', 'ExportCsv');
+                if (periodSelect.value) params.set('Period', periodSelect.value);
+                if (deptSelect.value) params.set('DepartmentId', deptSelect.value);
+                exportBtn.href = window.location.pathname + '?' + params.toString();
+            }
+
+            // Re-run the report as soon as a filter changes, so the manager
+            // doesn't have to remember to press Generate Report.
+            form.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', function () {
+                    refreshExportLink();
+                    form.submit();
+                });
+            });
+
+            refreshExportLink();
+        })();
+    </script>
+
+    <script src="~/js/performance-report-charts.js" asp-append-version="true"></script>
+}

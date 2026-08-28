@@ -1,0 +1,663 @@
+﻿@page
+@model TM_PE.Pages.Manager.PerformanceEvaluation.CreateModel
+@{
+    ViewData["Title"] = "New Performance Evaluation";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-clipboard-data"></i> New Performance Evaluation</h2>
+    <a class="btn btn-outline-secondary" asp-page="Index"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check2-circle"></i> @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@* ===================== Employee performance snapshot ===================== *@
+<style>
+    .stat-tile-clickable {
+        cursor: pointer;
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+
+    .stat-tile-clickable:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,.08);
+        transform: translateY(-1px);
+    }
+</style>
+<div class="row g-3 mb-4" id="statTiles">
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile1" data-metric="completed">
+            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-check2-circle"></i></div>
+            <div>
+                <div class="stat-label">Completed Job/Task</div>
+                <div class="stat-value" id="statCompleted">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile2" data-metric="ontime">
+            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="stat-label">On-time Rate</div>
+                <div class="stat-value" id="statOnTime">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile3" data-metric="rescheduled">
+            <div class="stat-icon bg-warning-subtle text-warning" id="statTile3Icon"><i class="bi bi-arrow-repeat"></i></div>
+            <div>
+                <div class="stat-label" id="statTile3Label">Rescheduled</div>
+                <div class="stat-value" id="statTile3Value">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile4" data-metric="cancelled">
+            <div class="stat-icon bg-danger-subtle text-danger" id="statTile4Icon"><i class="bi bi-x-circle"></i></div>
+            <div>
+                <div class="stat-label" id="statTile4Label">Cancelled</div>
+                <div class="stat-value" id="statTile4Value">—</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===================== Modal: stat tile drill-down list ===================== *@
+<div class="modal fade" id="recordsModal" tabindex="-1" aria-labelledby="recordsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recordsModalLabel">Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table align-middle table-sm">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>Type</th>
+                                <th>Id no.</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th id="recordsOnTimeHeader" class="d-none">On Time</th>
+                                <th id="recordsActionHeader" class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===================== Modal: one record's remarks / uploaded file(s) ===================== *@
+<div class="modal fade" id="recordDetailModal" tabindex="-1" aria-labelledby="recordDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recordDetailModalLabel">Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="recordDetailBody">
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post" id="evalForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <input type="hidden" id="selectedRoleInput" name="SelectedRole" value="@Model.SelectedRole" />
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card p-4 mb-4">
+                <h5 class="mb-2">Select Employee Role</h5>
+                <div class="d-flex gap-2" id="roleFilterGroup">
+                    <button type="button" class="btn btn-outline-primary role-filter-btn" data-role="FieldTechnician">
+                        <i class="bi bi-tools"></i> Field Technician
+                    </button>
+                    <button type="button" class="btn btn-outline-primary role-filter-btn" data-role="OfficeStaff">
+                        <i class="bi bi-person-workspace"></i> Office Staff
+                    </button>
+                </div>
+            </div>
+
+            <div class="card p-4 mb-4">
+                <h5 class="mb-3">Evaluation Details</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Employee <span class="text-danger">*</span></label>
+                        <select asp-for="Evaluation.EmployeeID" id="employeeSelect" class="form-select">
+                            <option value="">Select an employee</option>
+                            @foreach (var emp in Model.EmployeeList)
+                            {
+                                var s = Model.Stats.GetValueOrDefault(emp.EmployeeId) ?? new TM_PE.Model.EmployeePerformanceStats();
+                                <option value="@emp.EmployeeId"
+                                        data-roletype="@emp.RoleType"
+                                        data-completed="@s.CompletedJobsTasks"
+                                        data-ontime="@s.OnTimeRate.ToString("0")"
+                                        data-rescheduled="@s.Rescheduled"
+                                        data-cancelled="@s.Cancelled"
+                                        data-rejected="@s.RejectedActivities"
+                                        data-overdue="@s.OverdueTasks">
+                                    @emp.FullName (@emp.RoleType)
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="Evaluation.EmployeeID" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Period Month <span class="text-danger">*</span></label>
+                        <select asp-for="Evaluation.EvaluationPeriodMonth" id="periodMonthSelect" class="form-select">
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                <option value="@m">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Evaluation.EvaluationPeriodMonth" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Period Year <span class="text-danger">*</span></label>
+                        <select asp-for="Evaluation.EvaluationPeriodYear" id="periodYearSelect" class="form-select">
+                            @foreach (var y in Model.PeriodYearOptions)
+                            {
+                                <option value="@y">@y</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Evaluation.EvaluationPeriodYear" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Evaluation Date <span class="text-danger">*</span></label>
+                        <input asp-for="Evaluation.EvaluationDate" type="date" class="form-control"
+                               value="@Model.Evaluation.EvaluationDate.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="Evaluation.EvaluationDate" class="text-danger"></span>
+                        <div class="form-text">Also used as the appraisal date.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Evaluator</label>
+                        <input class="form-control" value="@Model.CurrentManagerName" disabled />
+                        <div class="form-text">Automatically set to your manager account.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4 mb-4" id="noEmployeeNotice">
+                <div class="text-muted text-center py-3">Select an employee above to load their evaluation criteria.</div>
+            </div>
+
+            @* ===================== Field Technician criteria ===================== *@
+            <div class="card p-4 mb-4 d-none" id="fieldTechnicianCriteriaCard">
+                <h5 class="mb-1">Field Technician Criteria</h5>
+                <div class="text-muted small mb-3">Rate each criterion from 0.5 to 4 stars — click the left half of a star for a half rating. Click the same rating again to clear it.</div>
+                <partial name="_CriteriaStarRows" model="Model.RowsFor(Model.FieldTechnicianCriteria)" />
+            </div>
+
+            @* ===================== Office Staff criteria ===================== *@
+            <div class="card p-4 mb-4 d-none" id="officeStaffCriteriaCard">
+                <h5 class="mb-1">Office Staff Criteria</h5>
+                <div class="text-muted small mb-3">Rate each criterion from 0.5 to 4 stars — click the left half of a star for a half rating. Click the same rating again to clear it.</div>
+                <partial name="_CriteriaStarRows" model="Model.RowsFor(Model.OfficeStaffCriteria)" />
+            </div>
+
+            <div class="card p-4">
+                <label class="form-label fw-semibold">Feedback</label>
+                <textarea asp-for="Evaluation.GeneralFeedback" class="form-control" rows="3" maxlength="1000"
+                          placeholder="Overall feedback for this evaluation period..."></textarea>
+                <div class="form-text">Covers both the evaluation and the appraisal decision.</div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card p-4 mb-3 sticky-top" style="top:1rem">
+                <h6 class="text-muted">Overall Score (preview)</h6>
+                <div class="display-6 fw-bold" id="overallScorePreview">0.0</div>
+                <div class="text-muted small">out of 4</div>
+                <div class="mt-2 d-flex align-items-center gap-2">
+                    <span id="overallStarsPreview"></span>
+                    <span class="badge bg-primary-subtle text-primary" id="overallRatingPreview">—</span>
+                </div>
+
+                <hr />
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-outline-secondary" asp-page-handler="SaveDraft">
+                        <i class="bi bi-save"></i> Save as Draft
+                    </button>
+                    <button type="submit" class="btn btn-primary" asp-page-handler="Finalize"
+                            onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
+                        <i class="bi bi-check2-circle"></i> Finalize Evaluation
+                    </button>
+                </div>
+                <div class="form-text mt-2">A draft can still be edited later; finalizing locks it.</div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/star-rating.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            // Changing the period reloads the page via GET so the server can
+            // recompute period-scoped stats for the new Month/Year - there's
+            // no client-side copy of every employee's per-period ticket/task
+            // history to redo that math in JS.
+            const periodMonthSelect = document.getElementById('periodMonthSelect');
+            const periodYearSelect = document.getElementById('periodYearSelect');
+            const employeeSelect = document.getElementById('employeeSelect');
+            function reloadForPeriod() {
+                const params = new URLSearchParams();
+                params.set('Month', periodMonthSelect.value);
+                params.set('Year', periodYearSelect.value);
+                // Carry the currently selected employee through the reload so
+                // changing the period doesn't reset "Select an employee".
+                if (employeeSelect.value) params.set('EmployeeId', employeeSelect.value);
+                // Same for the active role button - it isn't derivable from
+                // anything else once there's no employee selected.
+                const activeRoleBtn = document.querySelector('.role-filter-btn.active');
+                if (activeRoleBtn) params.set('SelectedRole', activeRoleBtn.dataset.role);
+                window.location.href = window.location.pathname + '?' + params.toString();
+            }
+            periodMonthSelect.addEventListener('change', reloadForPeriod);
+            periodYearSelect.addEventListener('change', reloadForPeriod);
+            // ---- Role filter buttons (Field Technician / Office Staff) ----
+            // Highlights the clicked button and narrows the Employee dropdown
+            // to just that role, so the manager picks a role first, then a
+            // name, instead of scanning one long mixed-role list. With no role
+            // picked yet, no employees are offered at all - only the
+            // placeholder - forcing a role to be chosen first.
+            const roleButtons = document.querySelectorAll('.role-filter-btn');
+
+            function applyRoleFilter(role) {
+                Array.from(employeeSelect.options).forEach(opt => {
+                    if (!opt.value) return; // always keep the "Select an employee" placeholder visible
+                    opt.hidden = !role || opt.getAttribute('data-roletype') !== role;
+                });
+
+                // If the currently selected employee no longer matches the
+                // chosen role (or no role is chosen at all anymore), clear the
+                // selection instead of leaving a hidden option selected.
+                const selectedOpt = employeeSelect.options[employeeSelect.selectedIndex];
+                if (selectedOpt && selectedOpt.value && (!role || selectedOpt.getAttribute('data-roletype') !== role)) {
+                    employeeSelect.value = '';
+                    employeeSelect.dispatchEvent(new Event('change'));
+                }
+            }
+
+            const selectedRoleInput = document.getElementById('selectedRoleInput');
+
+            function setActiveRole(role) {
+                roleButtons.forEach(b => b.classList.toggle('active', b.dataset.role === role));
+                if (selectedRoleInput) selectedRoleInput.value = role || '';
+                applyRoleFilter(role);
+                // applyRoleFilter above only re-runs applyStats itself (via a
+                // dispatched 'change') when it had to clear an out-of-role
+                // selection. Call it unconditionally too, so the tiles at the
+                // top pick up the newly active role immediately even when
+                // nothing was selected yet or the selection already matched.
+                applyStats(employeeSelect.options[employeeSelect.selectedIndex]);
+            }
+
+            roleButtons.forEach(btn => {
+                btn.addEventListener('click', () => setActiveRole(btn.dataset.role));
+            });
+
+            const noEmployeeNotice = document.getElementById('noEmployeeNotice');
+            const ftCard = document.getElementById('fieldTechnicianCriteriaCard');
+            const osCard = document.getElementById('officeStaffCriteriaCard');
+            const scorePreview = document.getElementById('overallScorePreview');
+            const ratingPreview = document.getElementById('overallRatingPreview');
+            const starsPreview = document.getElementById('overallStarsPreview');
+
+            // Rating bands mirrored from Model.EvaluationScoring for the live
+            // client-side preview only - the server always recalculates and is
+            // the source of truth for what actually gets saved.
+            const bands = [[3.6, 'Excellent'], [3.2, 'Very Good'], [2.8, 'Good'], [2.4, 'Needs Improvement'], [0, 'Poor']];
+
+            function ratingFor(score) {
+                for (const [min, label] of bands) { if (score >= min) return label; }
+                return 'Poor';
+            }
+
+            function setBlockEnabled(card, enabled) {
+                card.classList.toggle('d-none', !enabled);
+                card.querySelectorAll('input, select, textarea').forEach(el => {
+                    el.disabled = !enabled;
+                    if (!enabled && el.classList.contains('star-value-input')) el.value = 0;
+                });
+                if (!enabled) {
+                    card.querySelectorAll('[data-star-input]').forEach(c => window.StarRating.paint(c, 0));
+                }
+            }
+
+            function recalcPreview() {
+                let total = 0;
+                document.querySelectorAll('.star-value-input:not(:disabled)').forEach(input => {
+                    const weight = parseFloat(input.dataset.weight || '0');
+                    const stars = window.StarRating.snap(input.value || '0');
+                    total += weight / 100 * stars;
+                });
+                scorePreview.textContent = total.toFixed(1);
+                ratingPreview.textContent = ratingFor(total);
+                starsPreview.innerHTML = window.StarRating.render(total);
+            }
+
+            const tile3 = document.getElementById('statTile3');
+            const tile3Icon = document.getElementById('statTile3Icon');
+            const tile3Label = document.getElementById('statTile3Label');
+            const tile3Value = document.getElementById('statTile3Value');
+            const tile4 = document.getElementById('statTile4');
+            const tile4Icon = document.getElementById('statTile4Icon');
+            const tile4Label = document.getElementById('statTile4Label');
+            const tile4Value = document.getElementById('statTile4Value');
+
+            // Tiles 3/4 show different metrics depending on role: job ticket
+            // Rescheduled/Cancelled counts for a Field Technician, since Office
+            // Staff office tasks never use those statuses; Rejected
+            // activities/Overdue tasks for an Office Staff, since those are the
+            // equivalents that actually apply there. The role comes from
+            // whichever employee is selected when there is one, otherwise from
+            // whichever "Select Employee Role" button is currently active, so
+            // the tiles reflect the chosen role immediately - before an
+            // employee has even been picked.
+            function applyStats(opt) {
+                const has = opt && opt.value;
+                const activeRoleBtn = document.querySelector('.role-filter-btn.active');
+                const roleType = has ? opt.getAttribute('data-roletype') : (activeRoleBtn ? activeRoleBtn.dataset.role : '');
+                const isOfficeStaff = roleType === 'OfficeStaff';
+
+                document.getElementById('statCompleted').textContent = has ? opt.dataset.completed : '—';
+                document.getElementById('statOnTime').textContent = has ? opt.dataset.ontime + '%' : '—';
+
+                if (isOfficeStaff) {
+                    tile3Icon.className = 'stat-icon bg-danger-subtle text-danger';
+                    tile3Icon.innerHTML = '<i class="bi bi-hand-thumbs-down"></i>';
+                    tile3Label.textContent = 'Rejected Activities';
+                    tile3Value.textContent = has ? opt.dataset.rejected : '—';
+                    tile3.dataset.metric = 'rejected';
+
+                    tile4Icon.className = 'stat-icon bg-warning-subtle text-warning';
+                    tile4Icon.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
+                    tile4Label.textContent = 'Overdue Task';
+                    tile4Value.textContent = has ? opt.dataset.overdue : '—';
+                    tile4.dataset.metric = 'overdue';
+                } else {
+                    tile3Icon.className = 'stat-icon bg-warning-subtle text-warning';
+                    tile3Icon.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
+                    tile3Label.textContent = 'Rescheduled';
+                    tile3Value.textContent = has ? opt.dataset.rescheduled : '—';
+                    tile3.dataset.metric = 'rescheduled';
+
+                    tile4Icon.className = 'stat-icon bg-danger-subtle text-danger';
+                    tile4Icon.innerHTML = '<i class="bi bi-x-circle"></i>';
+                    tile4Label.textContent = 'Cancelled';
+                    tile4Value.textContent = has ? opt.dataset.cancelled : '—';
+                    tile4.dataset.metric = 'cancelled';
+                }
+            }
+
+            employeeSelect.addEventListener('change', function () {
+                const opt = employeeSelect.options[employeeSelect.selectedIndex];
+                const roleType = opt ? opt.getAttribute('data-roletype') : '';
+
+                applyStats(opt);
+
+                if (!roleType) {
+                    noEmployeeNotice.classList.remove('d-none');
+                    setBlockEnabled(ftCard, false);
+                    setBlockEnabled(osCard, false);
+                    recalcPreview();
+                    return;
+                }
+
+                noEmployeeNotice.classList.add('d-none');
+                const isFieldTechnician = roleType === 'FieldTechnician';
+                setBlockEnabled(ftCard, isFieldTechnician);
+                setBlockEnabled(osCard, roleType === 'OfficeStaff');
+                recalcPreview();
+            });
+
+            document.addEventListener('change', function (e) {
+                if (e.target.classList.contains('star-value-input')) recalcPreview();
+            });
+
+            // Initial state (also covers a validation-failure postback, where
+            // the server re-renders the manager's previously entered ratings
+            // and selected employee). Only reset both cards up front when no
+            // employee is selected - if one is, dispatching 'change' below
+            // enables/preserves whichever card matches that employee's role
+            // and disables (zeroing) only the other one, so a postback never
+            // wipes out ratings the manager already entered.
+            window.StarRating.initAll(document);
+            if (employeeSelect.value) {
+                // A postback (e.g. validation failure) can re-render with an
+                // employee already selected - highlight the matching role
+                // button so the filter reflects it instead of showing neither
+                // button active.
+                const selectedOpt = employeeSelect.options[employeeSelect.selectedIndex];
+                const selectedRole = selectedOpt ? selectedOpt.getAttribute('data-roletype') : '';
+                if (selectedRole) setActiveRole(selectedRole);
+                employeeSelect.dispatchEvent(new Event('change'));
+            } else {
+                // No employee selected. The role button itself can still carry
+                // over though - from a postback with no employee chosen, or
+                // (see SaveAsync) from the redirect back to this page right
+                // after a save, which keeps the period and role but always
+                // clears the employee so the manager can pick the next one.
+                const carriedRole = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedRole));
+                if (carriedRole) {
+                    setActiveRole(carriedRole);
+                } else {
+                    applyRoleFilter(null);
+                    applyStats(null);
+                }
+                setBlockEnabled(ftCard, false);
+                setBlockEnabled(osCard, false);
+                recalcPreview();
+            }
+        })();
+
+        // ---- Stat tile drill-down (Completed / On-time / Rescheduled-or-Rejected / Cancelled-or-Overdue) ----
+        (function () {
+            const employeeSelect = document.getElementById('employeeSelect');
+            const periodMonthSelect = document.getElementById('periodMonthSelect');
+            const periodYearSelect = document.getElementById('periodYearSelect');
+
+            const recordsModalEl = document.getElementById('recordsModal');
+            const recordsModal = new bootstrap.Modal(recordsModalEl);
+            const recordsModalLabel = document.getElementById('recordsModalLabel');
+            const recordsTableBody = document.getElementById('recordsTableBody');
+            const recordsOnTimeHeader = document.getElementById('recordsOnTimeHeader');
+            const recordsActionHeader = document.getElementById('recordsActionHeader');
+
+            const recordDetailModalEl = document.getElementById('recordDetailModal');
+            const recordDetailModal = new bootstrap.Modal(recordDetailModalEl);
+            const recordDetailModalLabel = document.getElementById('recordDetailModalLabel');
+            const recordDetailBody = document.getElementById('recordDetailBody');
+
+            const metricLabels = {
+                completed: 'Completed Job/Task',
+                ontime: 'On-time Rate',
+                rescheduled: 'Rescheduled',
+                cancelled: 'Cancelled',
+                rejected: 'Rejected Activities',
+                overdue: 'Overdue Task'
+            };
+
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+            function isImageFile(fileName) {
+                const ext = (fileName.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+                return imageExtensions.includes(ext);
+            }
+            function fileUrl(filePath) {
+                return '/' + String(filePath).replace(/\\/g, '/').replace(/^\/+/, '');
+            }
+            function renderFile(file) {
+                const url = fileUrl(file.filePath);
+                if (isImageFile(file.fileName)) {
+                    return `<a href="${url}" target="_blank" rel="noopener" class="d-inline-block me-2 mb-2">
+                        <img src="${url}" alt="${file.fileName}" style="width:100px;height:100px;object-fit:cover;border-radius:.375rem;border:1px solid #dee2e6;" />
+                    </a>`;
+                }
+                return `<a href="${url}" target="_blank" rel="noopener" class="d-inline-flex align-items-center gap-1 me-2 mb-2 btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-file-earmark-arrow-down"></i> ${file.fileName}
+                </a>`;
+            }
+
+            let currentRecords = [];
+
+            function badgeClassFor(status) {
+                switch (status) {
+                    case 'Completed': return 'bg-success-subtle text-success';
+                    case 'Completed Late': return 'bg-warning-subtle text-warning-emphasis';
+                    case 'In Progress': return 'bg-info-subtle text-info';
+                    case 'Cancelled': return 'bg-danger-subtle text-danger';
+                    case 'Rescheduled':
+                    case 'Reschedule Request': return 'bg-warning-subtle text-warning-emphasis';
+                    case 'Overdue': return 'bg-danger-subtle text-danger-emphasis';
+                    default: return 'bg-secondary-subtle text-secondary';
+                }
+            }
+
+            function renderRecordsTable(metric) {
+                recordsTableBody.innerHTML = '';
+                recordsOnTimeHeader.classList.toggle('d-none', metric !== 'ontime');
+
+                // Rescheduled rows have no per-row detail worth viewing, so
+                // the list is plain - no Action column, no eye button.
+                const showAction = metric !== 'rescheduled';
+                recordsActionHeader.classList.toggle('d-none', !showAction);
+
+                if (currentRecords.length === 0) {
+                    const colspan = (metric === 'ontime' ? 1 : 0) + (showAction ? 1 : 0) + 4;
+                    recordsTableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-muted text-center py-3">No records found.</td></tr>`;
+                    return;
+                }
+
+                currentRecords.forEach(function (item, index) {
+                    const tr = document.createElement('tr');
+                    let onTimeCell = '';
+                    if (metric === 'ontime') {
+                        const onTimeClass = item.onTime === 'Yes' ? 'text-success' : 'text-danger';
+                        onTimeCell = `<td class="${onTimeClass} fw-semibold">${item.onTime ?? '—'}</td>`;
+                    }
+                    const actionCell = showAction
+                        ? `<td class="text-end">
+                            <button type="button" class="btn btn-sm btn-link text-secondary p-1 record-view-btn" data-index="${index}" title="View">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>`
+                        : '';
+                    tr.innerHTML = `
+                        <td>${item.type}</td>
+                        <td class="text-muted">${item.number}</td>
+                        <td>${item.title}</td>
+                        <td><span class="badge rounded-pill ${badgeClassFor(item.status)} px-2 py-1">${item.status}</span></td>
+                        <td class="text-muted">${item.dateLabel ?? '—'}</td>
+                        ${onTimeCell}
+                        ${actionCell}
+                    `;
+                    recordsTableBody.appendChild(tr);
+                });
+            }
+
+            function showRecordDetail(item) {
+                recordDetailModalLabel.textContent = `${item.type} ${item.number}`;
+
+                if (item.type === 'Job Ticket') {
+                    const filesHtml = item.files && item.files.length
+                        ? item.files.map(renderFile).join('')
+                        : '<span class="text-muted">No uploaded files.</span>';
+                    recordDetailBody.innerHTML = `
+                        <div class="mb-3">
+                            <div class="text-muted small mb-1">Remarks</div>
+                            <div class="border rounded p-2 bg-light">${item.remarks ?? '<span class="text-muted">No remarks.</span>'}</div>
+                        </div>
+                        <div>
+                            <div class="text-muted small mb-2">Uploaded Files</div>
+                            <div>${filesHtml}</div>
+                        </div>
+                    `;
+                } else {
+                    const activitiesHtml = (item.activities && item.activities.length)
+                        ? item.activities.map(function (a) {
+                            const filesHtml = a.files && a.files.length
+                                ? a.files.map(renderFile).join('')
+                                : '<span class="text-muted small">No uploaded file.</span>';
+                            return `
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-semibold">${a.activityName}</div>
+                                        <span class="badge rounded-pill ${badgeClassFor(a.status)} px-2 py-1">${a.status}</span>
+                                    </div>
+                                    <div class="text-muted small mb-1">Feedback</div>
+                                    <div class="mb-2">${a.feedback ?? '<span class="text-muted">No feedback.</span>'}</div>
+                                    <div class="text-muted small mb-1">Uploaded File</div>
+                                    <div>${filesHtml}</div>
+                                </div>
+                            `;
+                        }).join('')
+                        : '<span class="text-muted">No activities recorded.</span>';
+                    recordDetailBody.innerHTML = activitiesHtml;
+                }
+
+                recordsModal.hide();
+                recordDetailModal.show();
+            }
+
+            recordDetailModalEl.addEventListener('hidden.bs.modal', function () {
+                recordsModal.show();
+            });
+
+            recordsTableBody.addEventListener('click', function (e) {
+                const btn = e.target.closest('.record-view-btn');
+                if (!btn) return;
+                const item = currentRecords[parseInt(btn.dataset.index, 10)];
+                if (item) showRecordDetail(item);
+            });
+
+            document.querySelectorAll('.stat-tile-clickable').forEach(function (tile) {
+                tile.addEventListener('click', async function () {
+                    if (!employeeSelect.value) {
+                        alert('Please select an employee first.');
+                        return;
+                    }
+
+                    const metric = tile.dataset.metric;
+                    const params = new URLSearchParams({
+                        handler: 'Records',
+                        metric: metric,
+                        EmployeeId: employeeSelect.value,
+                        Month: periodMonthSelect.value,
+                        Year: periodYearSelect.value
+                    });
+
+                    recordsModalLabel.textContent = metricLabels[metric] || 'Records';
+                    recordsTableBody.innerHTML = '<tr><td colspan="6" class="text-muted text-center py-3">Loading...</td></tr>';
+                    recordsModal.show();
+
+                    try {
+                        const response = await fetch(window.location.pathname + '?' + params.toString(), {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        currentRecords = response.ok ? await response.json() : [];
+                    } catch {
+                        currentRecords = [];
+                    }
+
+                    renderRecordsTable(metric);
+                });
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,286 @@
+@page
+@model TM_PE.Pages.OfficeStaff.PerformanceRecordsModel
+@{
+    ViewData["Title"] = "My Performance Records";
+    Layout = "_OfficeStaffLayout";
+    var emp = Model.Employee;
+    var last = Model.LastEvaluation;
+    var overallClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(Model.OverallRating);
+}
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+        <h2 class="mb-1"><i class="bi bi-award"></i> My Performance Records</h2>
+        <p class="text-muted mb-0">Your evaluation history and feedback.</p>
+    </div>
+    <a class="btn btn-outline-navy" asp-page="/OfficeStaff/Index"><i class="bi bi-arrow-left"></i> Back to My Tasks</a>
+</div>
+<hr class="page-divider" />
+
+@* ===================== Overall rating ===================== *@
+<div class="wlm-card p-4 mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-7">
+            <div class="fs-4 fw-bold">@emp.FullName</div>
+            <div class="text-muted">Office Staff</div>
+        </div>
+        <div class="col-lg-5">
+            <div class="border rounded p-3 h-100 text-center">
+                <div class="stat-label mb-1">Overall Rating</div>
+                <div class="d-flex justify-content-center">
+                    <partial name="_Stars" model="Model.OverallStars" />
+                </div>
+                <div class="display-6 fw-bold mt-1">@Model.OverallScore.ToString("0.##")</div>
+                <div class="text-muted small">out of 4 &mdash; across all finalized evaluations</div>
+                <div class="mt-2">
+                    <span class="badge bg-@(overallClass)-subtle text-@(overallClass)-emphasis">@Model.OverallRating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===================== Summary tiles ===================== *@
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon icon-palette-success"><i class="bi bi-clipboard-check"></i></div>
+            <div>
+                <div class="stat-label">Evaluations Completed</div>
+                <div class="stat-value">@Model.EvaluationsCompleted</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon icon-palette-primary"><i class="bi bi-check2-circle"></i></div>
+            <div>
+                <div class="stat-label">Completed Job/Task</div>
+                <div class="stat-value">@Model.Stats.CompletedJobsTasks</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon icon-palette-warning"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="stat-label">On-time Rate</div>
+                <div class="stat-value">@Model.Stats.OnTimeRate.ToString("0")%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon icon-palette-danger"><i class="bi bi-hand-thumbs-down"></i></div>
+            <div>
+                <div class="stat-label">Rejected Activities</div>
+                <div class="stat-value">@Model.Stats.RejectedActivities</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile d-flex align-items-center gap-3">
+            <div class="stat-icon icon-palette-warning"><i class="bi bi-exclamation-triangle"></i></div>
+            <div>
+                <div class="stat-label">Overdue Task</div>
+                <div class="stat-value">@Model.Stats.OverdueTasks</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===================== Last evaluation ===================== *@
+<div class="wlm-card p-4 mb-4">
+    <h5 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-clock"></i> Last Evaluation</h5>
+    @if (last == null)
+    {
+        <div class="text-muted">You don't have any finalized evaluations yet.</div>
+    }
+    else
+    {
+        var lastClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(last.OverallRating);
+        <div class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <div class="text-muted small">Evaluation Period</div>
+                <div class="fw-semibold fs-6">@last.EvaluationPeriod</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Date of Evaluation</div>
+                <div class="fw-semibold fs-6">@last.EvaluationDate.ToString("MMMM d, yyyy")</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Overall Rating</div>
+                <div class="d-flex align-items-center gap-2">
+                    <partial name="_Stars" model="last.OverallStars" />
+                    <span class="badge bg-@(lastClass)-subtle text-@(lastClass)-emphasis">@last.OverallRating</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Score</div>
+                <div class="fw-semibold fs-6">@last.OverallScore.ToString("0.##") / 4</div>
+            </div>
+        </div>
+    }
+</div>
+
+@* ===================== Evaluation history ===================== *@
+<div class="wlm-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="fw-bold text-uppercase mb-0" style="color:#020236;"><i class="bi bi-list-columns-reverse"></i> Evaluation History</h5>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-muted small mb-0" for="periodFilter">Evaluation Period</label>
+            <select class="form-select form-select-sm" id="periodFilter" style="width:auto">
+                <option value="">All periods</option>
+                @foreach (var p in Model.Periods)
+                {
+                    <option value="@p">@p</option>
+                }
+            </select>
+            <label class="text-muted small mb-0" for="yearFilter">Year</label>
+            <select class="form-select form-select-sm" id="yearFilter" style="width:auto">
+                <option value="">All years</option>
+                @foreach (var y in Model.Years)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle wlm-table mb-0">
+            <thead>
+                <tr>
+                    <th>Evaluation Period</th>
+                    <th style="width:180px">Overall Rating</th>
+                    <th style="width:120px">Score</th>
+                    <th style="width:160px">Evaluated By</th>
+                    <th class="text-end" style="width:90px">Action</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody">
+                @if (!Model.Evaluations.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">No evaluations on record yet.</td></tr>
+                }
+                else
+                {
+                    @foreach (var e in Model.Evaluations)
+                    {
+                        var results = TM_PE.Pages.Manager.PerformanceEvaluation.IndexModel.BuildResultViews(e);
+                        var rowClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(e.OverallRating);
+                        var evalStats = Model.EvaluationStats.GetValueOrDefault(e.EvaluationID) ?? new TM_PE.Model.EmployeePerformanceStats();
+
+                        <tr data-year="@e.EvaluationDate.Year" data-period="@e.EvaluationPeriod">
+                            <td>
+                                <div class="fw-semibold">@e.EvaluationPeriod</div>
+                                <div class="text-muted small">@e.EvaluationDate.ToString("MMMM d, yyyy")</div>
+                            </td>
+                            <td>
+                                <partial name="_Stars" model="e.OverallStars" />
+                                <div class="mt-1">
+                                    <span class="badge bg-@(rowClass)-subtle text-@(rowClass)-emphasis">@e.OverallRating</span>
+                                </div>
+                            </td>
+                            <td class="fw-semibold">@e.OverallScore.ToString("0.##") <span class="text-muted small fw-normal">/ 4</span></td>
+                            <td>@e.EvaluatorName</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-navy view-evaluation-btn"
+                                        data-bs-toggle="modal" data-bs-target="#evaluationModal"
+                                        data-employee="@emp.FullName"
+                                        data-role="Office Staff"
+                                        data-role-type="OfficeStaff"
+                                        data-period="@e.EvaluationPeriod"
+                                        data-evaluator="@e.EvaluatorName"
+                                        data-date="@e.EvaluationDate.ToString("MMMM d, yyyy")"
+                                        data-overall-score="@e.OverallScore.ToString("0.##")"
+                                        data-rating="@e.OverallRating"
+                                        data-status="@e.EvaluationStatus"
+                                        data-feedback="@e.GeneralFeedback"
+                                        data-results="@System.Text.Json.JsonSerializer.Serialize(results)"
+                                        data-completed="@evalStats.CompletedJobsTasks"
+                                        data-ontime="@evalStats.OnTimeRate.ToString("0")"
+                                        data-rescheduled="@evalStats.Rescheduled"
+                                        data-cancelled="@evalStats.Cancelled"
+                                        data-rejected="@evalStats.RejectedActivities"
+                                        data-overdue="@evalStats.OverdueTasks"
+                                        title="View full evaluation">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    <tr id="noYearMatch" class="d-none">
+                        <td colspan="5" class="text-center text-muted py-4">No evaluations for the selected filters.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* ===================== Feedback trail ===================== *@
+<div class="wlm-card p-4">
+    <h5 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-chat-square-text"></i> Appraisal Feedback</h5>
+    @if (!Model.FeedbackEntries.Any() && !Model.Evaluations.Any(e => !string.IsNullOrWhiteSpace(e.GeneralFeedback)))
+    {
+        <div class="text-muted">No feedback has been recorded for you yet.</div>
+    }
+    else
+    {
+        <div class="list-group list-group-flush">
+            @foreach (var f in Model.FeedbackEntries)
+            {
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">@f.FeedbackType</span>
+                        <span class="text-muted small">@f.DateCreated.ToString("MMM d, yyyy") &middot; @f.SubmittedBy</span>
+                    </div>
+                    <div class="mt-1">@f.Comment</div>
+                </div>
+            }
+            @foreach (var e in Model.Evaluations.Where(e => !string.IsNullOrWhiteSpace(e.GeneralFeedback)))
+            {
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <span class="badge bg-primary-subtle text-primary-emphasis">Evaluation &mdash; @e.EvaluationPeriod</span>
+                        <span class="text-muted small">@e.EvaluationDate.ToString("MMM d, yyyy") &middot; @e.EvaluatorName</span>
+                    </div>
+                    <div class="mt-1">@e.GeneralFeedback</div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<partial name="_EvaluationModal" />
+
+@section Scripts {
+    <script src="~/js/star-rating.js" asp-append-version="true"></script>
+    <script src="~/js/evaluation-modal.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const yearFilter = document.getElementById('yearFilter');
+            const periodFilter = document.getElementById('periodFilter');
+            const noMatch = document.getElementById('noYearMatch');
+            if (!yearFilter || !periodFilter) return;
+
+            function applyFilters() {
+                const year = yearFilter.value;
+                const period = periodFilter.value;
+                let visible = 0;
+
+                document.querySelectorAll('#historyBody tr[data-year]').forEach(row => {
+                    const show = (!year || row.dataset.year === year) && (!period || row.dataset.period === period);
+                    row.classList.toggle('d-none', !show);
+                    if (show) visible++;
+                });
+
+                if (noMatch) noMatch.classList.toggle('d-none', visible > 0);
+            }
+
+            yearFilter.addEventListener('change', applyFilters);
+            periodFilter.addEventListener('change', applyFilters);
+        })();
+    </script>
+}

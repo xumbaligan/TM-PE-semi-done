@@ -1,0 +1,90 @@
+﻿@page
+@model TM_PE.Pages.Admin.UserManagement.CreateModel
+@{
+    ViewData["Title"] = "New User Account";
+    Layout = "_Admin";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-person-badge"></i> New User Account</h2>
+    <a class="btn btn-outline-secondary" asp-page="Index"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<div class="card p-4" style="max-width:600px">
+    <form method="post" id="userForm">
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Select Employee <span class="text-danger">*</span></label>
+            <select class="form-select" asp-for="EmployeeID" id="employeeSelect">
+                <option value="">Select an employee</option>
+                @foreach (var emp in Model.EmployeeList)
+                {
+                    <option value="@emp.EmployeeId" data-role="@emp.RoleType" data-id="@emp.EmployeeId">
+                        @emp.FullName (@emp.RoleType)
+                    </option>
+                }
+            </select>
+            <span asp-validation-for="EmployeeID" class="text-danger"></span>
+            @if (!Model.EmployeeList.Any())
+            {
+                <div class="form-text text-warning">Every active employee already has a user account.</div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Username</label>
+            <input class="form-control" id="usernamePreview" disabled placeholder="Select an employee to generate a username" />
+            <div class="form-text">
+                Fixed automatically as <code>@TM_PE.Model.UsernamePolicy.CompanyName-{Role}{ID}</code>
+                (e.g. <code>Pakonek-T001</code> for Field Technician #1) — this can't be changed later.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+            <input class="form-control" type="text" asp-for="Password" maxlength="10" inputmode="numeric" pattern="\d{8,10}" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+            <div class="form-text">8-10 digits, numbers only.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+            <input class="form-control" type="text" asp-for="ConfirmPassword" maxlength="10" inputmode="numeric" pattern="\d{8,10}" />
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <button class="btn btn-primary" @(Model.EmployeeList.Any() ? "" : "disabled")>Create Account</button>
+        <a class="btn btn-secondary" asp-page="Index">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const employeeSelect = document.getElementById('employeeSelect');
+            const usernamePreview = document.getElementById('usernamePreview');
+            const roleInitials = { FieldTechnician: 'T', OfficeStaff: 'O', Manager: 'M', Admin: 'A' };
+
+            function updatePreview() {
+                const opt = employeeSelect.options[employeeSelect.selectedIndex];
+                if (!opt || !opt.value) {
+                    usernamePreview.value = '';
+                    return;
+                }
+                const role = opt.dataset.role;
+                const id = opt.dataset.id.padStart(3, '0');
+                const initial = roleInitials[role] || 'X';
+                usernamePreview.value = `Pakonek-${initial}${id}`;
+            }
+
+            employeeSelect.addEventListener('change', updatePreview);
+            updatePreview();
+
+            // Digits-only enforcement as the person types (server still re-validates).
+            document.querySelectorAll('input[pattern]').forEach(input => {
+                input.addEventListener('input', function () {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
+            });
+        })();
+    </script>
+}

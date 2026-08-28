@@ -1,0 +1,191 @@
+﻿@page
+@model TM_PE.Pages.Manager.PerformanceEvaluation.IndexModel
+@{
+    ViewData["Title"] = "Performance Evaluation";
+    Layout = "_Layout";
+}
+
+<div class="mb-3">
+    <h2 class="mb-1"><i class="bi bi-clipboard-data"></i> Performance Evaluation</h2>
+    <p class="text-muted mb-0">Employee evaluations and performance ratings.</p>
+</div>
+<hr class="page-divider" />
+
+<form method="get" class="d-flex flex-wrap gap-2 mb-3 align-items-center" id="evalFilters">
+    <div class="input-group shadow-sm flex-grow-1" style="max-width:400px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-start-0 ps-0" name="Search" id="liveSearch" value="@Model.Search"
+               placeholder="Search by employee or evaluator..." />
+    </div>
+    <input type="hidden" name="StatusFilter" id="liveStatus" value="@Model.StatusFilter" />
+    <div class="role-filter" id="statusFilter">
+        <button type="button" class="role-filter-btn @(string.IsNullOrEmpty(Model.StatusFilter) ? "active" : "")" data-value="">All Statuses</button>
+        <button type="button" class="role-filter-btn @(Model.StatusFilter == "Draft" ? "active" : "")" data-value="Draft">Draft</button>
+        <button type="button" class="role-filter-btn @(Model.StatusFilter == "Finalized" ? "active" : "")" data-value="Finalized">Finalized</button>
+    </div>
+    <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Evaluation</a>
+</form>
+
+<div class="wlm-card">
+    <div class="table-responsive">
+        <table class="table table-hover wlm-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Period</th>
+                    <th>Evaluator</th>
+                    <th>Evaluation Date</th>
+                    <th>Rating</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Evaluations.Any())
+                {
+                    <tr id="emptyRow">
+                        <td colspan="8" class="text-center text-muted py-4">No performance evaluations found</td>
+                    </tr>
+                }
+                else
+                {
+                    <tr id="emptyRow" style="display:none;">
+                        <td colspan="8" class="text-center text-muted py-4">No performance evaluations found</td>
+                    </tr>
+                    @foreach (var e in Model.Evaluations)
+                    {
+                        var results = IndexModel.BuildResultViews(e);
+                        var evalStats = Model.EvaluationStats.GetValueOrDefault(e.EvaluationID) ?? new TM_PE.Model.EmployeePerformanceStats();
+
+                        <tr data-employee="@((e.Employee?.FullName ?? "").ToLower())"
+                            data-evaluator="@e.EvaluatorName.ToLower()"
+                            data-status="@e.EvaluationStatus.ToString().ToLower()">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="wlm-avatar">
+                                        @(string.Join("", (e.Employee?.FullName ?? "-").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <strong>@(e.Employee?.FullName ?? "-")</strong>
+                                        @if (e.Employee != null)
+                                        {
+                                            <small class="text-muted">
+                                                @(e.Employee.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "Office Staff" : "Field Technician")
+                                            </small>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@e.EvaluationPeriod</td>
+                            <td>@e.EvaluatorName</td>
+                            <td>@e.EvaluationDate.ToString("MMM d, yyyy")</td>
+                            <td>
+                                <partial name="_Stars" model="e.OverallStars" />
+                                <div class="text-muted small">@e.OverallRating</div>
+                            </td>
+                            <td>@e.OverallScore.ToString("0.##") / 4</td>
+                            <td>
+                                @if (e.EvaluationStatus == TM_PE.Model.EvaluationStatus.Finalized)
+                                {
+                                    <span class="status-badge status-badge-active">Finalized</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-badge-inactive">Draft</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-outline-navy view-evaluation-btn"
+                                        data-bs-toggle="modal" data-bs-target="#evaluationModal"
+                                        data-employee="@(e.Employee?.FullName ?? "-")"
+                                        data-role="@(e.Employee?.RoleType.ToString() ?? "-")"
+                                        data-role-type="@(e.Employee?.RoleType.ToString() ?? "")"
+                                        data-period="@e.EvaluationPeriod"
+                                        data-evaluator="@e.EvaluatorName"
+                                        data-date="@e.EvaluationDate.ToString("MMMM d, yyyy")"
+                                        data-overall-score="@e.OverallScore.ToString("0.##")"
+                                        data-rating="@e.OverallRating"
+                                        data-status="@e.EvaluationStatus"
+                                        data-feedback="@e.GeneralFeedback"
+                                        data-results="@System.Text.Json.JsonSerializer.Serialize(results)"
+                                        data-completed="@evalStats.CompletedJobsTasks"
+                                        data-ontime="@evalStats.OnTimeRate.ToString("0")"
+                                        data-rescheduled="@evalStats.Rescheduled"
+                                        data-cancelled="@evalStats.Cancelled"
+                                        data-rejected="@evalStats.RejectedActivities"
+                                        data-overdue="@evalStats.OverdueTasks"
+                                        title="View full evaluation">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                @if (e.EvaluationStatus == TM_PE.Model.EvaluationStatus.Draft)
+                                {
+                                    <a class="btn btn-sm btn-outline-navy" asp-page="Edit" asp-route-id="@e.EvaluationID" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<partial name="_EvaluationModal" />
+
+@section Scripts {
+    <script src="~/js/star-rating.js" asp-append-version="true"></script>
+    <script src="~/js/evaluation-modal.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const searchInput = document.getElementById('liveSearch');
+            const statusInput = document.getElementById('liveStatus');
+            const statusButtons = document.querySelectorAll('#statusFilter .role-filter-btn');
+            const rows = document.querySelectorAll('tbody tr[data-employee]');
+
+            function filterTable() {
+                const searchVal = searchInput.value.toLowerCase().trim();
+                const statusVal = statusInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const employee = row.dataset.employee || '';
+                    const evaluator = row.dataset.evaluator || '';
+                    const status = row.dataset.status || '';
+
+                    const matchesSearch = employee.includes(searchVal) || evaluator.includes(searchVal);
+                    const matchesStatus = statusVal === '' || status === statusVal;
+
+                    if (matchesSearch && matchesStatus) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const emptyRow = document.getElementById('emptyRow');
+                if (emptyRow) {
+                    emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+                }
+            }
+
+            searchInput.addEventListener('input', filterTable);
+            statusButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    statusButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    statusInput.value = btn.dataset.value;
+                    filterTable();
+                });
+            });
+
+            // Apply immediately on load too, so a link that arrives with
+            // ?StatusFilter=... (e.g. from the Dashboard) actually filters the
+            // table instead of only pre-selecting the status pill.
+            filterTable();
+        })();
+    </script>
+}

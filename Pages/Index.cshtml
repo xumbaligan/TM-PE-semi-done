@@ -1,0 +1,222 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = Model.LayoutName;
+}
+
+<div class="mb-3">
+    <h2 class="mb-1">Dashboard</h2>
+    <p class="text-muted mb-0">Overview of performance and workload across Pakonek Solutions.</p>
+</div>
+<hr class="page-divider" />
+
+@* ===================== 1. PERIOD SELECTOR ===================== *@
+<form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <div class="role-filter">
+        <a class="role-filter-btn @(Model.PeriodType == "month" ? "active" : "")"
+           href="?PeriodType=month&amp;Month=@Model.SelectedMonth&amp;Year=@Model.SelectedYear">This Month</a>
+        <a class="role-filter-btn @(Model.PeriodType == "quarter" ? "active" : "")"
+           href="?PeriodType=quarter&amp;Quarter=@Model.SelectedQuarter&amp;Year=@Model.SelectedYear">This Quarter</a>
+    </div>
+
+    <input type="hidden" name="PeriodType" value="@Model.PeriodType" />
+
+    @if (Model.PeriodType == "quarter")
+    {
+        <select name="Quarter" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            @for (int q = 1; q <= 4; q++)
+            {
+                <option value="@q" selected="@(q == Model.SelectedQuarter)">Q@q</option>
+            }
+        </select>
+    }
+    else
+    {
+        <select name="Month" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m" selected="@(m == Model.SelectedMonth)">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+            }
+        </select>
+    }
+
+    <select name="Year" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+        @foreach (var y in Model.YearOptions)
+        {
+            <option value="@y" selected="@(y == Model.SelectedYear)">@y</option>
+        }
+    </select>
+
+    <span class="text-muted small ms-2">Viewing <strong>@Model.PeriodLabel</strong></span>
+</form>
+
+@* ===================== 2. NEEDS YOUR ATTENTION ===================== *@
+    <h5 class="fw-bold text-uppercase mb-3" style="color:#020236;">Needs Your Attention</h5>
+    <div class="row g-3 mb-4">
+        @foreach (var item in Model.AttentionItems)
+        {
+            var isAlert = item.Kind == "warning" && item.Count > 0;
+            var isClear = item.Kind == "warning" && item.Count == 0;
+            var iconClass = isAlert ? "icon-palette-danger"
+                : isClear ? "icon-palette-success"
+                : "icon-palette-primary";
+
+            <div class="col-md-6">
+                <a href="@item.Href" class="text-decoration-none text-body">
+                    <div class="stat-tile d-flex align-items-center gap-3">
+                        <div class="stat-icon @iconClass flex-shrink-0">
+                            <i class="bi @(isClear ? "bi-check2" : item.Icon)"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">@item.Label</div>
+                            @if (isClear)
+                            {
+                                <div class="text-muted small">All clear</div>
+                            }
+                        </div>
+                        <div class="fs-4 fw-bold @(isAlert ? "text-danger" : "text-body")">@item.Count</div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    @* ===================== 3. WORK STATUS THIS PERIOD ===================== *@
+    <h5 class="fw-bold text-uppercase mb-3" style="color:#020236;">Work Status This Period</h5>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <a href="/Manager/JobTickets" class="text-decoration-none text-body">
+                <div class="stat-tile d-flex align-items-center gap-3">
+                    <div class="stat-icon icon-palette-primary"><i class="bi bi-clipboard-check"></i></div>
+                    <div>
+                        <div class="stat-label">Job Tickets</div>
+                        <div class="stat-value">@Model.JobTicketsThisPeriod</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="/Manager/OfficeTask" class="text-decoration-none text-body">
+                <div class="stat-tile d-flex align-items-center gap-3">
+                    <div class="stat-icon icon-palette-primary"><i class="bi bi-kanban"></i></div>
+                    <div>
+                        <div class="stat-label">Office Tasks</div>
+                        <div class="stat-value">@Model.OfficeTasksThisPeriod</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    @* ===================== 4. WORKLOAD DISTRIBUTION ===================== *@
+    <script type="application/json" id="workloadChartData">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.WorkloadDistribution))
+    </script>
+    <div class="wlm-card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-uppercase mb-0" style="color:#020236;">Workload Distribution</h5>
+            <a href="/Manager/WorkLoadMonitoring" class="small">View full workload monitoring →</a>
+        </div>
+        <div class="chart-box" style="height:@(Math.Max(260, Model.WorkloadDistribution.Count * 28))px;">
+            <canvas id="workloadDistributionChart"></canvas>
+            <div class="chart-message d-none" id="workloadDistributionMessage"></div>
+        </div>
+        <div class="d-flex gap-3 small text-muted mt-3">
+            <span><span class="badge rounded-circle p-1 bg-danger">&nbsp;</span> Heavy</span>
+            <span><span class="badge rounded-circle p-1 bg-secondary">&nbsp;</span> Normal</span>
+            <span><span class="badge rounded-circle p-1 bg-warning">&nbsp;</span> Idle</span>
+        </div>
+    </div>
+
+@* ===================== 5. PERFORMANCE SNAPSHOT ===================== *@
+<h5 class="fw-bold text-uppercase mb-3" style="color:#020236;">Performance Snapshot</h5>
+<div class="row g-3 mb-4">
+    <div class="col-md-12">
+        <div class="stat-tile">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="stat-icon icon-palette-primary"><i class="bi bi-speedometer2"></i></div>
+                <div class="stat-label">Average Score — @Model.PeriodLabel</div>
+            </div>
+            <div class="d-flex align-items-baseline gap-2">
+                <div class="stat-value">@Model.AverageScoreThisPeriod.ToString("0.0")</div>
+                <span class="text-muted">/ 4</span>
+                <span class="text-muted ms-3">
+                    <strong>@Model.EvaluatedThisPeriod</strong> of <strong>@Model.EligibleThisPeriod</strong> evaluated
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-tile">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="stat-icon icon-palette-success"><i class="bi bi-trophy"></i></div>
+                <div class="stat-label">Highest Scoring Employee</div>
+            </div>
+            @if (Model.HighestPerformer == null)
+            {
+                <div class="text-muted small">No evaluations recorded for this period yet.</div>
+            }
+            else
+            {
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">@Model.HighestPerformer.Name</span>
+                    <span>
+                        <span class="fw-bold">@Model.HighestPerformer.Score.ToString("0.0")</span>
+                        <span class="badge rounded-pill bg-@EvaluationScoring.RatingBadgeClass(Model.HighestPerformer.Rating)-subtle text-@EvaluationScoring.RatingBadgeClass(Model.HighestPerformer.Rating) ms-1">
+                            @Model.HighestPerformer.Rating
+                        </span>
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-tile">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="stat-icon icon-palette-danger"><i class="bi bi-exclamation-triangle"></i></div>
+                <div class="stat-label">Lowest Scoring Employee</div>
+            </div>
+            @if (Model.LowestPerformer == null)
+            {
+                <div class="text-muted small">Not enough evaluated employees this period yet.</div>
+            }
+            else
+            {
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">@Model.LowestPerformer.Name</span>
+                    <span>
+                        <span class="fw-bold">@Model.LowestPerformer.Score.ToString("0.0")</span>
+                        <span class="badge rounded-pill bg-@EvaluationScoring.RatingBadgeClass(Model.LowestPerformer.Rating)-subtle text-@EvaluationScoring.RatingBadgeClass(Model.LowestPerformer.Rating) ms-1">
+                            @Model.LowestPerformer.Rating
+                        </span>
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* ===================== 6. SCORE TREND ACROSS PERIODS ===================== *@
+<script type="application/json" id="scoreTrendData">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+        points = Model.ScoreTrend,
+        hasData = Model.HasFinalizedEvaluations
+    }))
+</script>
+<div class="wlm-card p-4 mb-4">
+    <h5 class="fw-bold text-uppercase mb-3" style="color:#020236;">Score Trend Across Periods</h5>
+    <div class="chart-box">
+        <canvas id="scoreTrendChart"></canvas>
+        <div class="chart-message d-none" id="scoreTrendMessage"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
+    <script src="~/js/dashboard-charts.js" asp-append-version="true"></script>
+}

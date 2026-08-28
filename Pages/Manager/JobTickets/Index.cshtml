@@ -1,0 +1,330 @@
+﻿@page
+@model TM_PE.Pages.Manager.JobTickets.IndexModel
+@{
+    ViewData["Title"] = "Job Tickets";
+    Layout = "_Layout";
+}
+<div class="mb-3">
+    <h2 class="mb-1"><i class="bi bi-tools"></i> Job Ticket Management</h2>
+    <p class="text-muted mb-0">Field service tickets and technician assignments.</p>
+</div>
+<hr class="page-divider" />
+
+<form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="input-group shadow-sm flex-grow-1" style="max-width:480px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
+               value="@Model.Search" placeholder="Search by leader, job type, ticket #, or client..." />
+    </div>
+    <select class="form-select" name="status" id="liveStatus" style="max-width:220px;">
+        <option value="">All Statuses</option>
+        <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+        <option value="In Progress" selected="@(Model.StatusFilter == "In Progress")">In Progress</option>
+        <option value="Reschedule Request" selected="@(Model.StatusFilter == "Reschedule Request")">Reschedule Request</option>
+        <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
+        <option value="Completed Late" selected="@(Model.StatusFilter == "Completed Late")">Completed Late</option>
+        <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
+        <option value="Rescheduled" selected="@(Model.StatusFilter == "Rescheduled")">Rescheduled</option>
+        <option value="Overdue" selected="@(Model.StatusFilter == "Overdue")">Overdue</option>
+    </select>
+    <a asp-page="Create" class="btn btn-navy ms-auto">
+        <i class="bi bi-plus-lg"></i> Create New
+    </a>
+</form>
+
+<div class="table-responsive wlm-card">
+    <table class="table align-middle table-hover wlm-table mb-0">
+        <thead>
+            <tr>
+                <th>Task Number</th>
+                <th>Job Type</th>
+                <th>Leader</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.JobTicket.Any())
+            {
+                <tr id="emptyRow">
+                    <td colspan="7" class="text-center text-muted py-4">No job tickets yet.</td>
+                </tr>
+            }
+            else
+            {
+                <tr id="emptyRow" style="display:none;">
+                    <td colspan="7" class="text-center text-muted py-4">No job tickets found</td>
+                </tr>
+            }
+            @foreach (var item in Model.JobTicket)
+            {
+                var leader = item.Assignments?.FirstOrDefault(a => a.IsLeader)?.Employee;
+                <tr data-leader="@(leader?.FullName.ToLower() ?? "")"
+                    data-jobtype="@item.JobType.ToLower()"
+                    data-ticketid="@item.TicketNumber.ToLower()"
+                    data-status="@item.DisplayStatus.ToLower()">
+                    <td class="text-muted">@item.TicketNumber</td>
+                    <td class="fw-semibold">@item.JobType</td>
+                    <td>
+                        @if (leader != null)
+                        {
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="wlm-avatar">
+                                    @(string.Join("", leader.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
+                                </div>
+                                <span>@leader.FullName</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                    <td>
+                        @{
+                            var badgeClass = item.DisplayStatus switch
+                            {
+                                "Completed" => "bg-success-subtle text-success",
+                                "Completed Late" => "bg-warning-subtle text-warning-emphasis",
+                                "In Progress" => "bg-info-subtle text-info",
+                                "Cancelled" => "bg-danger-subtle text-danger",
+                                "Rescheduled" => "bg-warning-subtle text-warning-emphasis",
+                                "Overdue" => "bg-danger-subtle text-danger-emphasis",
+                                _ => "bg-secondary-subtle text-secondary"
+                            };
+                        }
+                        <span class="status-badge @badgeClass">
+                            @item.DisplayStatus
+                        </span>
+                    </td>
+                    <td class="text-muted">@item.ServiceDate.ToString("M/d/yyyy")</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-navy" title="View"
+                                data-bs-toggle="modal" data-bs-target="#viewModal-@item.JobTicketID">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        @if (!item.IsLockedFromEditing)
+                        {
+                            <a asp-page="./Edit" asp-route-id="@item.JobTicketID"
+                               class="btn btn-sm btn-outline-navy" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* ===================== VIEW MODALS ===================== *@
+@foreach (var item in Model.JobTicket)
+{
+    var modalBadgeClass = item.DisplayStatus switch
+    {
+        "Approved" => "bg-primary-subtle text-primary",
+        "Completed" => "bg-success-subtle text-success",
+        "Completed Late" => "bg-warning-subtle text-warning-emphasis",
+        "In Progress" => "bg-info-subtle text-info",
+        "Cancelled" => "bg-danger-subtle text-danger",
+        "Rescheduled" => "bg-warning-subtle text-warning-emphasis",
+        "Overdue" => "bg-danger-subtle text-danger-emphasis",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    <div class="modal fade" id="viewModal-@item.JobTicketID" tabindex="-1"
+         aria-labelledby="viewModalLabel-@item.JobTicketID" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="viewModalLabel-@item.JobTicketID">
+                            @item.JobType
+                        </h5>
+                        <div class="text-muted small">Ticket #@item.TicketNumber</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Status</div>
+                            <span class="status-badge @modalBadgeClass">
+                                @item.DisplayStatus
+                            </span>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Date Created</div>
+                            <div>@item.DateCreated.ToString("M/d/yyyy")</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">@item.ServiceDateLabel</div>
+                            <div>@item.ServiceDate.ToString("M/d/yyyy")</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Due Date</div>
+                            <div>@(item.DateOfCompletion?.ToString("M/d/yyyy") ?? "—")</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Date Completed</div>
+                            <div>@(item.DateCompleted?.ToString("M/d/yyyy") ?? "—")</div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-muted small">Assigned By</div>
+                            <div>@(item.AssignedByEmployee?.FullName ?? "—")</div>
+                        </div>
+                    </div>
+
+                    @if (item.JobType != TM_PE.Model.JobTypes.Maintenance)
+                    {
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-4">
+                                <div class="text-muted small">Client</div>
+                                <div>@item.ClientFullName</div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="text-muted small">Primary Number</div>
+                                <div>@item.PrimaryNumber</div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="text-muted small">Secondary Number</div>
+                                <div>@(string.IsNullOrWhiteSpace(item.SecondaryNumber) ? "—" : item.SecondaryNumber)</div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row g-3 mb-4">
+                        @if (item.JobType == "Installation")
+                        {
+                            <div class="col-sm-4">
+                                <div class="text-muted small">Fiber Plan</div>
+                                <div>₱@item.FiberPlan</div>
+                            </div>
+                            <div class="col-sm-8">
+                                <div class="text-muted small">Location</div>
+                                <div>@item.LocationAddress</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-sm-4">
+                                <div class="text-muted small">Description</div>
+                                <div>@item.Description</div>
+                            </div>
+                            <div class="col-sm-8">
+                                <div class="text-muted small">Location</div>
+                                <div>@item.LocationAddress</div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="text-muted small mb-2">Assigned Field Technicians</div>
+                        @if (item.Assignments != null && item.Assignments.Any())
+                        {
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var a in item.Assignments.Where(a => a.Employee != null))
+                                {
+                                    <span class="badge rounded-pill @(a.IsLeader ? "bg-primary" : "bg-light text-dark border") px-3 py-2">
+                                        @a.Employee!.FullName @(a.IsLeader ? "(Leader)" : "")
+                                    </span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No assignees</span>
+                        }
+                    </div>
+
+                    @if (item.Status == "Reschedule Request" || item.Status == "Rescheduled")
+                    {
+                        @if (!string.IsNullOrWhiteSpace(item.Remarks))
+                        {
+                            <div class="mt-3">
+                                <div class="text-muted small mb-1">Remarks (from Field Technician Leader)</div>
+                                <div class="border rounded p-2 bg-warning-subtle border-warning fw-semibold">@item.Remarks</div>
+                            </div>
+                        }
+
+                        @if (item.RescheduleHistory != null && item.RescheduleHistory.Any())
+                        {
+                            <div class="mt-3">
+                                <div class="text-muted small mb-2"><i class="bi bi-calendar-event"></i> Reschedule History</div>
+                                @foreach (var h in item.RescheduleHistory)
+                                {
+                                    <div class="border rounded p-2 mb-2">
+                                        <div class="fw-semibold small">
+                                            @h.OldServiceDate.ToString("M/d/yyyy") <i class="bi bi-arrow-right mx-1"></i> @h.NewServiceDate.ToString("M/d/yyyy")
+                                            <span class="text-muted small ms-2">(@h.DateChanged.ToString("M/d/yyyy h:mm tt"))</span>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(h.Reason))
+                                        {
+                                            <div class="text-muted small mt-1">Reason</div>
+                                            <div class="small">@h.Reason</div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+
+                </div>
+                <div class="modal-footer">
+                    <a asp-page="./Details" asp-route-id="@item.JobTicketID" class="btn btn-outline-navy btn-sm">
+                        Open Full Details
+                    </a>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('liveSearch');
+        const statusSelect = document.getElementById('liveStatus');
+        const rows = document.querySelectorAll('tbody tr[data-ticketid]');
+
+        function filterTable() {
+            const searchVal = searchInput.value.toLowerCase().trim();
+            const statusVal = statusSelect.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const leader = row.dataset.leader || '';
+                const jobType = row.dataset.jobtype || '';
+                const ticketId = row.dataset.ticketid || '';
+                const client = row.dataset.client || '';
+                const status = row.dataset.status || '';
+
+                const matchesSearch = leader.includes(searchVal) || jobType.includes(searchVal)
+                    || ticketId.includes(searchVal) || client.includes(searchVal);
+                const matchesStatus = statusVal === '' || status === statusVal;
+
+                if (matchesSearch && matchesStatus) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('emptyRow');
+            if (emptyRow) {
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+        }
+
+        searchInput.addEventListener('input', filterTable);
+        statusSelect.addEventListener('change', filterTable);
+
+        // Apply immediately on load too, so a link that arrives with
+        // ?status=... (e.g. from the Dashboard) actually filters the table
+        // instead of only pre-selecting the dropdown.
+        filterTable();
+    </script>
+}

@@ -1,0 +1,177 @@
+@page
+@model TM_PE.Pages.Admin.Departments.IndexModel
+@{
+    ViewData["Title"] = "Departments";
+    Layout = "_Admin";
+
+    string RoleLabel(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.OfficeStaff => "Office Staff",
+        TM_PE.Model.RoleType.FieldTechnician => "Field Technician",
+        _ => rt.ToString()
+    };
+    string RoleBadgeClass(TM_PE.Model.RoleType rt) => rt == TM_PE.Model.RoleType.OfficeStaff
+        ? "role-badge-office-staff" : "role-badge-field-technician";
+}
+
+<div class="mb-3">
+    <h2 class="mb-1">Departments</h2>
+    <p class="text-muted mb-0">Organizational units across Pakonek Solutions.</p>
+</div>
+<hr class="page-divider" />
+
+<form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="input-group shadow-sm flex-grow-1" style="max-width:480px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
+               value="@Model.Search" placeholder="Search departments..." />
+    </div>
+    <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Department</a>
+</form>
+
+<div id="emptyState" class="card @(Model.Departments.Any() ? "d-none" : "")">
+    <div class="card-body text-center text-muted py-5">
+        <i class="bi bi-inbox fs-3 d-block mb-2"></i>No departments found
+    </div>
+</div>
+
+<div id="deptGrid" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+    @foreach (var d in Model.Departments)
+    {
+        <div class="col" data-name="@d.DepartmentName.ToLower()"
+             data-description="@(d.Description?.ToLower() ?? "")">
+            <div class="dept-card p-3 d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="dept-icon"><i class="bi bi-building"></i></div>
+                    <span class="status-badge @(d.IsActive ? "status-badge-active" : "status-badge-inactive")">
+                        @(d.IsActive ? "Active" : "Inactive")
+                    </span>
+                </div>
+                <h5 class="fw-bold mb-1">@d.DepartmentName</h5>
+                <p class="text-muted small mb-2">@d.Description</p>
+                <span class="badge rounded-pill @RoleBadgeClass(d.RoleType) align-self-start mb-2">
+                    @RoleLabel(d.RoleType)
+                </span>
+                <hr class="mt-auto" />
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <span class="text-muted small">
+                        <i class="bi bi-people me-1"></i>@d.Employees.Count Employees
+                    </span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-navy"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deptEmployeesModal"
+                                data-dept-id="@d.DepartmentId"
+                                data-dept-name="@d.DepartmentName"
+                                data-employees="@System.Text.Json.JsonSerializer.Serialize(d.Employees.Select(e => new { e.FullName, e.Email, Role = RoleLabel(e.RoleType), e.IsActive }))"
+                                onclick="openDeptModal(this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <a class="btn btn-sm btn-outline-navy" asp-page="Edit" asp-route-id="@d.DepartmentId">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Department Employees Modal -->
+<div class="modal fade" id="deptEmployeesModal" tabindex="-1" aria-labelledby="deptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:16px; border:none; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-semibold mb-0" id="deptModalLabel">Department Employees</h5>
+                    <small id="deptModalSub" class="text-muted"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div id="deptEmployeeList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('liveSearch');
+        const cols = document.querySelectorAll('#deptGrid .col[data-name]');
+
+        function filterGrid() {
+            const searchVal = searchInput.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            cols.forEach(col => {
+                const name = col.dataset.name || '';
+                const description = col.dataset.description || '';
+
+                const matches = name.includes(searchVal) || description.includes(searchVal);
+
+                col.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
+            });
+
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState) {
+                emptyState.classList.toggle('d-none', visibleCount !== 0);
+            }
+        }
+        searchInput.addEventListener('input', filterGrid);
+
+        function openDeptModal(btn) {
+            const name = btn.dataset.deptName;
+            const employees = JSON.parse(btn.dataset.employees);
+
+            document.getElementById('deptModalLabel').textContent = name;
+            document.getElementById('deptModalSub').textContent =
+                employees.length + (employees.length === 1 ? ' employee' : ' employees');
+
+            const list = document.getElementById('deptEmployeeList');
+
+            if (employees.length === 0) {
+                list.innerHTML = '<p class="text-center text-muted py-4">No employees in this department.</p>';
+                return;
+            }
+
+            list.innerHTML = `
+                <div class="table-responsive">
+                <table class="table table-hover table-spaced mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${employees.map(e => {
+                            const initials = e.FullName.split(' ').slice(0, 2).map(n => n[0]).join('');
+                            const statusBadge = e.IsActive
+                                ? '<span class="status-badge status-badge-active">Active</span>'
+                                : '<span class="status-badge status-badge-inactive">Inactive</span>';
+                            const roleClass = e.Role === 'Office Staff' ? 'role-badge-office-staff' : 'role-badge-field-technician';
+                            return `<tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-circle">
+                                            ${initials}
+                                        </div>
+                                        <strong>${e.FullName}</strong>
+                                    </div>
+                                </td>
+                                <td class="text-muted">${e.Email}</td>
+                                <td><span class="badge rounded-pill ${roleClass}">${e.Role}</span></td>
+                                <td>${statusBadge}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                </div>`;
+        }
+    </script>
+}

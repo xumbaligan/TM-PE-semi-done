@@ -1,0 +1,100 @@
+﻿@page "{id:int}"
+@model TM_PE.Pages.Admin.Employees.EditModel
+@{
+    ViewData["Title"] = "Edit Employee";
+    Layout = "_Admin";
+}
+
+<h2 class="mb-4">Edit Employee</h2>
+<div class="card p-4" style="max-width:700px">
+    <form method="post">
+        <input type="hidden" asp-for="Employee.EmployeeId" />
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                <input class="form-control" asp-for="Employee.FullName" />
+                <span asp-validation-for="Employee.FullName" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input class="form-control" asp-for="Employee.Email" />
+                <span asp-validation-for="Employee.Email" class="text-danger"></span>
+            </div>
+
+
+            @* <div class="col-md-6"><label class="form-label">Position</label>
+            <input class="form-control" asp-for="Employee.Position" /></div> *@
+            <div class="col-md-6">
+                <label class="form-label">Role Type</label>
+                <select class="form-select" asp-for="Employee.RoleType" id="Employee_RoleType">
+                    <option value="OfficeStaff">Office Staff</option>
+                    <option value="FieldTechnician">Field Technician</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Department</label>
+                <select class="form-select" asp-for="Employee.DepartmentId" id="Employee_DepartmentId">
+                    <option value="">-- Select department --</option>
+                    @foreach (var d in Model.AllDepartments)
+                    {
+                        <option value="@d.DepartmentId" data-roletype="@d.RoleType">@d.DepartmentName</option>
+                    }
+                </select>
+                <small class="text-muted">Only departments matching the selected role type are shown.</small>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" asp-for="Employee.IsActive" />
+                    <label class="form-check-label">Active</label>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button class="btn btn-primary">Update</button>
+            <a class="btn btn-secondary" asp-page="Index">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Letters only (e.g. Full Name)
+    document.getElementById('Employee_FullName').addEventListener('keypress', function (e)
+    {
+        const char = String.fromCharCode(e.which);
+        const lettersOnly = /^[a-zA-Z\s]$/;
+        if (!lettersOnly.test(char)) {
+            e.preventDefault(); // blocks the keypress
+            showWarning(this, 'Letters only! No numbers or symbols allowed.');
+        }
+    });
+
+    // Only show departments whose Role Type matches the selected Role Type
+    (function () {
+        const roleSelect = document.getElementById('Employee_RoleType');
+        const deptSelect = document.getElementById('Employee_DepartmentId');
+        const deptOptions = Array.from(deptSelect.querySelectorAll('option[data-roletype]'));
+
+        function filterDepartments() {
+            const selectedRole = roleSelect.value;
+            let selectedStillValid = false;
+
+            deptOptions.forEach(function (opt) {
+                const matches = opt.dataset.roletype === selectedRole;
+                opt.hidden = !matches;
+                opt.disabled = !matches;
+                if (matches && opt.value === deptSelect.value) selectedStillValid = true;
+            });
+
+            if (!selectedStillValid) {
+                const firstMatch = deptOptions.find(o => o.dataset.roletype === selectedRole);
+                deptSelect.value = firstMatch ? firstMatch.value : '';
+            }
+        }
+
+        roleSelect.addEventListener('change', filterDepartments);
+        filterDepartments();
+    })();
+</script>

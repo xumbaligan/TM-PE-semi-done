@@ -1,0 +1,281 @@
+﻿@page "{id:int}"
+@model TM_PE.Pages.OfficeStaff.DetailsModel
+@{
+    ViewData["Title"] = "View Task";
+    Layout = "_OfficeStaffLayout";
+    var badgeClass = Model.OfficeTask.DisplayStatus switch
+    {
+        "Completed" => "bg-success-subtle text-success",
+        "Completed Late" => "bg-warning-subtle text-warning-emphasis",
+        "In Progress" => "bg-info-subtle text-info",
+        "Overdue" => "bg-danger-subtle text-danger",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+    var assignedCount = Model.OfficeTask.Assignments?.Count ?? 0;
+    var soleAssignee = assignedCount <= 1;
+}
+
+
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="wlm-card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        <i class="bi bi-clipboard-data me-1"></i>@Model.OfficeTask.TaskName
+                        <span class="badge bg-light text-dark border ms-1">TSK-@Model.OfficeTask.OfficeTaskID.ToString("D5")</span>
+                    </h5>
+                    <div class="text-muted small">Viewing as <strong>@Model.CurrentEmployee.FullName</strong></div>
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="row g-3 mb-2">
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Status</div>
+                    <span class="status-badge @badgeClass">@Model.OfficeTask.DisplayStatus</span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Progress</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height:8px; min-width:80px;">
+                            <div class="progress-bar progress-bar-brand" role="progressbar"
+                                 style="width:@(Model.OfficeTask.Progress)%;"
+                                 aria-valuenow="@Model.OfficeTask.Progress" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <span class="text-muted small">@Model.OfficeTask.Progress%</span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Date Assigned</div>
+                    <div>@Model.OfficeTask.DateCreated.ToString("M/d/yyyy")</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Due Date</div>
+                    <div>@Model.OfficeTask.DueDate.ToString("M/d/yyyy")</div>
+                </div>
+                @if (Model.OfficeTask.DateCompleted.HasValue)
+                {
+                    <div class="col-6 col-md-3">
+                        <div class="text-muted small">Date Completed</div>
+                        <div>@Model.OfficeTask.DateCompleted.Value.ToString("M/d/yyyy")</div>
+                    </div>
+                }
+                <div class="col-6 col-md-3">
+                    <div class="text-muted small">Assigned By</div>
+                    <div>@(Model.OfficeTask.AssignedByEmployee?.FullName ?? "—")</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.OfficeTask.Description))
+            {
+                <div class="mt-2">
+                    <div class="text-muted small">Description</div>
+                    <div>@Model.OfficeTask.Description</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ===================== ASSIGNED EMPLOYEES ===================== *@
+    <div class="wlm-card mb-3">
+        <div class="card-body">
+            <h6 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-people me-1"></i> Assigned Employees</h6>
+
+            <div class="d-flex flex-wrap gap-2">
+                @if (Model.OfficeTask.Assignments != null && Model.OfficeTask.Assignments.Any())
+                {
+                    @foreach (var a in Model.OfficeTask.Assignments.Where(a => a.Employee != null))
+                    {
+                        var isYou = a.EmployeeID == Model.CurrentEmployee.EmployeeId;
+                        <span class="badge rounded-pill @(isYou ? "badge-navy" : "bg-light text-dark border") px-3 py-2">
+                            @a.Employee!.FullName @(isYou ? "(You)" : "")
+                        </span>
+                    }
+                }
+                else
+                {
+                    <span class="text-muted small">No employees assigned.</span>
+                }
+            </div>
+
+            @if (!soleAssignee)
+            {
+                <div class="text-muted small mt-2">
+                    Multiple employees are on this task. Activities aren't pre-assigned &mdash; anyone here can
+                    upload for an open activity, but once someone uploads a file for it, it's theirs to finish.
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ===================== ACTIVITIES & SUBMISSIONS ===================== *@
+    <div class="wlm-card mb-4">
+        <div class="card-body">
+            <h6 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-arrow-return-right me-1"></i> Activities &amp; Submissions</h6>
+            <div class="text-muted small mb-3">
+                @if (soleAssignee)
+                {
+                    <text>You can upload a file for any activity here until it's approved.</text>
+                }
+                else
+                {
+                    <text>You can see everyone's progress here. You can upload for any activity that's still open or already claimed by you &mdash; once a teammate uploads first, it's locked to them.</text>
+                }
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle wlm-table">
+                    <thead>
+                        <tr>
+                            <th>Activity</th>
+                            <th style="width:130px;">Status</th>
+                            <th style="width:200px;">Submission</th>
+                            <th style="width:110px;">History</th>
+                            <th style="width:220px;">Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.OfficeTask.Activities != null && Model.OfficeTask.Activities.Any())
+                        {
+                            @foreach (var activity in Model.OfficeTask.Activities)
+                            {
+                                var statusBadgeClass = activity.Status switch
+                                {
+                                    "Approved" => "bg-success-subtle text-success",
+                                    "Rejected" => "bg-danger-subtle text-danger",
+                                    "Submitted" => "bg-info-subtle text-info",
+                                    _ => "bg-secondary-subtle text-secondary"
+                                };
+                                Model.LatestSubmissions.TryGetValue(activity.ActivityID, out var submission);
+                                var history = Model.SubmissionHistory.GetValueOrDefault(activity.ActivityID) ?? new List<TM_PE.Model.ActivitySubmission>();
+
+                                var isMine = activity.AssignedEmployeeID == Model.CurrentEmployee.EmployeeId;
+                                var isClaimedByOther = !soleAssignee && activity.AssignedEmployeeID.HasValue && !isMine;
+                                var canUpload = activity.Status != "Approved" && (soleAssignee || activity.AssignedEmployeeID == null || isMine);
+                                // Only the not-yet-reviewed file can be pulled back - once a manager
+                                // has approved or rejected it, that decision (and any feedback) is
+                                // permanent history and must not be removable.
+                                var canRemove = canUpload && submission != null && submission.Status == "Pending Review";
+
+                                <tr>
+                                    <td class="fw-semibold">@activity.ActivityName</td>
+                                    <td>
+                                        <span class="status-badge @statusBadgeClass">@activity.Status</span>
+                                        @if (activity.Status == "Rejected" && activity.RejectionCount > 0)
+                                        {
+                                            <div class="text-muted small">
+                                                Rejected @(activity.RejectionCount == 1 ? "1 attempt" : $"{activity.RejectionCount} attempts")
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (submission != null)
+                                            {
+                                                <div class="border rounded-2 px-2 py-1 d-flex align-items-center gap-1 bg-light">
+                                                    <a asp-page-handler="Download" asp-route-submissionId="@submission.SubmissionID"
+                                                       class="small text-truncate" style="max-width:100px;" title="@submission.FileName">
+                                                        @submission.FileName
+                                                    </a>
+                                                    @if (canRemove)
+                                                    {
+                                                        <form method="post" asp-page-handler="RemoveSubmission" class="m-0 p-0 lh-1"
+                                                              onsubmit="return confirm('Remove this uploaded file? You will need to upload again.');">
+                                                            <input type="hidden" name="submissionId" value="@submission.SubmissionID" />
+                                                            <input type="hidden" name="officeTaskId" value="@Model.OfficeTask.OfficeTaskID" />
+                                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 border-0" title="Remove file">
+                                                                <i class="bi bi-x-lg"></i>
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">No file</span>
+                                            }
+
+                                            @if (canUpload)
+                                            {
+                                                <form method="post" asp-page-handler="UploadSubmission" enctype="multipart/form-data" class="m-0 p-0">
+                                                    <input type="hidden" name="activityId" value="@activity.ActivityID" />
+                                                    <input type="hidden" name="officeTaskId" value="@Model.OfficeTask.OfficeTaskID" />
+                                                    <label class="btn btn-sm btn-outline-navy py-0 px-1 mb-0" title="Upload your submission">
+                                                        <i class="bi bi-upload"></i>
+                                                        <input type="file" name="submissionFile" class="d-none" onchange="this.form.submit()" />
+                                                    </label>
+                                                </form>
+                                            }
+                                            else if (isClaimedByOther)
+                                            {
+                                                <span class="text-muted small" title="Already claimed by another assignee">
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        @if (history.Any())
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-navy" data-bs-toggle="modal" data-bs-target="#historyModal-@activity.ActivityID">
+                                                <i class="bi bi-clock-history"></i> History
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">—</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-muted small">
+                                        @(string.IsNullOrWhiteSpace(activity.FeedBack) ? "—" : activity.FeedBack)
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-muted text-center py-3">No activities yet.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-muted small mt-2">
+                Status changes to Submitted automatically when a file is uploaded. Only a manager can mark an
+                activity Approved or Rejected, and once approved it can no longer be changed.
+            </div>
+        </div>
+    </div>
+
+    @* ===================== HISTORY OF SUBMISSION MODALS ===================== *@
+    @* One per activity, placed outside the table to keep markup valid. *@
+    @if (Model.OfficeTask.Activities != null)
+    {
+        @foreach (var activity in Model.OfficeTask.Activities)
+        {
+            var history = Model.SubmissionHistory.GetValueOrDefault(activity.ActivityID) ?? new List<TM_PE.Model.ActivitySubmission>();
+            if (history.Any())
+            {
+                <partial name="_ActivitySubmissionHistoryModal" model="new TM_PE.Pages.Shared.ActivitySubmissionHistoryViewModel { Activity = activity, Attempts = history }" />
+            }
+        }
+    }
+
+    <div class="d-flex justify-content-end mb-4">
+        <a asp-page="./Index" class="btn btn-outline-navy">Back to My Tasks</a>
+    </div>

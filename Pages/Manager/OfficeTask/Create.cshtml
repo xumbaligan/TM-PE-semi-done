@@ -1,0 +1,338 @@
+﻿@page
+@model TM_PE.Pages.Manager.OfficeTask.CreateModel
+
+@{
+    ViewData["Title"] = "Create Task";
+    Layout = "_Layout";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <h3 class="fw-bold">Task Assignment Form</h3>
+        <p class="text-muted">
+            Fill out the task details, assign employees, and break the task into activities.
+        </p>
+
+        <form method="post" id="taskForm">
+
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <!-- Task Number + Date Created -->
+            <div class="row mb-3">
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        # Task Number
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.NextTaskNumber"
+                           disabled />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Date Created
+                    </label>
+
+                    <input type="date"
+                           class="form-control"
+                           value="@Model.OfficeTask.DateCreated.ToString("yyyy-MM-dd")"
+                           disabled />
+
+                    <input type="hidden" asp-for="OfficeTask.DateCreated" />
+
+                    <span asp-validation-for="OfficeTask.DateCreated"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Assigned By
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.CurrentManagerName"
+                           disabled />
+                </div>
+
+            </div>
+
+            <!-- Task Name -->
+            <div class="mb-3">
+
+                <label class="form-label fw-semibold">
+                    Task Name <span class="text-danger">*</span>
+                </label>
+
+                <input asp-for="OfficeTask.TaskName"
+                       class="form-control"
+                       placeholder="e.g. Quarterly inventory audit" />
+
+                <span asp-validation-for="OfficeTask.TaskName"
+                      class="text-danger"></span>
+
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+
+                <label class="form-label fw-semibold">
+                    Description
+                </label>
+
+                <textarea asp-for="OfficeTask.Description"
+                          rows="4"
+                          class="form-control"
+                          placeholder="Instructions, objectives, or additional details..."></textarea>
+
+                <span asp-validation-for="OfficeTask.Description"
+                      class="text-danger"></span>
+
+            </div>
+
+            <!-- Due Date -->
+            <div class="mb-4">
+
+                <label class="form-label fw-semibold">
+                    Due Date <span class="text-danger">*</span>
+                </label>
+
+                <input asp-for="OfficeTask.DueDate"
+                       type="date"
+                       min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                       class="form-control w-50" />
+
+                <span asp-validation-for="OfficeTask.DueDate"
+                      class="text-danger"></span>
+
+            </div>
+
+            <!-- Assign Employees -->
+            <div class="card mb-3">
+                <div class="card-body">
+
+                    <h5 class="fw-semibold mb-3">
+                        👥 Assign Employees <span class="text-danger">*</span>
+                    </h5>
+
+                    <div class="row">
+
+                        <div class="col-md-10">
+
+                            <select id="employeeSelect" class="form-select">
+                                <option value="">Select an employee</option>
+                                @foreach (var emp in Model.EmployeeList)
+                                {
+                                    <option value="@emp.EmployeeId">@emp.FullName</option>
+                                }
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-2">
+
+                            <button type="button"
+                                    id="addEmployeeBtn"
+                                    class="btn btn-primary w-100">
+                                + Add
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Selected Employees -->
+                    <div id="selectedEmployees" class="mt-3">
+                        <span class="text-muted small" id="noEmployeesMsg">No employees added yet.</span>
+                    </div>
+
+                    <div class="text-muted small mt-2" id="multiAssigneeHint" style="display:none;">
+                        More than one employee is assigned to this task. Activities are no longer assigned to a
+                        specific person &mdash; any assigned employee can pick up an activity.
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Activities -->
+            <div class="card mb-4">
+                <div class="card-body">
+
+                    <h5 class="fw-semibold mb-3">
+                        📋 Task Activities <span class="text-danger">*</span>
+                    </h5>
+
+                    <div class="row g-2">
+
+                        <div class="col-md-10">
+
+                            <input type="text"
+                                   id="activityInput"
+                                   class="form-control"
+                                   placeholder="Enter an activity name" />
+
+                        </div>
+
+                        <div class="col-md-2">
+
+                            <button type="button"
+                                    id="addActivityBtn"
+                                    class="btn btn-primary w-100">
+                                + Add
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Activities List -->
+                    <ul id="activitiesList" class="list-group mt-3">
+                        <li class="list-group-item text-muted small" id="noActivitiesMsg">No activities added yet.</li>
+                    </ul>
+
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="text-end">
+
+                <a asp-page="Index"
+                   class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Save Task
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        (function () {
+            const employeeSelect = document.getElementById('employeeSelect');
+            const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+            const selectedEmployeesDiv = document.getElementById('selectedEmployees');
+            const noEmployeesMsg = document.getElementById('noEmployeesMsg');
+            const multiAssigneeHint = document.getElementById('multiAssigneeHint');
+
+            const activityInput = document.getElementById('activityInput');
+            const addActivityBtn = document.getElementById('addActivityBtn');
+            const activitiesList = document.getElementById('activitiesList');
+            const noActivitiesMsg = document.getElementById('noActivitiesMsg');
+
+            // id -> name, preserves insertion order
+            const addedEmployees = new Map();
+
+            function refreshMultiAssigneeHint() {
+                multiAssigneeHint.style.display = addedEmployees.size > 1 ? '' : 'none';
+            }
+
+            addEmployeeBtn.addEventListener('click', function () {
+                const id = employeeSelect.value;
+                const name = employeeSelect.options[employeeSelect.selectedIndex].text;
+
+                if (!id) return;
+                if (addedEmployees.has(id)) return;
+
+                addedEmployees.set(id, name);
+                noEmployeesMsg.style.display = 'none';
+
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-primary me-2 p-2';
+                badge.dataset.employeeId = id;
+                badge.innerHTML = `${name} <span class="ms-2" style="cursor:pointer;" onclick="removeEmployee('${id}')">&times;</span>`;
+
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'SelectedEmployeeIds';
+                hiddenInput.value = id;
+                hiddenInput.dataset.employeeId = id;
+
+                selectedEmployeesDiv.appendChild(badge);
+                selectedEmployeesDiv.appendChild(hiddenInput);
+
+                // Once assigned, an employee can't be picked again from the
+                // dropdown until they're removed from the selected list below.
+                employeeSelect.options[employeeSelect.selectedIndex].hidden = true;
+                employeeSelect.value = '';
+                refreshMultiAssigneeHint();
+            });
+
+            window.removeEmployee = function (id) {
+                addedEmployees.delete(id);
+                selectedEmployeesDiv
+                    .querySelectorAll(`[data-employee-id="${id}"]`)
+                    .forEach(el => el.remove());
+
+                const opt = employeeSelect.querySelector(`option[value="${id}"]`);
+                if (opt) opt.hidden = false;
+
+                if (addedEmployees.size === 0) {
+                    noEmployeesMsg.style.display = '';
+                }
+
+                refreshMultiAssigneeHint();
+            };
+
+            let activityCounter = 0;
+
+            addActivityBtn.addEventListener('click', function () {
+                const text = activityInput.value.trim();
+                if (!text) return;
+
+                if (addedEmployees.size === 0) {
+                    alert('Please assign at least one employee before adding activities.');
+                    return;
+                }
+
+                activityCounter++;
+                const activityId = `activity-${activityCounter}`;
+                noActivitiesMsg.style.display = 'none';
+
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.dataset.activityId = activityId;
+                li.innerHTML = `
+                    <span>${text}</span>
+                    <span class="text-danger" style="cursor:pointer;" onclick="removeActivity('${activityId}')">&times;</span>
+                    <input type="hidden" name="Activities" value="${text.replace(/"/g, '&quot;')}" />
+                `;
+
+                activitiesList.appendChild(li);
+                activityInput.value = '';
+                activityInput.focus();
+            });
+
+            activityInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addActivityBtn.click();
+                }
+            });
+
+            window.removeActivity = function (id) {
+                const li = activitiesList.querySelector(`[data-activity-id="${id}"]`);
+                if (li) li.remove();
+
+                if (activitiesList.querySelectorAll('li[data-activity-id]').length === 0) {
+                    noActivitiesMsg.style.display = '';
+                }
+            };
+        })();
+    </script>
+}

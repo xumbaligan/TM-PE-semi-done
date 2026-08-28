@@ -1,0 +1,229 @@
+﻿@page "{id:int}"
+@model TM_PE.Pages.Manager.OfficeTask.EditModel
+
+@{
+    ViewData["Title"] = "Edit Task";
+    Layout = "_Layout";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <h3 class="fw-bold">Edit Task</h3>
+        <p class="text-muted">
+            Update the task details, reassign employees, or adjust its activities.
+        </p>
+
+        <form method="post" id="taskForm">
+
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="OfficeTask.OfficeTaskID" />
+
+            <!-- Task Number + Date Created -->
+            <div class="row mb-3">
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        # Task Number
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.OfficeTask.TaskNumber"
+                           disabled />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Date Created
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.OfficeTask.DateCreated.ToString("MM/dd/yyyy")"
+                           disabled />
+                </div>
+
+            </div>
+
+            <!-- Assigned By -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Assigned By
+                    </label>
+
+                    <input class="form-control"
+                           value="@(Model.OfficeTask.AssignedByEmployee?.FullName ?? "—")"
+                           disabled />
+                </div>
+            </div>
+
+            <!-- Task Name -->
+            <div class="mb-3">
+
+                <label class="form-label fw-semibold">
+                    Task Name <span class="text-danger">*</span>
+                </label>
+
+                <input asp-for="OfficeTask.TaskName"
+                       class="form-control"
+                       placeholder="e.g. Quarterly inventory audit" />
+
+                <span asp-validation-for="OfficeTask.TaskName"
+                      class="text-danger"></span>
+
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+
+                <label class="form-label fw-semibold">
+                    Description
+                </label>
+
+                <textarea asp-for="OfficeTask.Description"
+                          rows="4"
+                          class="form-control"
+                          placeholder="Instructions, objectives, or additional details..."></textarea>
+
+                <span asp-validation-for="OfficeTask.Description"
+                      class="text-danger"></span>
+
+            </div>
+
+            <!-- Due Date, Status, Progress -->
+            <div class="row mb-4">
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        Due Date <span class="text-danger">*</span>
+                    </label>
+
+                    <input asp-for="OfficeTask.DueDate"
+                           type="date"
+                           class="form-control" />
+
+                    <span asp-validation-for="OfficeTask.DueDate"
+                          class="text-danger"></span>
+                </div>
+
+                @* <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            Status
+                        </label>
+
+                        <select asp-for="OfficeTask.Status" class="form-select">
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+
+                        <span asp-validation-for="OfficeTask.Status"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            Progress (%)
+                        </label>
+
+                        <input asp-for="OfficeTask.Progress"
+                               type="number"
+                               min="0"
+                               max="100"
+                               class="form-control" />
+
+                        <span asp-validation-for="OfficeTask.Progress"
+                              class="text-danger"></span>
+                    </div> *@
+
+            </div>
+
+            <!-- Assign Employees -->
+            <div class="card mb-3">
+                <div class="card-body">
+
+                    <h5 class="fw-semibold mb-3">
+                        👥 Assigned Employees
+                    </h5>
+
+                    <!-- Assigned Employees (view only, cannot be added or removed here) -->
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (Model.OfficeTask.Assignments != null && Model.OfficeTask.Assignments.Any(a => a.Employee != null))
+                        {
+                            @foreach (var a in Model.OfficeTask.Assignments.Where(a => a.Employee != null))
+                            {
+                                <span class="badge bg-primary p-2">@a.Employee!.FullName</span>
+                                <input type="hidden" name="SelectedEmployeeIds" value="@a.EmployeeID" />
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small">No employees assigned yet.</span>
+                        }
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Activities -->
+            <div class="card mb-4">
+                <div class="card-body">
+
+                    <h5 class="fw-semibold mb-3">
+                        📋 Task Activities
+                    </h5>
+
+                    <!-- Activities List (view only, cannot be added or removed here) -->
+                    <ul class="list-group">
+                        @if (Model.OfficeTask.Activities != null && Model.OfficeTask.Activities.Any())
+                        {
+                            @foreach (var act in Model.OfficeTask.Activities)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        @act.ActivityName
+                                        @{
+                                            var assignedCount = Model.OfficeTask.Assignments?.Count ?? 0;
+                                        }
+                                    </span>
+                                    <span class="badge bg-secondary-subtle text-secondary">@act.Status</span>
+                                </li>
+                                <input type="hidden" name="KeptActivityIds" value="@act.ActivityID" />
+                            }
+                        }
+                        else
+                        {
+                            <li class="list-group-item text-muted small">No activities yet.</li>
+                        }
+                    </ul>
+
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="text-end">
+
+                <a asp-page="Index"
+                   class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+}

@@ -1,0 +1,86 @@
+﻿@model List<TM_PE.Model.CriteriaStarRow>
+@using System.Globalization
+@*
+    Shared half-star rating table for Performance Evaluation Create/Edit.
+
+    Collection binding uses the "Results.Index" hidden-input form rather than
+    plain 0..n indices: on the Create page only the block matching the selected
+    employee's role type is enabled, so the posted indices are never guaranteed
+    to be contiguous from zero.
+
+    Each star is drawn server-side already filled to the saved value, so an
+    existing evaluation shows its blue full/half stars immediately on load
+    rather than waiting for JavaScript.
+*@
+@functions {
+    static decimal FillPercent(decimal value, int index)
+    {
+        var filled = value - (index - 1);
+        if (filled >= 1m) return 100m;
+        if (filled <= 0m) return 0m;
+        return filled * 100m;
+    }
+}
+@if (!Model.Any())
+{
+    <div class="text-muted">No active criteria configured for this role type yet. Add some under Manager &gt; Criteria.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr class="text-muted small">
+                    <th style="width:32%">Criteria</th>
+                    <th style="width:30%">Rating</th>
+                    <th>Feedback</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    var c = row.Criteria;
+                    var key = $"c{c.CriteriaId}";
+                    var starsId = $"stars_{key}";
+                    var value = Math.Clamp(row.StarRating, 0m, TM_PE.Model.EvaluationScoring.MaxStars);
+
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@c.CriteriaName</div>
+                            <div class="text-muted small">@c.Description (@c.Weight%)</div>
+                        </td>
+                        <td>
+                            <input type="hidden" name="Results.Index" value="@key" />
+                            <input type="hidden" name="Results[@key].CriteriaID" value="@c.CriteriaId" />
+
+                            <div class="d-flex align-items-center gap-1">
+                                <div class="star-rating" data-star-input data-target="@starsId"
+                                     aria-label="@c.CriteriaName rating" aria-valuemin="0" aria-valuemax="@TM_PE.Model.EvaluationScoring.MaxStars"
+                                     aria-valuenow="@value.ToString("0.#", CultureInfo.InvariantCulture)">
+                                    @for (int star = 1; star <= TM_PE.Model.EvaluationScoring.MaxStars; star++)
+                                    {
+                                        <span class="star" data-index="@star">
+                                            <span class="star-bg"><i class="bi bi-star-fill"></i></span>
+                                            <span class="star-fg" style="width:@(TM_PE.Model.EvaluationScoring.StarFillPercent(value, star).ToString(CultureInfo.InvariantCulture))%"><i class="bi bi-star-fill"></i></span>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <input type="hidden" class="star-value-input" id="@starsId"
+                                   name="Results[@key].StarRating"
+                                   value="@value.ToString("0.#", CultureInfo.InvariantCulture)"
+                                   data-weight="@c.Weight.ToString(CultureInfo.InvariantCulture)" />
+                            <div class="star-value-label" data-weight="@c.Weight.ToString(CultureInfo.InvariantCulture)">Not rated</div>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm" maxlength="500"
+                                   name="Results[@key].Feedback" value="@row.Feedback"
+                                   placeholder="Feedback for this criterion..." />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

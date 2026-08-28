@@ -1,0 +1,103 @@
+﻿@page
+@model TM_PE.Pages.OfficeStaff.IndexModel
+
+@{
+    ViewData["Title"] = "My Assigned Tasks";
+    Layout = "_OfficeStaffLayout";
+}
+
+<div class="mb-3">
+    <h2 class="mb-1"><i class="bi bi-person-workspace"></i> My Assigned Tasks</h2>
+    <p class="text-muted mb-0">Viewing as <strong>@Model.CurrentEmployee.FullName</strong></p>
+</div>
+<hr class="page-divider" />
+
+<div class="wlm-card">
+    <div class="card-body p-0">
+
+        @if (!Model.AssignedTasks.Any())
+        {
+            <div class="p-4 text-muted text-center">You don't have any assigned tasks yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+            <table class="table align-middle wlm-table mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Task</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Assigned By</th>
+                        <th style="width:180px;">Overall Progress</th>
+                        <th>Your Activities</th>
+                        <th class="text-end pe-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in Model.AssignedTasks)
+                    {
+                        var badgeClass = task.DisplayStatus switch
+                        {
+                            "Completed" => "bg-success-subtle text-success",
+                            "Completed Late" => "bg-warning-subtle text-warning-emphasis",
+                            "In Progress" => "bg-info-subtle text-info",
+                            "Overdue" => "bg-danger-subtle text-danger",
+                            _ => "bg-secondary-subtle text-secondary"
+                        };
+
+                        var soleAssignee = task.Assignments.Count <= 1;
+                        var myActivities = soleAssignee
+                        ? task.Activities.ToList()
+                        : task.Activities.Where(a => a.AssignedEmployeeID == Model.CurrentEmployee.EmployeeId).ToList();
+                        var myApproved = myActivities.Count(a => a.Status == "Approved");
+                        var openActivities = soleAssignee ? 0 : task.Activities.Count(a => a.AssignedEmployeeID == null);
+
+                        <tr>
+                            <td class="ps-3">
+                                <div class="fw-semibold">@task.TaskName</div>
+                                <div class="text-muted small">TSK-@task.OfficeTaskID.ToString("D5")</div>
+                            </td>
+                            <td>@task.DueDate.ToString("M/d/yyyy")</td>
+                            <td><span class="status-badge @badgeClass">@task.DisplayStatus</span></td>
+                            <td class="text-muted">@(task.AssignedByEmployee?.FullName ?? "—")</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height:8px; min-width:80px;">
+                                        <div class="progress-bar progress-bar-brand" role="progressbar" style="width:@(task.Progress)%;"></div>
+                                    </div>
+                                    <span class="text-muted small">@task.Progress%</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (myActivities.Any())
+                                {
+                                    <span>@myApproved/@myActivities.Count approved</span>
+                                    @if (!soleAssignee && openActivities > 0)
+                                    {
+                                        <div class="text-muted small">@openActivities open to claim</div>
+                                    }
+                                }
+                                else if (!soleAssignee && openActivities > 0)
+                                {
+                                    <span class="text-muted small">@openActivities open — none claimed yet</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">None yet</span>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                <a asp-page="./Details" asp-route-id="@task.OfficeTaskID" class="btn btn-sm btn-outline-navy">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        }
+
+    </div>
+</div>

@@ -1,0 +1,745 @@
+﻿@page
+@model TM_PE.Pages.Manager.JobTickets.CreateModel
+
+@{
+    ViewData["Title"] = "Create Job Ticket";
+    Layout = "_Layout";
+
+    // Purely numeric plan names (the original hardcoded prices, e.g. "999") are
+    // shown the way they always were ("₱999 / month"); free-form plans a manager
+    // types into the "Fiber Plans" modal (e.g. "Fiber 500 Promo") are shown as-is.
+    string FiberPlanDisplay(string name) =>
+        System.Text.RegularExpressions.Regex.IsMatch(name, @"^\d+$") ? $"₱{name} / month" : name;
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <h3 class="fw-bold">Job Ticket Form</h3>
+        <p class="text-muted">
+            Fill out the job details, enter the installation location, and assign field technicians.
+        </p>
+
+        <form method="post" id="ticketForm">
+
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <!-- ID Number + Date Created -->
+            <div class="row mb-3">
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        # Task Number
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.NextTicketNumber"
+                           disabled />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Date Created
+                    </label>
+
+                    <input type="date"
+                           class="form-control"
+                           value="@Model.JobTicket.DateCreated.ToString("yyyy-MM-dd")"
+                           disabled />
+
+                    <input type="hidden" asp-for="JobTicket.DateCreated" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Assigned By
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.CurrentManagerName"
+                           disabled />
+                </div>
+
+            </div>
+
+            <!-- Job Type -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Job Type <span class="text-danger">*</span>
+                </label>
+
+                <select asp-for="JobTicket.JobType" id="jobTypeSelect" class="form-select" required>
+
+                    <option value="">Select job type</option>
+                    @foreach (var type in Model.JobTypeOptions)
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </select>
+
+                <span asp-validation-for="JobTicket.JobType" class="text-danger"></span>
+            </div>
+
+            <!-- Client Info (auto-cleared/hidden when Job Type = Maintenance) -->
+            <div class="row mb-3" id="clientInfoGroup">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        Full Name (Client) <span class="text-danger">*</span>
+                    </label>
+
+                    <input asp-for="JobTicket.ClientFullName"
+                           id="clientFullNameInput"
+                           class="form-control"
+                           placeholder="e.g. Juan Dela Cruz"
+                           required />
+
+                    <span asp-validation-for="JobTicket.ClientFullName" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        Primary Number <span class="text-danger">*</span>
+                    </label>
+
+                    <input asp-for="JobTicket.PrimaryNumber"
+                           id="primaryNumberInput"
+                           class="form-control"
+                           placeholder="09171234567"
+                           inputmode="numeric"
+                           maxlength="11"
+                           required />
+
+                    <span asp-validation-for="JobTicket.PrimaryNumber" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        Secondary Number
+                    </label>
+
+                    <input asp-for="JobTicket.SecondaryNumber"
+                           id="secondaryNumberInput"
+                           class="form-control"
+                           placeholder="Optional"
+                           inputmode="numeric"
+                           maxlength="11" />
+
+                    <span asp-validation-for="JobTicket.SecondaryNumber" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Fiber Plan (Installation) / Description (Repair, Maintenance) + Date -->
+            <div class="row mb-3">
+                <div class="col-md-6" id="fiberPlanGroup">
+                    <label class="form-label fw-semibold">
+                        Fiber Plan <span class="text-danger">*</span>
+                    </label>
+
+                    <div class="d-flex gap-2">
+                        <select asp-for="JobTicket.FiberPlan" id="fiberPlanSelect" class="form-select">
+                            <option value="">Select a plan</option>
+                            @foreach (var plan in Model.FiberPlanOptions)
+                            {
+                                <option value="@plan.PlanName">@FiberPlanDisplay(plan.PlanName)</option>
+                            }
+                        </select>
+
+                        <button type="button" class="btn btn-outline-primary text-nowrap" id="openFiberPlanModalBtn" data-bs-toggle="modal" data-bs-target="#fiberPlanModal">
+                            + Add Fiber Plan
+                        </button>
+                    </div>
+
+                    <span asp-validation-for="JobTicket.FiberPlan" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 d-none" id="descriptionGroup">
+                    <label class="form-label fw-semibold">
+                        Description <span class="text-danger">*</span>
+                    </label>
+
+                    <textarea asp-for="JobTicket.Description"
+                              id="descriptionInput"
+                              class="form-control"
+                              rows="4"
+                              maxlength="500"
+                              placeholder="Describe the job"></textarea>
+
+                    <span asp-validation-for="JobTicket.Description" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" id="serviceDateLabel">
+                        Date of Installation <span class="text-danger">*</span>
+                    </label>
+
+                    <input asp-for="JobTicket.ServiceDate"
+                           type="date"
+                           id="serviceDateInput"
+                           min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                           value="@Model.JobTicket.ServiceDate.ToString("yyyy-MM-dd")"
+                           class="form-control"
+                           required />
+
+                    <span asp-validation-for="JobTicket.ServiceDate" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mt-3">
+                    <label class="form-label fw-semibold">
+                        Due Date <span class="text-danger">*</span>
+                    </label>
+
+                    <input asp-for="JobTicket.DateOfCompletion"
+                           type="date"
+                           id="dateOfCompletionInput"
+                           min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                           value="@(Model.JobTicket.DateOfCompletion?.ToString("yyyy-MM-dd"))"
+                           class="form-control"
+                           required />
+
+                    <div class="form-text">
+                        The deadline for this job to be finished. If this date passes and the job still isn't done, it's automatically marked Overdue.
+                    </div>
+
+                    <span asp-validation-for="JobTicket.DateOfCompletion" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Location -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="fw-semibold mb-2">
+                        📍 Job Location <span class="text-danger">*</span>
+                    </h5>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Address</label>
+                        <input asp-for="JobTicket.LocationAddress"
+                               id="locationAddressInput"
+                               class="form-control"
+                               placeholder="Enter the job site address"
+                               required />
+                        <span asp-validation-for="JobTicket.LocationAddress" class="text-danger"></span>
+                    </div>
+
+                    <div>
+                        <label class="form-label fw-semibold">Nearest Landmark</label>
+                        <input asp-for="JobTicket.NearestLandmark"
+                               id="nearestLandmarkInput"
+                               class="form-control"
+                               placeholder="e.g. Near the barangay hall" />
+                        <span asp-validation-for="JobTicket.NearestLandmark" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Assignees -->
+            <div class="card mb-4">
+                <div class="card-body">
+
+                    <h5 class="fw-semibold mb-1">
+                        👷 Add Assignees <span class="text-danger">*</span>
+                    </h5>
+                    <p class="text-muted small mb-3">Only Field Technicians can be assigned to a job ticket. Assign at least 2, and pick one to be the leader.</p>
+
+                    <div class="row">
+                        <div class="col-md-10">
+                            <select id="employeeSelect" class="form-select">
+                                <option value="">Select a field technician</option>
+                                @foreach (var emp in Model.FieldTechnicianList)
+                                {
+                                    <option value="@emp.EmployeeId">@emp.FullName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <button type="button" id="addEmployeeBtn" class="btn btn-primary w-100">
+                                + Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Selected Employees -->
+                    <div id="selectedEmployees" class="mt-3 d-flex flex-column gap-2">
+                        <span class="text-muted small" id="noEmployeesMsg">No field technicians added yet.</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="text-end">
+                <a asp-page="Index" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn btn-primary">
+                    Save Job Ticket
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@* ===================== Modal: Fiber Plans ===================== *@
+<div class="modal fade" id="fiberPlanModal" tabindex="-1" aria-labelledby="fiberPlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fiberPlanModalLabel">Fiber Plans</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex gap-2 mb-2">
+                    <input type="text" id="newFiberPlanInput" class="form-control" placeholder="e.g. 1299 or Fiber 500 Promo" maxlength="50" />
+                    <button type="button" id="addFiberPlanBtn" class="btn btn-primary text-nowrap">Add</button>
+                </div>
+                <div class="form-text mb-2">Letters, numbers, spaces, and . , - / ₱ # &amp; ( ) are allowed.</div>
+                <div id="fiberPlanModalError" class="text-danger small mb-2 d-none"></div>
+
+                <ul class="list-group" id="fiberPlanList">
+                    @foreach (var plan in Model.FiberPlanOptions)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center" data-plan-id="@plan.FiberPlanID" data-plan-name="@plan.PlanName">
+                            <span>@FiberPlanDisplay(plan.PlanName)</span>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 fiber-plan-delete-btn" title="Delete">&times;</button>
+                        </li>
+                    }
+                </ul>
+                <div id="noFiberPlansMsg" class="text-muted small mt-2 @(Model.FiberPlanOptions.Any() ? "d-none" : "")">No fiber plans yet.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script src="~/js/address-autocomplete.js"></script>
+    <script>
+        (function () {
+            // ---------------- ADDRESS AUTOCOMPLETE ----------------
+            // Biased toward Cebu/Philippines; users can still search anywhere.
+            // initAddressAutocomplete(document.getElementById('locationAddressInput'), { lat: 10.3157, lon: 123.8854 });
+            // initAddressAutocomplete(document.getElementById('nearestLandmarkInput'), { lat: 10.3157, lon: 123.8854 });
+
+            // ---------------- JOB TYPE TOGGLE ----------------
+            const jobTypeSelect = document.getElementById('jobTypeSelect');
+            const fiberPlanGroup = document.getElementById('fiberPlanGroup');
+            const fiberPlanSelect = document.getElementById('fiberPlanSelect');
+            const descriptionGroup = document.getElementById('descriptionGroup');
+            const descriptionInput = document.getElementById('descriptionInput');
+            const serviceDateLabel = document.getElementById('serviceDateLabel');
+            const serviceDateInput = document.getElementById('serviceDateInput');
+
+            // Client Info (Full Name / Primary / Secondary) — only collected for
+            // non-Maintenance jobs. Switching to Maintenance clears whatever was typed.
+            const clientInfoGroup = document.getElementById('clientInfoGroup');
+            const clientFullNameInput = document.getElementById('clientFullNameInput');
+            const primaryNumberInput = document.getElementById('primaryNumberInput');
+            const secondaryNumberInput = document.getElementById('secondaryNumberInput');
+
+            // Philippine mobile numbers only: digits only, capped at 11
+            // (e.g. 09171234567), matching JobTicket.PrimaryNumber/SecondaryNumber.
+            function restrictToPhMobile(input) {
+                input.addEventListener('input', function () {
+                    input.value = input.value.replace(/\D/g, '').slice(0, 11);
+                });
+            }
+            restrictToPhMobile(primaryNumberInput);
+            restrictToPhMobile(secondaryNumberInput);
+
+            function applyClientInfoVisibility(type) {
+                if (type === 'Maintenance') {
+                    clientInfoGroup.classList.add('d-none');
+                    clientFullNameInput.value = '';
+                    primaryNumberInput.value = '';
+                    secondaryNumberInput.value = '';
+                    clientFullNameInput.removeAttribute('required');
+                    primaryNumberInput.removeAttribute('required');
+                } else {
+                    clientInfoGroup.classList.remove('d-none');
+                    clientFullNameInput.setAttribute('required', 'required');
+                    primaryNumberInput.setAttribute('required', 'required');
+                }
+            }
+
+            function applyJobType() {
+                const type = jobTypeSelect.value;
+                if (type === 'Installation') {
+                    fiberPlanGroup.classList.remove('d-none');
+                    descriptionGroup.classList.add('d-none');
+                    fiberPlanSelect.setAttribute('required', 'required');
+                    descriptionInput.removeAttribute('required');
+                    serviceDateLabel.innerHTML = 'Date of Installation <span class="text-danger">*</span>';
+                } else if (type === 'Repair') {
+                    fiberPlanGroup.classList.add('d-none');
+                    descriptionGroup.classList.remove('d-none');
+                    fiberPlanSelect.removeAttribute('required');
+                    descriptionInput.setAttribute('required', 'required');
+                    serviceDateLabel.innerHTML = 'Date of Repair <span class="text-danger">*</span>';
+                } else if (type === 'Inspection') {
+                    fiberPlanGroup.classList.add('d-none');
+                    descriptionGroup.classList.remove('d-none');
+                    fiberPlanSelect.removeAttribute('required');
+                    descriptionInput.setAttribute('required', 'required');
+                    serviceDateLabel.innerHTML = 'Date of Inspection <span class="text-danger">*</span>';
+                } else if (type === 'Maintenance') {
+                    fiberPlanGroup.classList.add('d-none');
+                    descriptionGroup.classList.remove('d-none');
+                    fiberPlanSelect.removeAttribute('required');
+                    descriptionInput.setAttribute('required', 'required');
+                    serviceDateLabel.innerHTML = 'Date of Maintenance <span class="text-danger">*</span>';
+                } else {
+                    fiberPlanGroup.classList.remove('d-none');
+                    descriptionGroup.classList.add('d-none');
+                    serviceDateLabel.innerHTML = 'Date <span class="text-danger">*</span>';
+                }
+                applyClientInfoVisibility(type);
+            }
+
+            jobTypeSelect.addEventListener('change', applyJobType);
+            applyJobType();
+
+            // ---------------- DATE OF COMPLETION ----------------
+            // The completion deadline can't be set before the service date itself.
+            const dateOfCompletionInput = document.getElementById('dateOfCompletionInput');
+            function applyDateOfCompletionMin() {
+                if (!serviceDateInput.value) return;
+                dateOfCompletionInput.min = serviceDateInput.value;
+                if (dateOfCompletionInput.value && dateOfCompletionInput.value < serviceDateInput.value) {
+                    dateOfCompletionInput.value = serviceDateInput.value;
+                }
+            }
+            serviceDateInput.addEventListener('change', applyDateOfCompletionMin);
+            applyDateOfCompletionMin();
+
+            // ---------------- ASSIGNEES + LEADER ----------------
+            const employeeSelect = document.getElementById('employeeSelect');
+            const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+            const selectedEmployeesDiv = document.getElementById('selectedEmployees');
+            const noEmployeesMsg = document.getElementById('noEmployeesMsg');
+
+            // id -> name, preserves insertion order
+            const addedEmployees = new Map();
+            let leaderId = null;
+
+            // Assignees the manager had already added before a validation error
+            // reloaded the page (e.g. a bad phone number, missing description,
+            // etc). Without this, the list below would start empty again and the
+            // manager would have to re-pick every technician from scratch.
+            const preSelectedEmployees = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                                                    Model.SelectedEmployees.Select(e => new { id = e.EmployeeId.ToString(), name = e.FullName })));
+    const preSelectedLeaderId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                                        Model.LeaderEmployeeId > 0 ? Model.LeaderEmployeeId.ToString() : null));
+
+    // Once a technician is selected, their option disappears from the
+    // dropdown; removing them from the list restores it in its original
+    // (alphabetical) position.
+    const originalOptions = Array.from(employeeSelect.options).filter(o => o.value !== '');
+    const optionMap = new Map();
+    originalOptions.forEach(o => optionMap.set(o.value, o));
+
+            function hideOptionFromDropdown(id) {
+                const opt = optionMap.get(id);
+                if (opt && opt.parentElement === employeeSelect) {
+                    employeeSelect.removeChild(opt);
+                }
+            }
+
+            function restoreOptionToDropdown(id) {
+                const opt = optionMap.get(id);
+                if (!opt) return;
+                const idx = originalOptions.indexOf(opt);
+                let inserted = false;
+                for (let i = idx + 1; i < originalOptions.length; i++) {
+                    const nextOpt = originalOptions[i];
+                    if (nextOpt.parentElement === employeeSelect) {
+                        employeeSelect.insertBefore(opt, nextOpt);
+                        inserted = true;
+                        break;
+                    }
+                }
+                if (!inserted) {
+                    employeeSelect.appendChild(opt);
+                }
+            }
+
+            function renderEmployeeRow(id, name) {
+                const row = document.createElement('div');
+                row.className = 'd-flex align-items-center gap-2 border rounded p-2';
+                row.dataset.employeeId = id;
+                row.innerHTML = `
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="radio" name="leaderRadio" id="leaderRadio-${id}" ${leaderId === id ? 'checked' : ''}>
+                        <label class="form-check-label small" for="leaderRadio-${id}"></label>
+                    </div>
+                    <span class="flex-grow-1" id="empName-${id}"></span>
+                    <span class="text-danger" style="cursor:pointer;" title="Remove">&times;</span>
+                    <input type="hidden" name="SelectedEmployeeIds" value="${id}" />
+                `;
+
+                row.querySelector('input[type=radio]').addEventListener('change', function () {
+                    leaderId = id;
+                    document.getElementById('leaderEmployeeIdInput').value = id;
+                    refreshLeaderTags();
+                });
+
+                row.querySelector('.text-danger').addEventListener('click', function () {
+                    addedEmployees.delete(id);
+                    row.remove();
+                    restoreOptionToDropdown(id);
+                    if (leaderId === id) {
+                        leaderId = null;
+                        document.getElementById('leaderEmployeeIdInput').value = '';
+                        // Auto-promote the next remaining technician to leader, if any
+                        const remaining = [...addedEmployees.keys()];
+                        if (remaining.length > 0) {
+                            leaderId = remaining[0];
+                            document.getElementById('leaderEmployeeIdInput').value = leaderId;
+                            const nextRadio = document.getElementById(`leaderRadio-${leaderId}`);
+                            if (nextRadio) nextRadio.checked = true;
+                        }
+                    }
+                    refreshLeaderTags();
+                    if (addedEmployees.size === 0) {
+                        noEmployeesMsg.style.display = '';
+                    }
+                });
+
+                selectedEmployeesDiv.appendChild(row);
+                refreshLeaderTags();
+            }
+
+            // Only the currently Selected/assigned leader gets the "Leader" tag
+            // next to their name — everyone else just shows their plain name.
+            function refreshLeaderTags() {
+                addedEmployees.forEach(function (name, id) {
+                    const nameSpan = document.getElementById(`empName-${id}`);
+                    if (!nameSpan) return;
+                    nameSpan.innerHTML = (id === leaderId)
+                        ? `${name} <span class="badge bg-primary ms-1">Leader</span>`
+                        : name;
+                });
+            }
+
+            // Hidden input carrying the chosen leader's EmployeeId
+            const leaderHidden = document.createElement('input');
+            leaderHidden.type = 'hidden';
+            leaderHidden.id = 'leaderEmployeeIdInput';
+            leaderHidden.name = 'LeaderEmployeeId';
+            leaderHidden.value = '';
+            document.getElementById('ticketForm').appendChild(leaderHidden);
+
+            // Restore any assignees (and the chosen leader) that survived a
+            // validation error on the server, so they don't have to be re-added.
+            preSelectedEmployees.forEach(function (emp) {
+                if (addedEmployees.has(emp.id)) return;
+                addedEmployees.set(emp.id, emp.name);
+                noEmployeesMsg.style.display = 'none';
+                renderEmployeeRow(emp.id, emp.name);
+                hideOptionFromDropdown(emp.id);
+            });
+
+            if (addedEmployees.size > 0) {
+                if (preSelectedLeaderId && addedEmployees.has(preSelectedLeaderId)) {
+                    leaderId = preSelectedLeaderId;
+                } else {
+                    leaderId = [...addedEmployees.keys()][0];
+                }
+                leaderHidden.value = leaderId;
+                const leaderRadio = document.getElementById(`leaderRadio-${leaderId}`);
+                if (leaderRadio) leaderRadio.checked = true;
+                refreshLeaderTags();
+            }
+
+            addEmployeeBtn.addEventListener('click', function () {
+                const id = employeeSelect.value;
+                const name = employeeSelect.options[employeeSelect.selectedIndex].text;
+
+                if (!id) return;
+                if (addedEmployees.has(id)) return;
+
+                addedEmployees.set(id, name);
+                noEmployeesMsg.style.display = 'none';
+
+                renderEmployeeRow(id, name);
+                hideOptionFromDropdown(id);
+
+                // First technician added is auto-selected as leader
+                if (addedEmployees.size === 1) {
+                    leaderId = id;
+                    leaderHidden.value = id;
+                    document.getElementById(`leaderRadio-${id}`).checked = true;
+                    refreshLeaderTags();
+                }
+
+                employeeSelect.value = '';
+            });
+
+            // ---------------- FIBER PLANS MODAL ----------------
+            (function () {
+                const planSelect = document.getElementById('fiberPlanSelect');
+                const planList = document.getElementById('fiberPlanList');
+                const noPlansMsg = document.getElementById('noFiberPlansMsg');
+                const newPlanInput = document.getElementById('newFiberPlanInput');
+                const addPlanBtn = document.getElementById('addFiberPlanBtn');
+                const errorBox = document.getElementById('fiberPlanModalError');
+
+                // Same restriction enforced server-side (Model.FiberPlanRules.AllowedPattern):
+                // letters, numbers, spaces, and a small set of punctuation.
+                const allowedPattern = /^[A-Za-z0-9À-ÖØ-öø-ÿ.,\-\/₱#&()\s]+$/;
+
+                const token = document.querySelector('#ticketForm input[name="__RequestVerificationToken"]')?.value || '';
+
+                // Purely numeric plans keep the original "₱999 / month" display;
+                // free-form plans are shown as typed.
+                function formatPlan(name) {
+                    return /^\d+$/.test(name) ? `₱${name} / month` : name;
+                }
+
+                function showError(msg) {
+                    errorBox.textContent = msg;
+                    errorBox.classList.remove('d-none');
+                }
+
+                function clearError() {
+                    errorBox.classList.add('d-none');
+                    errorBox.textContent = '';
+                }
+
+                function addRow(id, name) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.dataset.planId = id;
+                    li.dataset.planName = name;
+                    li.innerHTML = `<span></span><button type="button" class="btn btn-sm btn-link text-danger p-0 fiber-plan-delete-btn" title="Delete">&times;</button>`;
+                    li.querySelector('span').textContent = formatPlan(name);
+                    planList.appendChild(li);
+                    noPlansMsg.classList.add('d-none');
+                }
+
+                function addOption(name) {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = formatPlan(name);
+                    planSelect.appendChild(opt);
+                }
+
+                addPlanBtn.addEventListener('click', async function () {
+                    clearError();
+                    const name = newPlanInput.value.trim();
+
+                    if (!name) {
+                        showError('Please enter a fiber plan.');
+                        return;
+                    }
+                    if (name.length > 50) {
+                        showError('Fiber plan name is too long (max 50 characters).');
+                        return;
+                    }
+                    if (!allowedPattern.test(name)) {
+                        showError('Only letters, numbers, spaces, and . , - / ₱ # & ( ) are allowed.');
+                        return;
+                    }
+
+                    addPlanBtn.disabled = true;
+                    try {
+                        const body = new URLSearchParams();
+                        body.set('planName', name);
+                        body.set('__RequestVerificationToken', token);
+
+                        const res = await fetch('?handler=AddFiberPlan', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: body.toString()
+                        });
+                        const data = await res.json();
+
+                        if (!res.ok || !data.success) {
+                            showError(data.message || 'Could not add that fiber plan.');
+                            return;
+                        }
+
+                        addRow(data.id, data.name);
+                        addOption(data.name);
+                        newPlanInput.value = '';
+                    } catch (err) {
+                        showError('Something went wrong. Please try again.');
+                    } finally {
+                        addPlanBtn.disabled = false;
+                    }
+                });
+
+                newPlanInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addPlanBtn.click();
+                    }
+                });
+
+                planList.addEventListener('click', async function (e) {
+                    const btn = e.target.closest('.fiber-plan-delete-btn');
+                    if (!btn) return;
+
+                    clearError();
+                    const li = btn.closest('li');
+                    const id = li.dataset.planId;
+                    const name = li.dataset.planName;
+
+                    btn.disabled = true;
+                    try {
+                        const body = new URLSearchParams();
+                        body.set('id', id);
+                        body.set('__RequestVerificationToken', token);
+
+                        const res = await fetch('?handler=DeleteFiberPlan', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: body.toString()
+                        });
+                        const data = await res.json();
+
+                        if (!res.ok || !data.success) {
+                            showError(data.message || 'Could not delete that fiber plan.');
+                            btn.disabled = false;
+                            return;
+                        }
+
+                        li.remove();
+                        if (!planList.children.length) {
+                            noPlansMsg.classList.remove('d-none');
+                        }
+
+                        // If the plan being removed was selected in the main form,
+                        // clear the selection so a deleted plan can't be submitted.
+                        const opt = Array.from(planSelect.options).find(o => o.value === name);
+                        if (opt) {
+                            if (planSelect.value === name) planSelect.value = '';
+                            opt.remove();
+                        }
+                    } catch (err) {
+                        showError('Something went wrong. Please try again.');
+                        btn.disabled = false;
+                    }
+                });
+            })();
+
+            document.getElementById('ticketForm').addEventListener('submit', function (e) {
+                if (addedEmployees.size < 2) {
+                    e.preventDefault();
+                    alert('Please assign at least 2 field technicians.');
+                    return;
+                }
+                if (!leaderHidden.value) {
+                    e.preventDefault();
+                    alert('Please choose a leader among the assigned field technicians.');
+                }
+            });
+        })();
+    </script>
+}

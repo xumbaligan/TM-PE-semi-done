@@ -1,0 +1,233 @@
+@page
+@model TM_PE.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Pakonek Performance</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <style>
+        :root {
+            --login-navy-deep: #00001e;
+            --login-navy: #020236;
+            --login-purple: #8958eb;
+            --login-purple-light: #915df6;
+            --login-plum-mid: #31055d;
+            --login-plum: #47076f;
+        }
+
+        .login-body {
+            background-color: #f1f5f9;
+        }
+
+        .login-shell {
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,.18);
+            background: #fff;
+        }
+
+        .login-panel-dark {
+            background: linear-gradient(180deg, var(--login-navy-deep), var(--login-navy));
+            color: #fff;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .login-logo-orb {
+            width: 160px;
+            max-width: 60%;
+        }
+
+        .login-wordmark {
+            width: 260px;
+            max-width: 80%;
+        }
+
+        .login-tagline {
+            color: var(--login-purple-light);
+            text-shadow: 0px 4px 4px rgba(85,50,105,.6);
+            letter-spacing: .3em;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+
+        .login-panel-light {
+            padding: 2.5rem 2rem;
+        }
+
+        .login-heading .text-accent {
+            color: var(--login-purple);
+        }
+
+        .login-input-group {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            border: 1.5px solid rgba(2,2,54,.14);
+            border-radius: 9px;
+            box-shadow: 0 4px 5px rgba(0,0,0,.1);
+            padding: .65rem .9rem;
+            background: #fff;
+        }
+
+            .login-input-group i {
+                color: #ccc6c6;
+                font-size: 1.1rem;
+            }
+
+            .login-input-group input {
+                border: 0;
+                outline: 0;
+                flex: 1;
+                min-width: 0;
+                font-size: .95rem;
+            }
+
+            .login-input-group button {
+                border: 0;
+                background: none;
+                color: #ccc6c6;
+                padding: 0;
+                line-height: 1;
+            }
+
+        .login-forgot {
+            color: var(--login-purple);
+            font-weight: 700;
+            font-size: .8rem;
+        }
+
+        .login-btn {
+            background: linear-gradient(90deg, var(--login-navy), var(--login-plum-mid), var(--login-plum));
+            color: #fff;
+            border: 0;
+            border-radius: 9px;
+            font-weight: 800;
+            letter-spacing: .03em;
+            padding: .85rem;
+            box-shadow: 0 4px 5px rgba(0,0,0,.1);
+        }
+
+            .login-btn:hover {
+                filter: brightness(1.08);
+                color: #fff;
+            }
+
+        .login-role-tile {
+            border: 1.5px solid rgba(2,2,54,.14);
+            border-radius: 9px;
+            box-shadow: 0 4px 5px rgba(0,0,0,.1);
+            padding: .75rem .5rem;
+            text-align: center;
+            flex: 1;
+        }
+
+            .login-role-tile img {
+                width: 42px;
+                height: 42px;
+                object-fit: contain;
+            }
+
+            .login-role-tile .login-role-label {
+                font-size: .75rem;
+                font-weight: 600;
+                color: var(--login-navy);
+                margin-top: .35rem;
+            }
+
+        @@media (max-width: 767.98px) {
+            .login-panel-dark {
+                padding: 1.75rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="login-body d-flex align-items-center justify-content-center min-vh-100 py-4">
+    <div class="login-shell d-flex flex-column flex-md-row">
+        <div class="login-panel-dark col-md-5 d-flex flex-column align-items-center justify-content-center text-center">
+            <img src="~/images/login/orb.png" alt="" class="login-logo-orb mb-2" />
+            <img src="~/images/login/pakonek-wordmark.png" alt="Pakonek" class="login-wordmark mb-2" />
+            <div class="login-tagline">
+                EMPLOYEE PERFORMANCE<br />
+                TRACKING SYSTEM
+            </div>
+        </div>
+        <div class="login-panel-light col-md-7">
+            <h2 class="login-heading fw-bold mb-1">
+                WELCOME <span class="text-accent">BACK!</span>
+            </h2>
+            <p class="fw-semibold mb-4">Please Log In to your account now.</p>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger py-2 small">@Model.ErrorMessage</div>
+            }
+
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Username</label>
+                    <div class="login-input-group">
+                        <i class="bi bi-person-fill"></i>
+                        <input asp-for="Username" autofocus placeholder="Enter your username" />
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold">Password</label>
+                    <div class="login-input-group">
+                        <i class="bi bi-lock-fill"></i>
+                        <input type="password" asp-for="Password" maxlength="10" placeholder="Enter your password" />
+                        <button type="button" id="togglePassword" tabindex="-1" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-end mb-4">
+                    <span class="login-forgot">Forgot Password?</span>
+                </div>
+                <button type="submit" class="login-btn w-100 mb-4">LOG IN</button>
+            </form>
+
+            <div class="d-flex gap-2">
+                <div class="login-role-tile">
+                    <img src="~/images/login/role-admin.png" alt="" />
+                    <div class="login-role-label">Administrator</div>
+                </div>
+                <div class="login-role-tile">
+                    <img src="~/images/login/role-technician.png" alt="" />
+                    <div class="login-role-label">Technician</div>
+                </div>
+                <div class="login-role-tile">
+                    <img src="~/images/login/role-officestaff.png" alt="" />
+                    <div class="login-role-label">Office Staff</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const toggleBtn = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('Password');
+            const icon = toggleBtn.querySelector('i');
+
+            toggleBtn.addEventListener('click', function () {
+                const isHidden = passwordInput.type === 'password';
+                passwordInput.type = isHidden ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !isHidden);
+                icon.classList.toggle('bi-eye-slash', isHidden);
+                toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            });
+        })();
+    </script>
+</body>
+</html>

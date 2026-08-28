@@ -1,0 +1,116 @@
+﻿@*
+    Shared "view full evaluation" modal. Any button with class
+    .view-evaluation-btn and the matching data-* attributes opens it - see
+    wwwroot/js/evaluation-modal.js. Used by Performance Evaluation > Index and
+    by Feedback & Appraisal Records > Details so both show an evaluation in
+    exactly the same shape.
+*@
+<div class="modal fade" id="evaluationModal" tabindex="-1" aria-labelledby="evaluationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="evaluationModalLabel">
+                    <i class="bi bi-clipboard-data"></i> Evaluation &amp; Appraisal Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div>
+                        <div class="fw-bold fs-5" id="evalEmployee"></div>
+                        <div class="text-muted small" id="evalRole"></div>
+                    </div>
+                    <div class="text-end">
+                        <div class="d-flex align-items-center gap-2 justify-content-end">
+                            <span id="evalStarsTop"></span>
+                            <span class="fw-bold fs-5" id="evalScore"></span>
+                        </div>
+                        <div><span class="badge" id="evalRatingBadge"></span></div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-3">
+                        <div class="text-muted small">Evaluation Period</div>
+                        <div class="fw-semibold" id="evalPeriod"></div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="text-muted small">Evaluation Date</div>
+                        <div class="fw-semibold" id="evalDate"></div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="text-muted small">Evaluated By</div>
+                        <div class="fw-semibold" id="evalEvaluator"></div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="text-muted small">Status</div>
+                        <div><span class="badge" id="evalStatusBadge"></span></div>
+                    </div>
+                </div>
+
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Performance Snapshot</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-tile d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-check2-circle"></i></div>
+                            <div>
+                                <div class="stat-label">Completed Job/Task</div>
+                                <div class="stat-value" id="evalStatCompleted">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-tile d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-clock-history"></i></div>
+                            <div>
+                                <div class="stat-label">On-time Rate</div>
+                                <div class="stat-value" id="evalStatOnTime">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-tile d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-warning-subtle text-warning" id="evalStatTile3Icon"><i class="bi bi-arrow-repeat"></i></div>
+                            <div>
+                                <div class="stat-label" id="evalStatTile3Label">Rescheduled</div>
+                                <div class="stat-value" id="evalStatTile3Value">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="stat-tile d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-danger-subtle text-danger" id="evalStatTile4Icon"><i class="bi bi-x-circle"></i></div>
+                            <div>
+                                <div class="stat-label" id="evalStatTile4Label">Cancelled</div>
+                                <div class="stat-value" id="evalStatTile4Value">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Criteria Ratings</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th style="width:32%">Criteria</th>
+                                <th style="width:26%">Rating</th>
+                                <th style="width:14%">Score</th>
+                                <th>Feedback</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evalResultsBody"></tbody>
+                    </table>
+                </div>
+
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Feedback</h6>
+                <div class="border rounded p-3 bg-light" id="evalFeedback"></div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

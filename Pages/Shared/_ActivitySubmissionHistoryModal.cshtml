@@ -1,0 +1,76 @@
+@model TM_PE.Pages.Shared.ActivitySubmissionHistoryViewModel
+@{
+    // Only rejected attempts are worth reviewing in this history - an
+    // Approved one is already reflected by the activity's own current state,
+    // and Pending Review is just the in-progress attempt shown elsewhere on
+    // the page.
+    var rejectedAttempts = Model.Attempts.Where(a => a.Status == "Rejected").ToList();
+
+    // Reviewed By is shown once at the top rather than repeated per row -
+    // these rejections are reviewed by whichever manager is on the task, not
+    // a different one per attempt.
+    var reviewedBy = rejectedAttempts.FirstOrDefault(a => a.ReviewedByEmployee != null)?.ReviewedByEmployee?.FullName;
+}
+@* Every rejected attempt for this activity, newest first - each one keeps its
+   own file, feedback, and who/when submitted it permanently, since a
+   re-upload now adds a new row instead of overwriting the last one. *@
+<div class="modal fade" id="historyModal-@Model.Activity.ActivityID" tabindex="-1" aria-labelledby="historyModalLabel-@Model.Activity.ActivityID" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historyModalLabel-@Model.Activity.ActivityID">
+                    <i class="bi bi-clock-history"></i> History of Submission &mdash; @Model.Activity.ActivityName
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-muted small mb-3">
+                    <span class="fw-semibold">Reviewed By:</span> @(reviewedBy ?? "—")
+                </div>
+                @if (!rejectedAttempts.Any())
+                {
+                    <div class="text-muted text-center py-3">No rejected submissions.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr class="text-muted small">
+                                    <th>File</th>
+                                    <th>Submitted By</th>
+                                    <th>Submitted On</th>
+                                    <th>Feedback</th>
+                                    <th>Reviewed On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var attempt in rejectedAttempts)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-page-handler="Download" asp-route-submissionId="@attempt.SubmissionID"
+                                               class="small text-truncate d-inline-block" style="max-width:150px;" title="@attempt.FileName">
+                                                @attempt.FileName
+                                            </a>
+                                        </td>
+                                        <td class="small">
+                                            @(attempt.Employee?.FullName ?? "—")
+                                            <div class="text-danger" style="font-size:.7rem;">Rejected</div>
+                                        </td>
+                                        <td class="small text-nowrap text-muted">@attempt.DateSubmitted.ToString("M/d/yyyy h:mm tt")</td>
+                                        <td class="small" style="max-width:220px;">@(string.IsNullOrWhiteSpace(attempt.Feedback) ? "—" : attempt.Feedback)</td>
+                                        <td class="small text-nowrap text-muted">@(attempt.DateReviewed?.ToString("M/d/yyyy h:mm tt") ?? "—")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

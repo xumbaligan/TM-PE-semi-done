@@ -1,0 +1,142 @@
+@page
+@model TM_PE.Pages.Admin.UserManagement.IndexModel
+@{
+    ViewData["Title"] = "User Management";
+    Layout = "_Admin";
+
+    string RoleBadgeClass(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.FieldTechnician => "role-badge-field-technician",
+        TM_PE.Model.RoleType.OfficeStaff => "role-badge-office-staff",
+        TM_PE.Model.RoleType.Manager => "role-badge-manager",
+        TM_PE.Model.RoleType.Admin => "role-badge-admin",
+        _ => "role-badge-office-staff"
+    };
+}
+
+<div class="mb-3">
+    <h2 class="mb-1"><i class="bi bi-person-badge"></i> User Management</h2>
+    <p class="text-muted mb-0">Login accounts for every employee.</p>
+</div>
+<hr class="page-divider" />
+
+<form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="input-group shadow-sm flex-grow-1" style="max-width:400px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-start-0 ps-0" id="liveSearch"
+               placeholder="Search by username or employee..." />
+    </div>
+    <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New User Account</a>
+</form>
+
+<div class="wlm-card">
+  <div class="table-responsive">
+    <table class="table table-hover wlm-table mb-0 align-middle">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Employee</th>
+                <th>Role</th>
+                <th>Created</th>
+                <th>Last Login</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Accounts.Any())
+            {
+                <tr id="emptyRow">
+                    <td colspan="7" class="text-center text-muted py-4">No user accounts yet.</td>
+                </tr>
+            }
+            else
+            {
+                <tr id="emptyRow" style="display:none;">
+                    <td colspan="7" class="text-center text-muted py-4">No user accounts found</td>
+                </tr>
+                @foreach (var a in Model.Accounts)
+                {
+                    <tr data-username="@a.Username.ToLower()"
+                        data-employee="@((a.Employee?.FullName ?? "").ToLower())">
+                        <td><code class="username-text">@a.Username</code></td>
+                        <td>
+                            @if (a.Employee != null)
+                            {
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="wlm-avatar">
+                                        @(string.Join("", a.Employee.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
+                                    </div>
+                                    <span>@a.Employee.FullName</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (a.Employee != null)
+                            {
+                                <span class="badge rounded-pill @RoleBadgeClass(a.Employee.RoleType)">
+                                    @a.Employee.RoleType
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-muted">@a.DateCreated.ToString("MMM d, yyyy")</td>
+                        <td class="text-muted">@(a.LastLogin.HasValue ? a.LastLogin.Value.ToString("MMM d, yyyy h:mm tt") : "Never")</td>
+                        <td>
+                            @if (a.IsActive)
+                            {
+                                <span class="status-badge status-badge-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-badge-inactive">Disabled</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-navy" asp-page="Details" asp-route-id="@a.UserAccountID">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+  </div>
+</div>
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('liveSearch');
+        const rows = document.querySelectorAll('tbody tr[data-username]');
+
+        function filterTable() {
+            const searchVal = searchInput.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const username = row.dataset.username || '';
+                const employee = row.dataset.employee || '';
+
+                const matches = username.includes(searchVal) || employee.includes(searchVal);
+
+                row.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
+            });
+
+            const emptyRow = document.getElementById('emptyRow');
+            if (emptyRow) {
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+        }
+
+        searchInput.addEventListener('input', filterTable);
+    </script>
+}

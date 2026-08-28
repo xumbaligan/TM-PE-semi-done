@@ -1,0 +1,25 @@
+﻿@model decimal
+@{
+    // Read-only star display for a 0-MaxStars value. Each star draws a grey
+    // outline with a blue fill clipped to the right width, so 3.5 renders as
+    // three full blue stars plus one half-filled star.
+    var maxStars = TM_PE.Model.EvaluationScoring.MaxStars;
+    var value = Math.Clamp(Model, 0m, maxStars);
+
+    decimal FillPercent(int index)
+    {
+        var filled = value - (index - 1);
+        if (filled >= 1m) return 100m;
+        if (filled <= 0m) return 0m;
+        return filled * 100m;
+    }
+}
+<span class="star-rating readonly sm" title="@value.ToString("0.#") of @maxStars stars">
+    @for (int i = 1; i <= maxStars; i++)
+    {
+        <span class="star" data-index="@i">
+            <span class="star-bg"><i class="bi bi-star-fill"></i></span>
+            <span class="star-fg" style="width:@(FillPercent(i).ToString(System.Globalization.CultureInfo.InvariantCulture))%"><i class="bi bi-star-fill"></i></span>
+        </span>
+    }
+</span>
