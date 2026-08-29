@@ -3,6 +3,15 @@
 @{
     ViewData["Title"] = "User Account Details";
     Layout = "_Admin";
+
+    string RoleBadgeClass(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.FieldTechnician => "role-badge-field-technician",
+        TM_PE.Model.RoleType.OfficeStaff => "role-badge-office-staff",
+        TM_PE.Model.RoleType.Manager => "role-badge-manager",
+        TM_PE.Model.RoleType.Admin => "role-badge-admin",
+        _ => "role-badge-office-staff"
+    };
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -24,11 +33,11 @@
                     <div>
                         @if (Model.Account.IsActive)
                         {
-                            <span class="badge badge-soft-success">Active</span>
+                            <span class="status-badge status-badge-active">Active</span>
                         }
                         else
                         {
-                            <span class="badge badge-soft-warning">Disabled</span>
+                            <span class="status-badge status-badge-inactive">Disabled</span>
                         }
                     </div>
                 </div>
@@ -94,7 +103,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="text-muted small">Role Type</div>
-                        <div><span class="badge badge-soft-primary">@Model.Account.Employee.RoleType</span></div>
+                        <div><span class="badge rounded-pill @RoleBadgeClass(Model.Account.Employee.RoleType)">@Model.Account.Employee.RoleType</span></div>
                     </div>
                     <div class="col-md-6">
                         <div class="text-muted small">Department</div>
@@ -109,11 +118,11 @@
                         <div>
                             @if (Model.Account.Employee.IsActive)
                             {
-                                <span class="badge badge-soft-success">Active</span>
+                                <span class="status-badge status-badge-active">Active</span>
                             }
                             else
                             {
-                                <span class="badge badge-soft-warning">Inactive</span>
+                                <span class="status-badge status-badge-inactive">Inactive</span>
                             }
                         </div>
                     </div>

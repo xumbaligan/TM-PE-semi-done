@@ -9,12 +9,12 @@
 
     function ratingBadgeClass(rating) {
         switch (rating) {
-            case 'Excellent': return 'bg-success-subtle text-success-emphasis';
-            case 'Very Good': return 'bg-primary-subtle text-primary-emphasis';
-            case 'Good': return 'bg-info-subtle text-info-emphasis';
-            case 'Needs Improvement': return 'bg-warning-subtle text-warning-emphasis';
-            case 'Poor': return 'bg-danger-subtle text-danger-emphasis';
-            default: return 'bg-secondary-subtle text-secondary-emphasis';
+            case 'Excellent': return 'vm-status-success';
+            case 'Very Good': return 'vm-status-info';
+            case 'Good': return 'vm-status-pending';
+            case 'Needs Improvement': return 'vm-status-warning';
+            case 'Poor': return 'vm-status-danger';
+            default: return 'vm-status-pending';
         }
     }
 
@@ -38,50 +38,62 @@
         const ratingBadge = document.getElementById('evalRatingBadge');
         if (ratingBadge) {
             ratingBadge.textContent = d.rating || '-';
-            ratingBadge.className = 'badge ' + ratingBadgeClass(d.rating);
+            ratingBadge.className = 'vm-status ' + ratingBadgeClass(d.rating);
         }
 
         const statusBadge = document.getElementById('evalStatusBadge');
         if (statusBadge) {
             statusBadge.textContent = d.status || '-';
-            statusBadge.className = 'badge ' + (d.status === 'Finalized'
-                ? 'bg-success-subtle text-success-emphasis'
-                : 'bg-secondary-subtle text-secondary-emphasis');
+            statusBadge.className = 'vm-status ' + (d.status === 'Finalized'
+                ? 'vm-status-success'
+                : 'vm-status-pending');
         }
 
         // ---- Performance snapshot tiles ----
         set('evalStatCompleted', d.completed || '0');
         set('evalStatOnTime', (d.ontime || '0') + '%');
 
+        const tile3 = document.getElementById('evalStatTile3');
         const tile3Icon = document.getElementById('evalStatTile3Icon');
         const tile3Label = document.getElementById('evalStatTile3Label');
         const tile3Value = document.getElementById('evalStatTile3Value');
+        const tile4 = document.getElementById('evalStatTile4');
         const tile4Icon = document.getElementById('evalStatTile4Icon');
         const tile4Label = document.getElementById('evalStatTile4Label');
         const tile4Value = document.getElementById('evalStatTile4Value');
+
+        // Tone is set on the tile as well as the icon, because the tile
+        // itself is tinted - repainting only the glyph would leave an amber
+        // "Rejected Activities" card. Mirrors setTileTone() on the New
+        // Evaluation page.
+        function setTileTone(tile, iconEl, tone) {
+            tile.classList.remove('eval-stat-primary', 'eval-stat-success', 'eval-stat-warning', 'eval-stat-danger');
+            tile.classList.add('eval-stat-' + tone);
+            iconEl.className = 'stat-icon icon-palette-' + tone;
+        }
 
         // Tile 3/4 show different metrics depending on role, same as the New
         // Evaluation page: job ticket Rescheduled/Cancelled counts for a Field
         // Technician (Office Tasks never use those statuses), Rejected
         // activities/Overdue tasks for an Office Staff.
-        if (tile3Icon && tile3Label && tile3Value && tile4Icon && tile4Label && tile4Value) {
+        if (tile3 && tile3Icon && tile3Label && tile3Value && tile4 && tile4Icon && tile4Label && tile4Value) {
             if (d.roleType === 'OfficeStaff') {
-                tile3Icon.className = 'stat-icon bg-danger-subtle text-danger';
+                setTileTone(tile3, tile3Icon, 'danger');
                 tile3Icon.innerHTML = '<i class="bi bi-hand-thumbs-down"></i>';
                 tile3Label.textContent = 'Rejected Activities';
                 tile3Value.textContent = d.rejected || '0';
 
-                tile4Icon.className = 'stat-icon bg-warning-subtle text-warning';
+                setTileTone(tile4, tile4Icon, 'warning');
                 tile4Icon.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
                 tile4Label.textContent = 'Overdue Task';
                 tile4Value.textContent = d.overdue || '0';
             } else {
-                tile3Icon.className = 'stat-icon bg-warning-subtle text-warning';
+                setTileTone(tile3, tile3Icon, 'warning');
                 tile3Icon.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
                 tile3Label.textContent = 'Rescheduled';
                 tile3Value.textContent = d.rescheduled || '0';
 
-                tile4Icon.className = 'stat-icon bg-danger-subtle text-danger';
+                setTileTone(tile4, tile4Icon, 'danger');
                 tile4Icon.innerHTML = '<i class="bi bi-x-circle"></i>';
                 tile4Label.textContent = 'Cancelled';
                 tile4Value.textContent = d.cancelled || '0';

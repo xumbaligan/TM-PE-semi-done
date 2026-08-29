@@ -1,81 +1,15 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model TM_PE.Pages.Manager.PerformanceEvaluation.EditModel
 @{
     ViewData["Title"] = "Edit Performance Evaluation";
     Layout = "_Layout";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2><i class="bi bi-clipboard-data"></i> Edit Performance Evaluation</h2>
-    <a class="btn btn-outline-secondary" asp-page="Index"><i class="bi bi-arrow-left"></i> Back</a>
+<div class="mb-3">
+    <h1 class="tf-page-title mb-1">Edit Performance Evaluation</h1>
+    <p class="tf-page-sub mb-0">Update ratings, feedback, or finalize this evaluation</p>
 </div>
-
-@* ===================== Employee performance snapshot ===================== *@
-<div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile d-flex align-items-center gap-3">
-            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-check2-circle"></i></div>
-            <div>
-                <div class="stat-label">Completed Job/Task</div>
-                <div class="stat-value">@Model.Stats.CompletedJobsTasks</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile d-flex align-items-center gap-3">
-            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-clock-history"></i></div>
-            <div>
-                <div class="stat-label">On-time Rate</div>
-                <div class="stat-value">@Model.Stats.OnTimeRate.ToString("0")%</div>
-            </div>
-        </div>
-    </div>
-    @* Office Staff office tasks never use the Rescheduled/Cancelled job ticket
-       statuses, so those tiles would always read 0 for them - show the
-       equivalents that actually apply instead. *@
-    @if (Model.Employee?.RoleType == TM_PE.Model.RoleType.OfficeStaff)
-    {
-        <div class="col-6 col-lg-3">
-            <div class="stat-tile d-flex align-items-center gap-3">
-                <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-hand-thumbs-down"></i></div>
-                <div>
-                    <div class="stat-label">Rejected Activities</div>
-                    <div class="stat-value">@Model.Stats.RejectedActivities</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-tile d-flex align-items-center gap-3">
-                <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-triangle"></i></div>
-                <div>
-                    <div class="stat-label">Overdue Task</div>
-                    <div class="stat-value">@Model.Stats.OverdueTasks</div>
-                </div>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="col-6 col-lg-3">
-            <div class="stat-tile d-flex align-items-center gap-3">
-                <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-arrow-repeat"></i></div>
-                <div>
-                    <div class="stat-label">Rescheduled</div>
-                    <div class="stat-value">@Model.Stats.Rescheduled</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-tile d-flex align-items-center gap-3">
-                <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-x-circle"></i></div>
-                <div>
-                    <div class="stat-label">Cancelled</div>
-                    <div class="stat-value">@Model.Stats.Cancelled</div>
-                </div>
-            </div>
-        </div>
-    }
-</div>
+<hr class="page-divider" />
 
 <form method="post" id="evalForm">
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -83,69 +17,143 @@
 
     <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card p-4 mb-4">
-                <h5 class="mb-3">Evaluation Details</h5>
+
+            <div class="tf-section mb-4">
+                <div class="tf-section-title mb-3">Evaluation Details</div>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Employee</label>
+                        <label class="tf-label">Employee</label>
                         <input class="form-control" value="@(Model.Employee?.FullName) (@Model.Employee?.RoleType)" disabled />
-                        <div class="form-text">The employee on an evaluation can't be changed — create a new evaluation instead.</div>
+                        <div class="tf-form-hint">The employee on an evaluation can't be changed — create a new evaluation instead.</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Evaluator</label>
+                        <label class="tf-label">Evaluator</label>
                         <input class="form-control" value="@Model.Evaluation.EvaluatorName" disabled />
-                        <div class="form-text">Set automatically when this evaluation was created — not editable.</div>
+                        <div class="tf-form-hint">Set automatically when this evaluation was created — not editable.</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Evaluation Period</label>
+                        <label class="tf-label">Evaluation Period</label>
                         <input class="form-control" value="@Model.Evaluation.EvaluationPeriod" disabled />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Evaluation Date <span class="text-danger">*</span></label>
+                        <label class="tf-label">Evaluation Date <span class="tf-required">*</span></label>
                         <input asp-for="Evaluation.EvaluationDate" type="date" class="form-control"
                                value="@Model.Evaluation.EvaluationDate.ToString("yyyy-MM-dd")" />
-                        <span asp-validation-for="Evaluation.EvaluationDate" class="text-danger"></span>
-                        <div class="form-text">Also used as the appraisal date.</div>
+                        <span asp-validation-for="Evaluation.EvaluationDate" class="text-danger small"></span>
+                        <div class="tf-form-hint">Also used as the appraisal date.</div>
                     </div>
                 </div>
             </div>
 
-            <div class="card p-4 mb-4">
-                <h5 class="mb-1">@Model.Employee?.RoleType Criteria</h5>
-                <div class="text-muted small mb-3">Rate each criterion from 0.5 to 4 stars — click the left half of a star for a half rating. Click the same rating again to clear it.</div>
-                <partial name="_CriteriaStarRows" model="Model.Rows" />
+            <div class="tf-section mb-4">
+                <div class="tf-section-title mb-1">@Model.Employee?.RoleType Criteria</div>
+                <p class="tf-section-sub mb-3">Rate each criterion from 0.5 to 4 stars &mdash; click the left half of a star for a half rating. Click the same rating again to clear it.</p>
+                <div class="eval-criteria-table">
+                    <partial name="_CriteriaStarRows" model="Model.Rows" />
+                </div>
             </div>
 
-            <div class="card p-4">
-                <label class="form-label fw-semibold">Feedback</label>
-                <textarea asp-for="Evaluation.GeneralFeedback" class="form-control" rows="3" maxlength="1000"
+            <div class="tf-section mb-4">
+                <div class="tf-section-title mb-1">Feedback</div>
+                <p class="tf-section-sub mb-3">Summary of the employee's overall performance and areas for improvement.</p>
+                <textarea asp-for="Evaluation.GeneralFeedback" class="form-control eval-feedback" rows="5" maxlength="1000"
                           placeholder="Overall feedback for this evaluation period..."></textarea>
-                <div class="form-text">Covers both the evaluation and the appraisal decision.</div>
+                <div class="tf-form-hint">Covers both the evaluation and the appraisal decision.</div>
             </div>
+
         </div>
 
         <div class="col-lg-4">
-            <div class="card p-4 mb-3 sticky-top" style="top:1rem">
-                <h6 class="text-muted">Overall Score (preview)</h6>
-                <div class="display-6 fw-bold" id="overallScorePreview">@Model.Evaluation.OverallScore.ToString("0.#")</div>
-                <div class="text-muted small">out of 4</div>
-                <div class="mt-2 d-flex align-items-center gap-2">
-                    <span id="overallStarsPreview"></span>
-                    <span class="badge bg-primary-subtle text-primary" id="overallRatingPreview">@Model.Evaluation.OverallRating</span>
+            <div class="sticky-top" style="top:1rem">
+
+                @* ===================== Employee performance snapshot ===================== *@
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="eval-stat eval-stat-primary d-flex align-items-start gap-2">
+                            <div class="stat-icon icon-palette-primary"><i class="bi bi-check2-circle"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="stat-label">Completed Job/Task</div>
+                                <div class="stat-value">@Model.Stats.CompletedJobsTasks</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="eval-stat eval-stat-success d-flex align-items-start gap-2">
+                            <div class="stat-icon icon-palette-success"><i class="bi bi-clock-history"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="stat-label">On-time Rate</div>
+                                <div class="stat-value">@Model.Stats.OnTimeRate.ToString("0")%</div>
+                            </div>
+                        </div>
+                    </div>
+                    @* Office Staff office tasks never use the Rescheduled/Cancelled job ticket
+                       statuses, so those tiles would always read 0 for them - show the
+                       equivalents that actually apply instead. *@
+                    @if (Model.Employee?.RoleType == TM_PE.Model.RoleType.OfficeStaff)
+                    {
+                        <div class="col-6">
+                            <div class="eval-stat eval-stat-danger d-flex align-items-start gap-2">
+                                <div class="stat-icon icon-palette-danger"><i class="bi bi-hand-thumbs-down"></i></div>
+                                <div class="overflow-hidden">
+                                    <div class="stat-label">Rejected Activities</div>
+                                    <div class="stat-value">@Model.Stats.RejectedActivities</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2">
+                                <div class="stat-icon icon-palette-warning"><i class="bi bi-exclamation-triangle"></i></div>
+                                <div class="overflow-hidden">
+                                    <div class="stat-label">Overdue Task</div>
+                                    <div class="stat-value">@Model.Stats.OverdueTasks</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-6">
+                            <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2">
+                                <div class="stat-icon icon-palette-warning"><i class="bi bi-arrow-repeat"></i></div>
+                                <div class="overflow-hidden">
+                                    <div class="stat-label">Rescheduled</div>
+                                    <div class="stat-value">@Model.Stats.Rescheduled</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="eval-stat eval-stat-danger d-flex align-items-start gap-2">
+                                <div class="stat-icon icon-palette-danger"><i class="bi bi-x-circle"></i></div>
+                                <div class="overflow-hidden">
+                                    <div class="stat-label">Cancelled</div>
+                                    <div class="stat-value">@Model.Stats.Cancelled</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
 
-                <hr />
+                <div class="eval-score-card mb-3">
+                    <div class="eval-score-label">Overall Score (preview)</div>
+                    <div class="eval-score-value" id="overallScorePreview">@Model.Evaluation.OverallScore.ToString("0.#")</div>
+                    <div class="eval-score-out-of">out of 4</div>
+                    <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                        <span id="overallStarsPreview"></span>
+                        <span class="vm-status vm-status-pending" id="overallRatingPreview">@Model.Evaluation.OverallRating</span>
+                    </div>
+                </div>
 
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-outline-secondary" asp-page-handler="SaveDraft" asp-route-id="@Model.Evaluation.EvaluationID">
-                        <i class="bi bi-save"></i> Save as Draft
+                    <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft" asp-route-id="@Model.Evaluation.EvaluationID">
+                        Save as Draft
                     </button>
-                    <button type="submit" class="btn btn-primary" asp-page-handler="Finalize" asp-route-id="@Model.Evaluation.EvaluationID"
+                    <button type="submit" class="tf-btn-save" asp-page-handler="Finalize" asp-route-id="@Model.Evaluation.EvaluationID"
                             onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
-                        <i class="bi bi-check2-circle"></i> Finalize Evaluation
+                        Finalize Evaluation
                     </button>
                 </div>
-                <div class="form-text mt-2">A draft can still be edited later; finalizing locks it.</div>
+                <div class="tf-form-hint text-center mt-2">A draft can still be edited later; finalizing locks it.</div>
+
             </div>
         </div>
     </div>

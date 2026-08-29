@@ -619,6 +619,9 @@
                 if (currentRecords.length === 0) {
                     const colspan = (metric === 'ontime' ? 1 : 0) + (showAction ? 1 : 0) + 4;
                     recordsTableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-muted text-center py-3">No records found.</td></tr>`;
+                    // Clears any pagination control left over from a previous,
+                    // longer render of this same table (see below).
+                    if (window.TFPagination) window.TFPagination.init(recordsTableBody.closest('table'));
                     return;
                 }
 
@@ -647,6 +650,11 @@
                     `;
                     recordsTableBody.appendChild(tr);
                 });
+
+                // Rows are rebuilt from scratch every time a stat tile is clicked, so
+                // pagination has to be (re)built here too rather than only once at
+                // page load - see wwwroot/js/table-pagination.js.
+                if (window.TFPagination) window.TFPagination.init(recordsTableBody.closest('table'));
             }
 
             function showRecordDetail(item) {

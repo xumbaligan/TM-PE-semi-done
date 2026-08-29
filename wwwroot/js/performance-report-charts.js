@@ -48,14 +48,21 @@
 
     const emptyMsg = 'No evaluations match the current filters, so there is nothing to chart yet.';
 
-    // Same colours the rating badges (and the pie chart below) use, so every
-    // view of a rating reads as the same thing.
+    // Rating is a single ordered scale (Poor -> Excellent), not five unrelated
+    // categories, so it's encoded as an ordinal ramp - one hue, light to dark -
+    // rather than a mix of unrelated categorical hues. The hue is this app's
+    // own brand purple: the two darkest steps are the exact tokens already
+    // used for the header icon gradient and the pending-status pill
+    // (#9f4cd6 / #47076f in site.css), with lighter steps of the same hue
+    // filled in above them so the lightest tier still reads against the card
+    // background. Same colours drive both charts below, so every view of a
+    // rating reads as the same thing.
     const ratingColors = {
-        'Excellent': '#198754',
-        'Very Good': '#0d6efd',
-        'Good': '#0dcaf0',
-        'Needs Improvement': '#ffc107',
-        'Poor': '#dc3545'
+        'Poor': '#d9c2f0',
+        'Needs Improvement': '#c08fe3',
+        'Good': '#9f4cd6',
+        'Very Good': '#7226a8',
+        'Excellent': '#47076f'
     };
     const unevaluatedColor = '#adb5bd';
 

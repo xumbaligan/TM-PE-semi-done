@@ -29,8 +29,7 @@
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New User Account</a>
 </form>
 
-<div class="wlm-card">
-  <div class="table-responsive">
+<div class="table-responsive wlm-card">
     <table class="table table-hover wlm-table mb-0 align-middle">
         <thead>
             <tr>
@@ -40,7 +39,7 @@
                 <th>Created</th>
                 <th>Last Login</th>
                 <th>Status</th>
-                <th></th>
+                <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -109,7 +108,6 @@
             }
         </tbody>
     </table>
-  </div>
 </div>
 
 @section Scripts {

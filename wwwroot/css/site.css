@@ -221,7 +221,7 @@ body {
     width: 46px;
     height: 46px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    background: linear-gradient(135deg, #31055d, #47076f);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -784,7 +784,7 @@ body {
 */
 .icon-palette-primary {
     background: #ece4f7;
-    color: #47076f;
+    color: #31055d;
 }
 
 .icon-palette-success {
@@ -925,7 +925,7 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 11px;
-    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    background: linear-gradient(135deg, #31055d, #47076f);
     color: #fff;
     display: flex;
     align-items: center;
@@ -1094,7 +1094,7 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 11px;
-    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    background: linear-gradient(135deg, #31055d, #47076f);
     color: #fff;
     display: flex;
     align-items: center;
@@ -1441,7 +1441,7 @@ body {
     width: 46px;
     height: 46px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    background: linear-gradient(135deg, #31055d, #47076f);
     color: #fff;
     display: flex;
     align-items: center;
@@ -1535,6 +1535,15 @@ body {
     line-height: 1.5;
 }
 
+/* One entry in a plain list of dated events inside a .vm-card - reschedule
+   history, audit-style logs - a lighter-weight alternative to a full nested
+   .vm-card for content that's just a few lines per entry. */
+.vm-history-item {
+    border: 1px solid rgba(2,2,54,.12);
+    border-radius: 10px;
+    padding: .75rem 1rem;
+}
+
 /*
    Hairline between the columns of a stat grid. Only applied from md up -
    below that the columns stack and a left rule would sit across them.
@@ -1550,7 +1559,7 @@ body {
     width: 34px;
     height: 34px;
     border-radius: 9px;
-    background: linear-gradient(135deg, #1c0a4a, #47076f);
+    background: linear-gradient(135deg, #020236, #31055d);
     color: #fff;
     display: flex;
     align-items: center;
@@ -1668,6 +1677,47 @@ body {
         border-bottom: 0;
     }
 
+/* Prev/Next control appended below any table (see wwwroot/js/table-pagination.js)
+   once its tbody has more rows than fit on one page - keeps a long table from
+   just expanding the page instead of scrolling internally. */
+.tf-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .9rem;
+    padding: .75rem 0 .25rem;
+}
+
+.tf-pagination-info {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #020236;
+    min-width: 6.5rem;
+    text-align: center;
+}
+
+.tf-pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #fff;
+    border: 1.5px solid rgba(2,2,54,.25);
+    border-radius: 8px;
+    color: #020236;
+    font-size: .85rem;
+}
+
+    .tf-pagination-btn:hover:not(:disabled),
+    .tf-pagination-btn:focus:not(:disabled) {
+        background: #f4f4f8;
+    }
+
+    .tf-pagination-btn:disabled {
+        opacity: .4;
+    }
+
 /* Row number chip in front of each activity name. */
 .vm-num-badge {
     display: inline-flex;
@@ -1766,7 +1816,7 @@ body {
     width: 38px;
     height: 38px;
     border-radius: 9px;
-    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    background: linear-gradient(135deg, #31055d, #47076f);
     color: #fff;
     display: flex;
     align-items: center;
@@ -2050,6 +2100,30 @@ body {
     .vm-btn-sm:focus {
         background: #f4f4f8;
         color: #020236;
+    }
+
+/* Approve/Reject color variants of .vm-btn-sm, tinted with the same
+   green/red tokens as .vm-status-success / .vm-status-danger. */
+.vm-btn-sm-success {
+    border-color: #a9dcc0;
+    color: #219750;
+}
+
+    .vm-btn-sm-success:hover,
+    .vm-btn-sm-success:focus {
+        background: #e4f4ec;
+        color: #219750;
+    }
+
+.vm-btn-sm-danger {
+    border-color: #edb0b0;
+    color: #a21919;
+}
+
+    .vm-btn-sm-danger:hover,
+    .vm-btn-sm-danger:focus {
+        background: #fbe8e8;
+        color: #a21919;
     }
 
 /* Remove-file control, pinned to the corner of a file card. */

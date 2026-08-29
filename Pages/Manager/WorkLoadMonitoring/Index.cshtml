@@ -327,26 +327,33 @@
 @* ===================== Modal: Technician Ticket Details ===================== *@
 <div class="modal fade" id="technicianModal" tabindex="-1" aria-labelledby="technicianModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="technicianModalLabel"><i class="bi bi-person-badge"></i> <span id="technicianModalName"></span></h5>
+        <div class="modal-content vm-content">
+            <div class="modal-header vm-header">
+                <div class="vm-header-icon"><i class="bi bi-person-badge"></i></div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="vm-title" id="technicianModalLabel"><span id="technicianModalName"></span></div>
+                    <div class="vm-subtitle">Active Job Tickets</div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="row mb-3 small">
-                    <div class="col-sm-6">
-                        <div class="text-muted">Department</div>
-                        <div class="fw-semibold" id="technicianModalDepartment"></div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="text-muted">Active Job Tickets</div>
-                        <div class="fw-semibold" id="technicianModalActive"></div>
+            <hr class="vm-header-rule" />
+            <div class="modal-body vm-body">
+                <div class="vm-card mb-3">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="vm-label">Department</div>
+                            <div class="vm-value" id="technicianModalDepartment"></div>
+                        </div>
+                        <div class="col-sm-6 vm-col-divider">
+                            <div class="vm-label">Active Job Tickets</div>
+                            <div class="vm-value" id="technicianModalActive"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table align-middle table-sm">
+                    <table class="table vm-table align-middle">
                         <thead>
-                            <tr class="text-muted small">
+                            <tr>
                                 <th>Job ID</th>
                                 <th>Type of Job</th>
                                 <th>Client</th>
@@ -375,26 +382,33 @@
 @* ===================== Modal: Office Staff Task Details ===================== *@
 <div class="modal fade" id="staffModal" tabindex="-1" aria-labelledby="staffModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="staffModalLabel"><i class="bi bi-person-badge"></i> <span id="staffModalName"></span></h5>
+        <div class="modal-content vm-content">
+            <div class="modal-header vm-header">
+                <div class="vm-header-icon"><i class="bi bi-person-badge"></i></div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="vm-title" id="staffModalLabel"><span id="staffModalName"></span></div>
+                    <div class="vm-subtitle">Active Tasks</div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="row mb-3 small">
-                    <div class="col-sm-6">
-                        <div class="text-muted">Department</div>
-                        <div class="fw-semibold" id="staffModalDepartment"></div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="text-muted">Active Tasks</div>
-                        <div class="fw-semibold" id="staffModalActive"></div>
+            <hr class="vm-header-rule" />
+            <div class="modal-body vm-body">
+                <div class="vm-card mb-3">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="vm-label">Department</div>
+                            <div class="vm-value" id="staffModalDepartment"></div>
+                        </div>
+                        <div class="col-sm-6 vm-col-divider">
+                            <div class="vm-label">Active Tasks</div>
+                            <div class="vm-value" id="staffModalActive"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table align-middle table-sm">
+                    <table class="table vm-table align-middle">
                         <thead>
-                            <tr class="text-muted small">
+                            <tr>
                                 <th>Task ID</th>
                                 <th>Task Name</th>
                                 <th>Status</th>
@@ -440,14 +454,14 @@
                     list.innerHTML = '';
 
                     if (tickets.length === 0) {
-                        list.innerHTML = '<tr><td colspan="6" class="text-muted small">No active tickets</td></tr>';
+                        list.innerHTML = '<tr><td colspan="6"><span class="tf-empty-msg">No active tickets</span></td></tr>';
                         return;
                     }
 
                     tickets.forEach(t => {
                         const statusClass = t.Status === 'In Progress'
-                            ? 'bg-warning-subtle text-warning'
-                            : 'bg-secondary-subtle text-secondary';
+                            ? 'vm-status-info'
+                            : 'vm-status-pending';
                         const serviceDate = new Date(t.ServiceDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
                         const dueDate = t.DueDate
                             ? new Date(t.DueDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
@@ -455,12 +469,12 @@
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td class="small fw-semibold">${t.TicketNumber}</td>
-                            <td class="small">${t.JobType}</td>
-                            <td class="small">${t.JobType === 'Maintenance' ? '—' : t.ClientFullName}</td>
-                            <td class="small"><span class="badge rounded-pill ${statusClass}">${t.Status}</span></td>
-                            <td class="small text-muted">${serviceDate}</td>
-                            <td class="small text-muted">${dueDate}</td>
+                            <td class="fw-semibold">${t.TicketNumber}</td>
+                            <td>${t.JobType}</td>
+                            <td>${t.JobType === 'Maintenance' ? '—' : t.ClientFullName}</td>
+                            <td><span class="vm-status ${statusClass}">${t.Status}</span></td>
+                            <td class="text-nowrap">${serviceDate}</td>
+                            <td class="text-nowrap">${dueDate}</td>
                         `;
                         list.appendChild(row);
                     });
@@ -484,26 +498,26 @@
                     list.innerHTML = '';
 
                     if (tasks.length === 0) {
-                        list.innerHTML = '<tr><td colspan="5" class="text-muted small">No active tasks</td></tr>';
+                        list.innerHTML = '<tr><td colspan="5"><span class="tf-empty-msg">No active tasks</span></td></tr>';
                         return;
                     }
 
                     tasks.forEach(t => {
                         const statusClass = t.Status === 'Overdue'
-                            ? 'bg-danger-subtle text-danger'
+                            ? 'vm-status-danger'
                             : t.Status === 'In Progress'
-                                ? 'bg-warning-subtle text-warning'
-                                : 'bg-secondary-subtle text-secondary';
+                                ? 'vm-status-info'
+                                : 'vm-status-pending';
                         const dateCreated = new Date(t.DateCreated).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
                         const dueDate = new Date(t.DueDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td class="small fw-semibold">${t.TaskNumber}</td>
-                            <td class="small">${t.TaskName}</td>
-                            <td class="small"><span class="badge rounded-pill ${statusClass}">${t.Status}</span></td>
-                            <td class="small text-muted">${dateCreated}</td>
-                            <td class="small text-muted">${dueDate}</td>
+                            <td class="fw-semibold">${t.TaskNumber}</td>
+                            <td>${t.TaskName}</td>
+                            <td><span class="vm-status ${statusClass}">${t.Status}</span></td>
+                            <td class="text-nowrap">${dateCreated}</td>
+                            <td class="text-nowrap">${dueDate}</td>
                         `;
                         list.appendChild(row);
                     });
