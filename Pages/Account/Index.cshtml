@@ -6,80 +6,104 @@
     var emp = Model.Account.Employee;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2><i class="bi bi-person-circle"></i> My Account</h2>
+<div class="mb-3">
+    <h2 class="mb-1 fw-bold">My Account</h2>
+    <p class="text-muted mb-0">Manage your account information and security settings.</p>
 </div>
+<hr class="page-divider" />
 
 <div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card p-4 mb-4">
-            <h5 class="mb-3">Account</h5>
-            <div class="row g-3">
+    <div class="col-lg-8">
+        <div class="account-card mb-4">
+            <div class="account-card-title">Account Overview</div>
+            <div class="row g-4">
                 <div class="col-md-6">
-                    <div class="text-muted small">Username</div>
-                    <div class="fw-semibold"><code>@Model.Account.Username</code></div>
-                </div>
-                <div class="col-md-6">
-                    <div class="text-muted small">Status</div>
-                    <div>
-                        @if (Model.Account.IsActive)
-                        {
-                            <span class="badge bg-success-subtle text-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning-subtle text-warning-emphasis">Disabled</span>
-                        }
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-person-badge"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Username</div>
+                            <div class="account-value">@Model.Account.Username</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="text-muted small">Account Created</div>
-                    <div class="fw-semibold">@Model.Account.DateCreated.ToString("MMMM d, yyyy")</div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-calendar-check"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Hired At</div>
+                            <div class="account-value">@(emp != null ? emp.HiredAt.ToString("MMMM d, yyyy") : "—")</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="text-muted small">Last Login</div>
-                    <div class="fw-semibold">@(Model.Account.LastLogin.HasValue ? Model.Account.LastLogin.Value.ToString("MMMM d, yyyy h:mm tt") : "Never")</div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-calendar3"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Account Created</div>
+                            <div class="account-value">@Model.Account.DateCreated.ToString("MMMM d, yyyy")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-hourglass-split"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Last Login</div>
+                            <div class="account-value">
+                                @(Model.Account.LastLogin.HasValue
+                                                                ? Model.Account.LastLogin.Value.ToString("MMMM d, yyyy h:mm tt")
+                                                                : "Never")
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card p-4">
-            <h5 class="mb-3">Employee Information</h5>
+        <div class="account-card">
+            <div class="account-card-title">Employee's Information</div>
             @if (emp == null)
             {
                 <div class="text-muted">Employee record not found.</div>
             }
             else
             {
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="text-muted small">Full Name</div>
-                        <div class="fw-semibold">@emp.FullName</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Email</div>
-                        <div class="fw-semibold">@emp.Email</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Role</div>
-                        <div><span class="badge bg-primary-subtle text-primary-emphasis">@emp.RoleType</span></div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Department</div>
-                        <div class="fw-semibold">@(emp.Department?.DepartmentName ?? "—")</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Hired At</div>
-                        <div class="fw-semibold">@emp.HiredAt.ToString("MMMM d, yyyy")</div>
+                <div class="account-employee-box">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="account-label">Full Name</div>
+                            <div class="account-value account-value-caps">@emp.FullName</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Email</div>
+                            <div class="account-value">@emp.Email</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Role</div>
+                            <div class="account-value account-value-caps">@emp.RoleType</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Status</div>
+                            <div>
+                                <span class="status-badge @(Model.Account.IsActive ? "status-badge-active" : "status-badge-inactive")">
+                                    @(Model.Account.IsActive ? "Active" : "Disabled")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Department</div>
+                            <div class="account-value account-value-caps">@(emp.Department?.DepartmentName ?? "—")</div>
+                        </div>
                     </div>
                 </div>
             }
         </div>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card p-4">
-            <h5 class="mb-3"><i class="bi bi-key"></i> Change Password</h5>
+    <div class="col-lg-4">
+        <div class="account-card">
+            <div class="account-card-title">Change Password</div>
+
             @if (!string.IsNullOrEmpty(Model.Message))
             {
                 <div class="alert alert-success py-2 small">@Model.Message</div>
@@ -88,22 +112,66 @@
             {
                 <div class="alert alert-danger py-2 small">@Model.Error</div>
             }
+
             <form method="post" asp-page-handler="ChangePassword">
-                <div class="mb-2">
-                    <label class="form-label">Current Password</label>
-                    <input class="form-control" type="password" asp-for="CurrentPassword" maxlength="10" autocomplete="current-password" />
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">New Password</label>
-                    <input class="form-control" type="password" asp-for="NewPassword" maxlength="10" inputmode="numeric" pattern="\d{8,10}" autocomplete="new-password" />
-                    <div class="form-text">8-10 digits, numbers only.</div>
-                </div>
                 <div class="mb-3">
-                    <label class="form-label">Confirm New Password</label>
-                    <input class="form-control" type="password" asp-for="ConfirmNewPassword" maxlength="10" inputmode="numeric" pattern="\d{8,10}" autocomplete="new-password" />
+                    <label class="account-form-label" asp-for="CurrentPassword">Current Password</label>
+                    <div class="account-input-group">
+                        <input type="password" asp-for="CurrentPassword" maxlength="10" autocomplete="current-password" />
+                        <button type="button" data-password-toggle="CurrentPassword" tabindex="-1" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-primary btn-sm">Change Password</button>
+
+                <div class="mb-3">
+                    <label class="account-form-label" asp-for="NewPassword">New Password</label>
+                    <div class="account-input-group">
+                        <input type="password" asp-for="NewPassword" maxlength="10" inputmode="numeric"
+                               pattern="\d{8,10}" autocomplete="new-password" />
+                        <button type="button" data-password-toggle="NewPassword" tabindex="-1" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="account-form-hint">8-10 digits, numbers only.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="account-form-label" asp-for="ConfirmNewPassword">Confirm New Password</label>
+                    <div class="account-input-group">
+                        <input type="password" asp-for="ConfirmNewPassword" maxlength="10" inputmode="numeric"
+                               pattern="\d{8,10}" autocomplete="new-password" />
+                        <button type="button" data-password-toggle="ConfirmNewPassword" tabindex="-1" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="account-btn-submit">Change password</button>
+                </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // One handler for all three fields - each button names the input it
+        // controls via data-password-toggle, so adding a field needs no JS change.
+        document.querySelectorAll('[data-password-toggle]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.getElementById(btn.dataset.passwordToggle);
+                if (!input) return;
+
+                var icon = btn.querySelector('i');
+                var isHidden = input.type === 'password';
+
+                input.type = isHidden ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !isHidden);
+                icon.classList.toggle('bi-eye-slash', isHidden);
+                btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            });
+        });
+    </script>
+}

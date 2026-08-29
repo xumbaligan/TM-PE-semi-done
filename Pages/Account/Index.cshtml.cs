@@ -35,6 +35,11 @@ namespace TM_PE.Pages.Account
         public string? Message { get; set; }
         public string? Error { get; set; }
 
+        // Personal "Employee Workload Summary" card - same signals/weighting as
+        // Manager > Workload Monitoring's Employee Workload Summary tab, just
+        // scoped to this one logged-in employee instead of every employee.
+        public WorkloadSummary Workload { get; set; } = new();
+
         public async Task<IActionResult> OnGetAsync()
         {
             var redirect = await LoadAsync();
@@ -109,7 +114,87 @@ namespace TM_PE.Pages.Account
             }
 
             Account = account;
+            Workload = account.Employee != null
+                ? await BuildWorkloadSummaryAsync(account.Employee.EmployeeId, account.Employee.RoleType)
+                : new WorkloadSummary();
             return null;
+        }
+
+        // Mirrors Manager/WorkLoadMonitoring/IndexModel's BuildWorkloadSummary /
+        // BuildTechnicianWorkloadSummary weighting for a single employee: Office
+        // Staff are measured by tasks + pending activities, Field Technicians by
+        // job tickets. Managers/Admins have no personal workload in this schema.
+        private async Task<WorkloadSummary> BuildWorkloadSummaryAsync(int employeeId, RoleType role)
+        {
+            var today = DateTime.Now.Date;
+
+            if (role == RoleType.FieldTechnician)
+            {
+                var tickets = await _context.JobTickets
+                    .Where(t => t.Assignments.Any(a => a.EmployeeID == employeeId))
+                    .ToListAsync();
+
+                var active = tickets.Count(t => t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress);
+                var overdue = tickets.Count(t =>
+                    t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress
+                    && t.ServiceDate.Date < today);
+                var completed = tickets.Count(t => t.Status == JobTicketStatuses.Completed);
+                var points = (active * 2) + (overdue * 2);
+
+                return new WorkloadSummary
+                {
+                    Kind = "Technician",
+                    Active = active,
+                    Overdue = overdue,
+                    Completed = completed,
+                    WorkloadPoints = points,
+                    WorkloadLevel = points switch { <= 2 => "Light", <= 6 => "Moderate", _ => "Heavy" }
+                };
+            }
+
+            if (role == RoleType.OfficeStaff)
+            {
+                var tasks = await _context.OfficeTasks
+                    .Where(t => t.Assignments.Any(a => a.EmployeeID == employeeId))
+                    .ToListAsync();
+
+                var active = tasks.Count(t => t.Status is "Pending" or "In Progress" or "Overdue");
+                var overdue = tasks.Count(t => t.Status == "Overdue");
+                var completed = tasks.Count(t => t.Status == "Completed");
+
+                var pendingActivities = await _context.TaskActivities
+                    .CountAsync(a => a.AssignedEmployeeID == employeeId && a.Status != "Approved");
+
+                var avgScore = tasks.Any() ? Math.Round(tasks.Average(t => t.Score), 1) : 0;
+                var points = (active * 2) + pendingActivities + (overdue * 2);
+
+                return new WorkloadSummary
+                {
+                    Kind = "Staff",
+                    Active = active,
+                    Overdue = overdue,
+                    Completed = completed,
+                    PendingActivities = pendingActivities,
+                    AvgScore = avgScore,
+                    WorkloadPoints = points,
+                    WorkloadLevel = points switch { <= 2 => "Light", <= 6 => "Moderate", _ => "Heavy" }
+                };
+            }
+
+            return new WorkloadSummary();
+        }
+
+        public class WorkloadSummary
+        {
+            // "Technician", "Staff", or "None" (Managers/Admins have no personal workload).
+            public string Kind { get; set; } = "None";
+            public int Active { get; set; }
+            public int Overdue { get; set; }
+            public int Completed { get; set; }
+            public int PendingActivities { get; set; }
+            public decimal AvgScore { get; set; }
+            public int WorkloadPoints { get; set; }
+            public string WorkloadLevel { get; set; } = "Light";
         }
     }
 }

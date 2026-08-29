@@ -3,17 +3,6 @@
 @{
     ViewData["Title"] = "Tasks";
     Layout = "_Layout";
-
-    var statusOptions = new (string Value, string Label)[]
-    {
-        ("", "All Statuses"),
-        ("Pending", "Pending"),
-        ("In Progress", "In Progress"),
-        ("Completed", "Completed"),
-        ("Completed Late", "Completed Late"),
-        ("Overdue", "Overdue"),
-    };
-    var currentStatusLabel = statusOptions.FirstOrDefault(o => o.Value == (Model.StatusFilter ?? "")).Label ?? "All Statuses";
 }
 <div class="mb-3">
     <h2 class="mb-1"><i class="bi bi-card-checklist"></i> Task Assignments</h2>
@@ -27,23 +16,14 @@
         <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
                value="@Model.Search" placeholder="Search by employee, task #, or task name..." />
     </div>
-    <div class="dropdown">
-        <button class="btn status-dropdown-btn dropdown-toggle" type="button" id="statusDropdownBtn"
-                data-bs-toggle="dropdown" aria-expanded="false" style="max-width:220px;">
-            @currentStatusLabel
-        </button>
-        <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="statusDropdownBtn">
-            @foreach (var opt in statusOptions)
-            {
-                <li>
-                    <a class="dropdown-item @((Model.StatusFilter ?? "") == opt.Value ? "active" : "")" href="#" data-value="@opt.Value">
-                        @opt.Label
-                    </a>
-                </li>
-            }
-        </ul>
-    </div>
-    <input type="hidden" name="status" id="liveStatus" value="@Model.StatusFilter" />
+    <select class="form-select" name="status" id="liveStatus" style="max-width:220px;">
+        <option value="">All Statuses</option>
+        <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+        <option value="In Progress" selected="@(Model.StatusFilter == "In Progress")">In Progress</option>
+        <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
+        <option value="Completed Late" selected="@(Model.StatusFilter == "Completed Late")">Completed Late</option>
+        <option value="Overdue" selected="@(Model.StatusFilter == "Overdue")">Overdue</option>
+    </select>
     <a asp-page="Create" class="btn btn-navy ms-auto">
         <i class="bi bi-plus-lg"></i> Create New
     </a>
@@ -199,105 +179,123 @@ else if (Model.ActivityFilter == "rejected")
 {
     var modalBadgeClass = item.DisplayStatus switch
     {
-        "Completed" => "bg-success-subtle text-success",
-        "Completed Late" => "bg-warning-subtle text-warning-emphasis",
-        "In Progress" => "bg-info-subtle text-info",
-        "Overdue" => "bg-danger-subtle text-danger",
-        _ => "bg-secondary-subtle text-secondary"
+        "Completed" => "vm-status-success",
+        "Completed Late" => "vm-status-warning",
+        "In Progress" => "vm-status-info",
+        "Overdue" => "vm-status-danger",
+        _ => "vm-status-pending"
     };
+
+    var approvedCount = item.Activities?.Count(a => a.Status == "Approved") ?? 0;
+    var totalCount = item.Activities?.Count ?? 0;
 
     <div class="modal fade" id="viewModal-@item.OfficeTaskID" tabindex="-1"
          aria-labelledby="viewModalLabel-@item.OfficeTaskID" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title fw-bold mb-0" id="viewModalLabel-@item.OfficeTaskID">
-                            @item.TaskName
-                        </h5>
-                        <div class="text-muted small">Task #@item.TaskNumber</div>
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content vm-content">
+
+                <div class="modal-header vm-header">
+                    <div class="vm-header-icon"><i class="bi bi-clipboard-check"></i></div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="vm-title" id="viewModalLabel-@item.OfficeTaskID">@item.TaskName</div>
+                        <div class="vm-subtitle">@item.TaskNumber</div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <hr class="vm-header-rule" />
 
-                    @if (!string.IsNullOrWhiteSpace(item.Description))
-                    {
-                        <p class="mb-3">@item.Description</p>
-                    }
+                <div class="modal-body vm-body">
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Status</div>
-                            <span class="status-badge @modalBadgeClass">
-                                @item.DisplayStatus
-                            </span>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Progress</div>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress flex-grow-1" style="height:6px; min-width:80px;">
-                                    <div class="progress-bar progress-bar-brand" role="progressbar"
-                                         style="width:@(item.Progress)%;"
-                                         aria-valuenow="@item.Progress"
-                                         aria-valuemin="0"
-                                         aria-valuemax="100">
-                                    </div>
-                                </div>
-                                <span class="text-muted small">@item.Progress%</span>
+                    @* Status / Progress / Assigned By, then the three dates. *@
+                    <div class="vm-card mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="vm-label">Status</div>
+                                <span class="vm-status @modalBadgeClass">@item.DisplayStatus</span>
                             </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Due Date</div>
-                            <div>@item.DueDate.ToString("M/d/yyyy")</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Date Created</div>
-                            <div>@item.DateCreated.ToString("M/d/yyyy")</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Date Completed</div>
-                            <div>@(item.DateCompleted?.ToString("M/d/yyyy") ?? "—")</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Assigned By</div>
-                            <div>@(item.AssignedByEmployee?.FullName ?? "—")</div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">Progress</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height:8px; min-width:80px;">
+                                        <div class="progress-bar progress-bar-brand" role="progressbar"
+                                             style="width:@(item.Progress)%;"
+                                             aria-valuenow="@item.Progress"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <span class="vm-value">@item.Progress%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">Assigned By</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-person-circle"></i>
+                                    @(item.AssignedByEmployee?.FullName ?? "—")
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="vm-label">Date Created</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-calendar3"></i>
+                                    @item.DateCreated.ToString("M/d/yyyy")
+                                </div>
+                            </div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">Due Date</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-calendar-event"></i>
+                                    @item.DueDate.ToString("M/d/yyyy")
+                                </div>
+                            </div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">Date Completed</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-calendar-check"></i>
+                                    @(item.DateCompleted?.ToString("M/d/yyyy") ?? "—/—/—")
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <div class="text-muted small mb-2">Assignees</div>
-                        @if (item.Assignments != null && item.Assignments.Any())
+                    @if (!string.IsNullOrWhiteSpace(item.Description))
+                    {
+                        <div class="vm-card mb-3">
+                            <div class="vm-card-label mb-2">Description</div>
+                            <div class="vm-text">@item.Description</div>
+                        </div>
+                    }
+
+                    <div class="vm-card mb-3">
+                        <div class="vm-card-label mb-2">Assignee's</div>
+                        @if (item.Assignments != null && item.Assignments.Any(a => a.Employee != null))
                         {
                             <div class="d-flex flex-wrap gap-2">
                                 @foreach (var a in item.Assignments.Where(a => a.Employee != null))
                                 {
-                                    <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
-                                        @a.Employee!.FullName
-                                    </span>
+                                    <span class="vm-pill">@a.Employee!.FullName</span>
                                 }
                             </div>
                         }
                         else
                         {
-                            <span class="text-muted">No assignees</span>
+                            <span class="tf-empty-msg">No assignees</span>
                         }
                     </div>
 
-                    <div>
-                        <div class="text-muted small mb-2">
-                            Activities
-                            <span class="badge bg-primary-subtle text-primary rounded-pill ms-1">
-                                @(item.Activities?.Count(a => a.Status == "Approved") ?? 0)/@(item.Activities?.Count ?? 0) Approved
-                            </span>
+                    <div class="vm-card">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="vm-card-label">Activities</span>
+                            <span class="vm-count-badge">@approvedCount/@totalCount</span>
                         </div>
 
                         @if (item.Activities != null && item.Activities.Any())
                         {
                             <div class="table-responsive">
-                                <table class="table table-sm align-middle mb-0">
+                                <table class="table vm-table align-middle">
                                     <thead>
-                                        <tr class="text-muted small">
+                                        <tr>
                                             <th>Activity</th>
                                             <th>Status</th>
                                             <th>Feedback</th>
@@ -305,24 +303,29 @@ else if (Model.ActivityFilter == "rejected")
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @{
+                                            var activityIndex = 0;
+                                        }
                                         @foreach (var activity in item.Activities)
                                         {
+                                            activityIndex++;
                                             var activityBadgeClass = activity.Status switch
                                             {
-                                                "Approved" => "bg-success-subtle text-success",
-                                                "Revised" => "bg-info-subtle text-info",
-                                                _ => "bg-secondary-subtle text-secondary"
+                                                "Approved" => "vm-status-success",
+                                                "Revised" => "vm-status-info",
+                                                _ => "vm-status-pending"
                                             };
                                             <tr>
                                                 <td>
-                                                    <div class="fw-semibold">@activity.ActivityName</div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="vm-num-badge">@activityIndex</span>
+                                                        <span class="fw-bold">@activity.ActivityName</span>
+                                                    </div>
                                                 </td>
                                                 <td>
-                                                    <span class="badge rounded-pill @activityBadgeClass px-2 py-1">
-                                                        @activity.Status
-                                                    </span>
+                                                    <span class="vm-status @activityBadgeClass">@activity.Status</span>
                                                 </td>
-                                                <td class="text-muted small">
+                                                <td class="text-muted">
                                                     @if (!string.IsNullOrWhiteSpace(activity.FeedBack))
                                                     {
                                                         @activity.FeedBack
@@ -332,7 +335,7 @@ else if (Model.ActivityFilter == "rejected")
                                                         <span class="text-muted">—</span>
                                                     }
                                                 </td>
-                                                <td class="text-muted small">
+                                                <td class="fw-bold">
                                                     @activity.DateCreated.ToString("M/d/yyyy")
                                                 </td>
                                             </tr>
@@ -343,17 +346,19 @@ else if (Model.ActivityFilter == "rejected")
                         }
                         else
                         {
-                            <span class="text-muted">No activities recorded for this task.</span>
+                            <span class="tf-empty-msg">No activities recorded for this task.</span>
                         }
                     </div>
 
                 </div>
-                <div class="modal-footer">
-                    <a asp-page="./Details" asp-route-id="@item.OfficeTaskID" class="btn btn-outline-navy btn-sm">
+
+                <div class="modal-footer vm-footer">
+                    <button type="button" class="vm-btn-close" data-bs-dismiss="modal">Close</button>
+                    <a asp-page="./Details" asp-route-id="@item.OfficeTaskID" class="vm-btn-primary">
                         Open Full Details
                     </a>
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
+
             </div>
         </div>
     </div>
@@ -362,14 +367,12 @@ else if (Model.ActivityFilter == "rejected")
 @section Scripts {
     <script>
         const searchInput = document.getElementById('liveSearch');
-        const statusInput = document.getElementById('liveStatus');
-        const statusDropdownBtn = document.getElementById('statusDropdownBtn');
-        const statusItems = document.querySelectorAll('.status-dropdown-menu .dropdown-item');
+        const statusSelect = document.getElementById('liveStatus');
         const rows = document.querySelectorAll('tbody tr[data-taskid]');
 
         function filterTable() {
             const searchVal = searchInput.value.toLowerCase().trim();
-            const statusVal = statusInput.value.toLowerCase().trim();
+            const statusVal = statusSelect.value.toLowerCase().trim();
             let visibleCount = 0;
 
             rows.forEach(row => {
@@ -396,16 +399,7 @@ else if (Model.ActivityFilter == "rejected")
         }
 
         searchInput.addEventListener('input', filterTable);
-        statusItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                statusItems.forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                statusInput.value = item.dataset.value;
-                statusDropdownBtn.textContent = item.textContent.trim();
-                filterTable();
-            });
-        });
+        statusSelect.addEventListener('change', filterTable);
 
         // Apply immediately on load too, so a link that arrives with
         // ?status=... (e.g. from the Dashboard) actually filters the table

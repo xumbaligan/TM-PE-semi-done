@@ -3,20 +3,6 @@
 @{
     ViewData["Title"] = "Job Tickets";
     Layout = "_Layout";
-
-    var statusOptions = new (string Value, string Label)[]
-    {
-        ("", "All Statuses"),
-        ("Pending", "Pending"),
-        ("In Progress", "In Progress"),
-        ("Reschedule Request", "Reschedule Request"),
-        ("Completed", "Completed"),
-        ("Completed Late", "Completed Late"),
-        ("Cancelled", "Cancelled"),
-        ("Rescheduled", "Rescheduled"),
-        ("Overdue", "Overdue"),
-    };
-    var currentStatusLabel = statusOptions.FirstOrDefault(o => o.Value == (Model.StatusFilter ?? "")).Label ?? "All Statuses";
 }
 <div class="mb-3">
     <h2 class="mb-1"><i class="bi bi-tools"></i> Job Ticket Management</h2>
@@ -30,23 +16,17 @@
         <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
                value="@Model.Search" placeholder="Search by leader, job type, ticket #, or client..." />
     </div>
-    <div class="dropdown">
-        <button class="btn status-dropdown-btn dropdown-toggle" type="button" id="statusDropdownBtn"
-                data-bs-toggle="dropdown" aria-expanded="false" style="max-width:220px;">
-            @currentStatusLabel
-        </button>
-        <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="statusDropdownBtn">
-            @foreach (var opt in statusOptions)
-            {
-                <li>
-                    <a class="dropdown-item @((Model.StatusFilter ?? "") == opt.Value ? "active" : "")" href="#" data-value="@opt.Value">
-                        @opt.Label
-                    </a>
-                </li>
-            }
-        </ul>
-    </div>
-    <input type="hidden" name="status" id="liveStatus" value="@Model.StatusFilter" />
+    <select class="form-select" name="status" id="liveStatus" style="max-width:220px;">
+        <option value="">All Statuses</option>
+        <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+        <option value="In Progress" selected="@(Model.StatusFilter == "In Progress")">In Progress</option>
+        <option value="Reschedule Request" selected="@(Model.StatusFilter == "Reschedule Request")">Reschedule Request</option>
+        <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
+        <option value="Completed Late" selected="@(Model.StatusFilter == "Completed Late")">Completed Late</option>
+        <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
+        <option value="Rescheduled" selected="@(Model.StatusFilter == "Rescheduled")">Rescheduled</option>
+        <option value="Overdue" selected="@(Model.StatusFilter == "Overdue")">Overdue</option>
+    </select>
     <a asp-page="Create" class="btn btn-navy ms-auto">
         <i class="bi bi-plus-lg"></i> Create New
     </a>
@@ -143,119 +123,218 @@
 {
     var modalBadgeClass = item.DisplayStatus switch
     {
-        "Approved" => "bg-primary-subtle text-primary",
-        "Completed" => "bg-success-subtle text-success",
-        "Completed Late" => "bg-warning-subtle text-warning-emphasis",
-        "In Progress" => "bg-info-subtle text-info",
-        "Cancelled" => "bg-danger-subtle text-danger",
-        "Rescheduled" => "bg-warning-subtle text-warning-emphasis",
-        "Overdue" => "bg-danger-subtle text-danger-emphasis",
-        _ => "bg-secondary-subtle text-secondary"
+        "Approved" => "vm-status-info",
+        "Completed" => "vm-status-success",
+        "Completed Late" => "vm-status-warning",
+        "In Progress" => "vm-status-info",
+        "Cancelled" => "vm-status-danger",
+        "Rescheduled" => "vm-status-warning",
+        "Overdue" => "vm-status-danger",
+        _ => "vm-status-pending"
+    };
+
+    var jobTypeIcon = item.JobType switch
+    {
+        "Installation" => "bi-hdd-network",
+        "Repair" => "bi-wrench-adjustable",
+        "Inspection" => "bi-tools",
+        "Maintenance" => "bi-gear-wide-connected",
+        _ => "bi-tools"
     };
 
     <div class="modal fade" id="viewModal-@item.JobTicketID" tabindex="-1"
          aria-labelledby="viewModalLabel-@item.JobTicketID" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title fw-bold mb-0" id="viewModalLabel-@item.JobTicketID">
-                            @item.JobType
-                        </h5>
-                        <div class="text-muted small">Ticket #@item.TicketNumber</div>
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content vm-content">
+
+                <div class="modal-header vm-header">
+                    <div class="vm-header-icon"><i class="bi @jobTypeIcon"></i></div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="vm-title" id="viewModalLabel-@item.JobTicketID">@item.JobType</div>
+                        <div class="vm-subtitle">@item.TicketNumber</div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <hr class="vm-header-rule" />
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Status</div>
-                            <span class="status-badge @modalBadgeClass">
-                                @item.DisplayStatus
-                            </span>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Date Created</div>
-                            <div>@item.DateCreated.ToString("M/d/yyyy")</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">@item.ServiceDateLabel</div>
-                            <div>@item.ServiceDate.ToString("M/d/yyyy")</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Due Date</div>
-                            <div>@(item.DateOfCompletion?.ToString("M/d/yyyy") ?? "—")</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Date Completed</div>
-                            <div>@(item.DateCompleted?.ToString("M/d/yyyy") ?? "—")</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted small">Assigned By</div>
-                            <div>@(item.AssignedByEmployee?.FullName ?? "—")</div>
+                <div class="modal-body vm-body">
+
+                    @*
+                        Three even columns per row, so the second row sits on the
+                        same vertical rules as the first instead of leaving two
+                        orphaned cells - matched across the details pages too.
+                    *@
+                    <div class="vm-card mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="vm-label">Status</div>
+                                <span class="vm-status @modalBadgeClass">@item.DisplayStatus</span>
+                            </div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">@item.ServiceDateLabel</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-calendar-event"></i>
+                                    @item.ServiceDate.ToString("M/d/yyyy")
+                                </div>
+                            </div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">Assigned By</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-person-circle"></i>
+                                    @(item.AssignedByEmployee?.FullName ?? "—")
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="vm-label">Date Created</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-calendar3"></i>
+                                    @item.DateCreated.ToString("M/d/yyyy")
+                                </div>
+                            </div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">Due Date</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-calendar-week"></i>
+                                    @(item.DateOfCompletion?.ToString("M/d/yyyy") ?? "—")
+                                </div>
+                            </div>
+                            <div class="col-md-4 vm-col-divider">
+                                <div class="vm-label">Date Completed</div>
+                                <div class="vm-value">
+                                    <i class="bi bi-calendar-check"></i>
+                                    @(item.DateCompleted?.ToString("M/d/yyyy") ?? "—/—/—")
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    @if (item.JobType != TM_PE.Model.JobTypes.Maintenance)
-                    {
-                        <div class="row g-3 mb-4">
-                            <div class="col-sm-4">
-                                <div class="text-muted small">Client</div>
-                                <div>@item.ClientFullName</div>
-                            </div>
-                            <div class="col-sm-4">
-                                <div class="text-muted small">Primary Number</div>
-                                <div>@item.PrimaryNumber</div>
-                            </div>
-                            <div class="col-sm-4">
-                                <div class="text-muted small">Secondary Number</div>
-                                <div>@(string.IsNullOrWhiteSpace(item.SecondaryNumber) ? "—" : item.SecondaryNumber)</div>
-                            </div>
-                        </div>
+                    @*
+                        Maintenance tickets carry no client details, so the Client
+                        Information card is skipped. When that happens, Location and
+                        Description sit side by side across the full width instead of
+                        stacking in the right half - otherwise they'd hang off the
+                        right edge with an empty column beside them, out of line with
+                        the date strip above.
+                    *@
+                    @{
+                        var hasClientInfo = item.JobType != TM_PE.Model.JobTypes.Maintenance;
                     }
 
-                    <div class="row g-3 mb-4">
-                        @if (item.JobType == "Installation")
+                    <div class="row g-3 mb-3">
+
+                        @if (hasClientInfo)
                         {
-                            <div class="col-sm-4">
-                                <div class="text-muted small">Fiber Plan</div>
-                                <div>₱@item.FiberPlan</div>
-                            </div>
-                            <div class="col-sm-8">
-                                <div class="text-muted small">Location</div>
-                                <div>@item.LocationAddress</div>
+                            <div class="col-lg-6">
+                                <div class="vm-card">
+                                    <div class="vm-card-title">Client Information</div>
+
+                                    <div class="d-flex align-items-center gap-3 mb-3">
+                                        <div class="vm-icon-tile"><i class="bi bi-person-fill"></i></div>
+                                        <div class="overflow-hidden">
+                                            <div class="vm-label">Client</div>
+                                            <div class="vm-value">@item.ClientFullName</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="vm-icon-tile"><i class="bi bi-telephone-fill"></i></div>
+                                                <div class="overflow-hidden">
+                                                    <div class="vm-label">Primary Number</div>
+                                                    <div class="vm-value">@item.PrimaryNumber</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 vm-col-divider">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="vm-icon-tile"><i class="bi bi-telephone"></i></div>
+                                                <div class="overflow-hidden">
+                                                    <div class="vm-label">Secondary Number</div>
+                                                    <div class="vm-value">@(string.IsNullOrWhiteSpace(item.SecondaryNumber) ? "—" : item.SecondaryNumber)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         }
-                        else
-                        {
-                            <div class="col-sm-4">
-                                <div class="text-muted small">Description</div>
-                                <div>@item.Description</div>
+
+                        <div class="col-lg-6 @(hasClientInfo ? "d-flex flex-column gap-3" : "")">
+
+                            <div class="vm-card">
+                                <div class="vm-card-title">Location</div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="vm-icon-tile"><i class="bi bi-geo-alt-fill"></i></div>
+                                    <div class="overflow-hidden">
+                                        <div class="vm-label">Address</div>
+                                        <div class="vm-value">@item.LocationAddress</div>
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(item.NearestLandmark))
+                                {
+                                    <div class="d-flex align-items-center gap-3 mt-3">
+                                        <div class="vm-icon-tile"><i class="bi bi-signpost-fill"></i></div>
+                                        <div class="overflow-hidden">
+                                            <div class="vm-label">Nearest Landmark</div>
+                                            <div class="vm-value">@item.NearestLandmark</div>
+                                        </div>
+                                    </div>
+                                }
                             </div>
-                            <div class="col-sm-8">
-                                <div class="text-muted small">Location</div>
-                                <div>@item.LocationAddress</div>
+
+                            @if (hasClientInfo)
+                            {
+                                @if (item.JobType == "Installation")
+                                {
+                                    <div class="vm-card">
+                                        <div class="vm-card-title">Fiber Plan</div>
+                                        <div class="vm-value">₱@item.FiberPlan</div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="vm-card">
+                                        <div class="vm-card-title">Description</div>
+                                        <div class="vm-text">@item.Description</div>
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                        @if (!hasClientInfo)
+                        {
+                            <div class="col-lg-6">
+                                <div class="vm-card">
+                                    <div class="vm-card-title">Description</div>
+                                    <div class="vm-text">@item.Description</div>
+                                </div>
                             </div>
                         }
                     </div>
 
-                    <div class="mb-2">
-                        <div class="text-muted small mb-2">Assigned Field Technicians</div>
-                        @if (item.Assignments != null && item.Assignments.Any())
+                    <div class="vm-card mb-3">
+                        <div class="vm-card-label mb-2">Assigned Field Technicians</div>
+                        @if (item.Assignments != null && item.Assignments.Any(a => a.Employee != null))
                         {
                             <div class="d-flex flex-wrap gap-2">
                                 @foreach (var a in item.Assignments.Where(a => a.Employee != null))
                                 {
-                                    <span class="badge rounded-pill @(a.IsLeader ? "bg-primary" : "bg-light text-dark border") px-3 py-2">
-                                        @a.Employee!.FullName @(a.IsLeader ? "(Leader)" : "")
+                                    <span class="vm-pill">
+                                        @a.Employee!.FullName
+                                        @if (a.IsLeader)
+                                        {
+                                            <span class="tf-leader-badge">Leader</span>
+                                        }
                                     </span>
                                 }
                             </div>
                         }
                         else
                         {
-                            <span class="text-muted">No assignees</span>
+                            <span class="tf-empty-msg">No assignees</span>
                         }
                     </div>
 
@@ -263,27 +342,31 @@
                     {
                         @if (!string.IsNullOrWhiteSpace(item.Remarks))
                         {
-                            <div class="mt-3">
-                                <div class="text-muted small mb-1">Remarks (from Field Technician Leader)</div>
-                                <div class="border rounded p-2 bg-warning-subtle border-warning fw-semibold">@item.Remarks</div>
+                            <div class="vm-card mb-3">
+                                <div class="vm-card-label mb-2">Remarks (from Field Technician Leader)</div>
+                                <div class="vm-text">@item.Remarks</div>
                             </div>
                         }
 
                         @if (item.RescheduleHistory != null && item.RescheduleHistory.Any())
                         {
-                            <div class="mt-3">
-                                <div class="text-muted small mb-2"><i class="bi bi-calendar-event"></i> Reschedule History</div>
+                            <div class="vm-card">
+                                <div class="vm-card-label mb-2">
+                                    <i class="bi bi-calendar-event"></i> Reschedule History
+                                </div>
                                 @foreach (var h in item.RescheduleHistory)
                                 {
-                                    <div class="border rounded p-2 mb-2">
-                                        <div class="fw-semibold small">
-                                            @h.OldServiceDate.ToString("M/d/yyyy") <i class="bi bi-arrow-right mx-1"></i> @h.NewServiceDate.ToString("M/d/yyyy")
-                                            <span class="text-muted small ms-2">(@h.DateChanged.ToString("M/d/yyyy h:mm tt"))</span>
+                                    <div class="vm-pill d-flex flex-column align-items-start mb-2 w-100">
+                                        <div>
+                                            @h.OldServiceDate.ToString("M/d/yyyy")
+                                            <i class="bi bi-arrow-right mx-1"></i>
+                                            @h.NewServiceDate.ToString("M/d/yyyy")
+                                            <span class="fw-normal ms-2">(@h.DateChanged.ToString("M/d/yyyy h:mm tt"))</span>
                                         </div>
                                         @if (!string.IsNullOrWhiteSpace(h.Reason))
                                         {
-                                            <div class="text-muted small mt-1">Reason</div>
-                                            <div class="small">@h.Reason</div>
+                                            <div class="vm-label mt-2 mb-0">Reason</div>
+                                            <div class="fw-normal">@h.Reason</div>
                                         }
                                     </div>
                                 }
@@ -292,12 +375,14 @@
                     }
 
                 </div>
-                <div class="modal-footer">
-                    <a asp-page="./Details" asp-route-id="@item.JobTicketID" class="btn btn-outline-navy btn-sm">
+
+                <div class="modal-footer vm-footer">
+                    <button type="button" class="vm-btn-close" data-bs-dismiss="modal">Close</button>
+                    <a asp-page="./Details" asp-route-id="@item.JobTicketID" class="vm-btn-primary">
                         Open Full Details
                     </a>
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
+
             </div>
         </div>
     </div>
@@ -306,14 +391,12 @@
 @section Scripts {
     <script>
         const searchInput = document.getElementById('liveSearch');
-        const statusInput = document.getElementById('liveStatus');
-        const statusDropdownBtn = document.getElementById('statusDropdownBtn');
-        const statusItems = document.querySelectorAll('.status-dropdown-menu .dropdown-item');
+        const statusSelect = document.getElementById('liveStatus');
         const rows = document.querySelectorAll('tbody tr[data-ticketid]');
 
         function filterTable() {
             const searchVal = searchInput.value.toLowerCase().trim();
-            const statusVal = statusInput.value.toLowerCase().trim();
+            const statusVal = statusSelect.value.toLowerCase().trim();
             let visibleCount = 0;
 
             rows.forEach(row => {
@@ -342,16 +425,7 @@
         }
 
         searchInput.addEventListener('input', filterTable);
-        statusItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                statusItems.forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                statusInput.value = item.dataset.value;
-                statusDropdownBtn.textContent = item.textContent.trim();
-                filterTable();
-            });
-        });
+        statusSelect.addEventListener('change', filterTable);
 
         // Apply immediately on load too, so a link that arrives with
         // ?status=... (e.g. from the Dashboard) actually filters the table

@@ -5,130 +5,154 @@
     Layout = "_FieldTechnicianLayout";
     var emp = Model.Employee;
     var last = Model.LastEvaluation;
-    var overallClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(Model.OverallRating);
 }
 
-<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-    <div>
-        <h2 class="mb-1"><i class="bi bi-award"></i> My Performance Records</h2>
-        <p class="text-muted mb-0">Your evaluation history and feedback.</p>
-    </div>
-    <a class="btn btn-outline-navy" asp-page="./Index"><i class="bi bi-arrow-left"></i> Back to Job Orders</a>
+@{
+    // EvaluationScoring.RatingBadgeClass returns Bootstrap colour tokens; map
+    // them onto the .vm-status-* pills the rest of the restyled app uses so
+    // all five rating bands stay visually distinct.
+    string RatingPill(string rating) => TM_PE.Model.EvaluationScoring.RatingBadgeClass(rating) switch
+    {
+        "success" => "vm-status-success",
+        "primary" => "vm-status-primary",
+        "info" => "vm-status-info",
+        "warning" => "vm-status-warning",
+        "danger" => "vm-status-danger",
+        _ => "vm-status-pending"
+    };
+}
+
+<div class="mb-3">
+    <h1 class="tf-page-title mb-1">My Performance Records</h1>
+    <p class="tf-page-sub mb-0">View your performance records and evaluation results.</p>
 </div>
 <hr class="page-divider" />
 
-@* ===================== Overall rating ===================== *@
-<div class="wlm-card p-4 mb-4">
-    <div class="row g-4 align-items-center">
-        <div class="col-lg-7">
-            <div class="fs-4 fw-bold">@emp.FullName</div>
-            <div class="text-muted">Field Technician</div>
-        </div>
-        <div class="col-lg-5">
-            <div class="border rounded p-3 h-100 text-center">
-                <div class="stat-label mb-1">Overall Rating</div>
-                <div class="d-flex justify-content-center">
-                    <partial name="_Stars" model="Model.OverallStars" />
-                </div>
-                <div class="display-6 fw-bold mt-1">@Model.OverallScore.ToString("0.##")</div>
-                <div class="text-muted small">out of 4 &mdash; across all finalized evaluations</div>
-                <div class="mt-2">
-                    <span class="badge bg-@(overallClass)-subtle text-@(overallClass)-emphasis">@Model.OverallRating</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="row g-3 mb-3">
 
-@* ===================== Summary tiles ===================== *@
-<div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile d-flex align-items-center gap-3">
-            <div class="stat-icon icon-palette-success"><i class="bi bi-clipboard-check"></i></div>
-            <div>
-                <div class="stat-label">Evaluations Completed</div>
-                <div class="stat-value">@Model.EvaluationsCompleted</div>
+    @* ===================== Overall rating ===================== *@
+    <div class="col-lg-7">
+        <div class="vm-card h-100">
+            <div class="row g-3 align-items-center h-100">
+                <div class="col-md-6">
+                    <div class="tf-page-title mb-2">@emp.FullName</div>
+                    <span class="vm-pill">Field Technician</span>
+                </div>
+                <div class="col-md-6 vm-col-divider text-center">
+                    <div class="eval-score-label">Overall Rating</div>
+                    <div class="eval-score-value">@Model.OverallScore.ToString("0.##")</div>
+                    <div class="d-flex justify-content-center">
+                        <partial name="_Stars" model="Model.OverallStars" />
+                    </div>
+                    <div class="eval-score-out-of mt-1">out of 4 &mdash; across all finalized evaluations</div>
+                    <div class="mt-2">
+                        <span class="vm-status @RatingPill(Model.OverallRating)">@Model.OverallRating</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile d-flex align-items-center gap-3">
-            <div class="stat-icon icon-palette-primary"><i class="bi bi-check2-circle"></i></div>
-            <div>
-                <div class="stat-label">Completed Job/Task</div>
-                <div class="stat-value">@Model.Stats.CompletedJobsTasks</div>
+
+    @* ===================== Summary tiles ===================== *@
+    <div class="col-lg-5">
+        <div class="row g-3">
+            <div class="col-6">
+                <div class="eval-stat eval-stat-primary d-flex align-items-start gap-2">
+                    <div class="stat-icon icon-palette-primary"><i class="bi bi-clipboard-check"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="stat-label">Evaluations Completed</div>
+                        <div class="stat-value">@Model.EvaluationsCompleted</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="eval-stat eval-stat-success d-flex align-items-start gap-2">
+                    <div class="stat-icon icon-palette-success"><i class="bi bi-check2-circle"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="stat-label">Completed Job/Task</div>
+                        <div class="stat-value">@Model.Stats.CompletedJobsTasks</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2">
+                    <div class="stat-icon icon-palette-warning"><i class="bi bi-clock-history"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="stat-label">On-time Rate</div>
+                        <div class="stat-value">@Model.Stats.OnTimeRate.ToString("0")%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="eval-stat eval-stat-danger d-flex align-items-start gap-2">
+                    <div class="stat-icon icon-palette-danger"><i class="bi bi-arrow-repeat"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="stat-label">Rescheduled</div>
+                        <div class="stat-value">@Model.Stats.Rescheduled</div>
+                    </div>
+                </div>
+            </div>
+            @* The mockup only had room for four tiles; Cancelled is the fifth
+               metric this page has always shown, so it keeps its own row. *@
+            <div class="col-6">
+                <div class="eval-stat eval-stat-danger d-flex align-items-start gap-2">
+                    <div class="stat-icon icon-palette-danger"><i class="bi bi-x-circle"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="stat-label">Cancelled</div>
+                        <div class="stat-value">@Model.Stats.Cancelled</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile d-flex align-items-center gap-3">
-            <div class="stat-icon icon-palette-warning"><i class="bi bi-clock-history"></i></div>
-            <div>
-                <div class="stat-label">On-time Rate</div>
-                <div class="stat-value">@Model.Stats.OnTimeRate.ToString("0")%</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile d-flex align-items-center gap-3">
-            <div class="stat-icon icon-palette-warning"><i class="bi bi-arrow-repeat"></i></div>
-            <div>
-                <div class="stat-label">Rescheduled</div>
-                <div class="stat-value">@Model.Stats.Rescheduled</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile d-flex align-items-center gap-3">
-            <div class="stat-icon icon-palette-danger"><i class="bi bi-x-circle"></i></div>
-            <div>
-                <div class="stat-label">Cancelled</div>
-                <div class="stat-value">@Model.Stats.Cancelled</div>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 @* ===================== Last evaluation ===================== *@
-<div class="wlm-card p-4 mb-4">
-    <h5 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-clock"></i> Last Evaluation</h5>
+<div class="vm-card mb-3">
+    <div class="vm-card-title">Last Evaluation</div>
     @if (last == null)
     {
-        <div class="text-muted">You don't have any finalized evaluations yet.</div>
+        <span class="tf-empty-msg">You don't have any finalized evaluations yet.</span>
     }
     else
     {
-        var lastClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(last.OverallRating);
-        <div class="row g-3 align-items-center">
+        <div class="row g-3">
             <div class="col-md-3">
-                <div class="text-muted small">Evaluation Period</div>
-                <div class="fw-semibold fs-6">@last.EvaluationPeriod</div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-muted small">Date of Evaluation</div>
-                <div class="fw-semibold fs-6">@last.EvaluationDate.ToString("MMMM d, yyyy")</div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-muted small">Overall Rating</div>
-                <div class="d-flex align-items-center gap-2">
-                    <partial name="_Stars" model="last.OverallStars" />
-                    <span class="badge bg-@(lastClass)-subtle text-@(lastClass)-emphasis">@last.OverallRating</span>
+                <div class="vm-label">Evaluation Period</div>
+                <div class="vm-value">
+                    <i class="bi bi-calendar3"></i>
+                    @last.EvaluationPeriod
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="text-muted small">Score</div>
-                <div class="fw-semibold fs-6">@last.OverallScore.ToString("0.##") / 4</div>
+            <div class="col-md-3 vm-col-divider">
+                <div class="vm-label">Date of Evaluation</div>
+                <div class="vm-value">
+                    <i class="bi bi-calendar-event"></i>
+                    @last.EvaluationDate.ToString("MMMM d, yyyy")
+                </div>
+            </div>
+            <div class="col-md-3 vm-col-divider">
+                <div class="vm-label">Overall Rating</div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <partial name="_Stars" model="last.OverallStars" />
+                    <span class="vm-status @RatingPill(last.OverallRating)">@last.OverallRating</span>
+                </div>
+            </div>
+            <div class="col-md-3 vm-col-divider">
+                <div class="vm-label">Score</div>
+                <div class="vm-value">@last.OverallScore.ToString("0.##") / 4</div>
             </div>
         </div>
     }
 </div>
 
 @* ===================== Evaluation history ===================== *@
-<div class="wlm-card p-4 mb-4">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <h5 class="fw-bold text-uppercase mb-0" style="color:#020236;"><i class="bi bi-list-columns-reverse"></i> Evaluation History</h5>
-        <div class="d-flex align-items-center gap-2">
-            <label class="text-muted small mb-0" for="periodFilter">Evaluation Period</label>
+<div class="vm-card mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <div class="vm-card-label">Evaluation History</div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <label class="vm-label mb-0" for="periodFilter">Evaluation Period</label>
             <select class="form-select form-select-sm" id="periodFilter" style="width:auto">
                 <option value="">All periods</option>
                 @foreach (var p in Model.Periods)
@@ -136,7 +160,7 @@
                     <option value="@p">@p</option>
                 }
             </select>
-            <label class="text-muted small mb-0" for="yearFilter">Year</label>
+            <label class="vm-label mb-0" for="yearFilter">Year</label>
             <select class="form-select form-select-sm" id="yearFilter" style="width:auto">
                 <option value="">All years</option>
                 @foreach (var y in Model.Years)
@@ -148,7 +172,7 @@
     </div>
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle wlm-table mb-0">
+        <table class="table vm-table-plain align-middle mb-0">
             <thead>
                 <tr>
                     <th>Evaluation Period</th>
@@ -161,31 +185,30 @@
             <tbody id="historyBody">
                 @if (!Model.Evaluations.Any())
                 {
-                    <tr><td colspan="5" class="text-center text-muted py-4">No evaluations on record yet.</td></tr>
+                    <tr><td colspan="5" class="text-center tf-empty-msg py-4">No evaluations on record yet.</td></tr>
                 }
                 else
                 {
                     @foreach (var e in Model.Evaluations)
                     {
                         var results = TM_PE.Pages.Manager.PerformanceEvaluation.IndexModel.BuildResultViews(e);
-                        var rowClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(e.OverallRating);
                         var evalStats = Model.EvaluationStats.GetValueOrDefault(e.EvaluationID) ?? new TM_PE.Model.EmployeePerformanceStats();
 
                         <tr data-year="@e.EvaluationDate.Year" data-period="@e.EvaluationPeriod">
                             <td>
-                                <div class="fw-semibold">@e.EvaluationPeriod</div>
-                                <div class="text-muted small">@e.EvaluationDate.ToString("MMMM d, yyyy")</div>
+                                <div class="vm-value">@e.EvaluationPeriod</div>
+                                <div class="vm-file-meta">@e.EvaluationDate.ToString("MMMM d, yyyy")</div>
                             </td>
                             <td>
                                 <partial name="_Stars" model="e.OverallStars" />
                                 <div class="mt-1">
-                                    <span class="badge bg-@(rowClass)-subtle text-@(rowClass)-emphasis">@e.OverallRating</span>
+                                    <span class="vm-status @RatingPill(e.OverallRating)">@e.OverallRating</span>
                                 </div>
                             </td>
-                            <td class="fw-semibold">@e.OverallScore.ToString("0.##") <span class="text-muted small fw-normal">/ 4</span></td>
-                            <td>@e.EvaluatorName</td>
+                            <td><div class="vm-value">@e.OverallScore.ToString("0.##") <span class="vm-file-meta">/ 4</span></div></td>
+                            <td><div class="vm-value">@e.EvaluatorName</div></td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-navy view-evaluation-btn"
+                                <button type="button" class="vm-btn-sm w-auto view-evaluation-btn"
                                         data-bs-toggle="modal" data-bs-target="#evaluationModal"
                                         data-employee="@emp.FullName"
                                         data-role="Field Technician"
@@ -205,13 +228,13 @@
                                         data-rejected="@evalStats.RejectedActivities"
                                         data-overdue="@evalStats.OverdueTasks"
                                         title="View full evaluation">
-                                    <i class="bi bi-eye"></i>
+                                    <i class="bi bi-eye"></i> View
                                 </button>
                             </td>
                         </tr>
                     }
                     <tr id="noYearMatch" class="d-none">
-                        <td colspan="5" class="text-center text-muted py-4">No evaluations for the selected filters.</td>
+                        <td colspan="5" class="text-center tf-empty-msg py-4">No evaluations for the selected filters.</td>
                     </tr>
                 }
             </tbody>
@@ -220,33 +243,33 @@
 </div>
 
 @* ===================== Feedback trail ===================== *@
-<div class="wlm-card p-4">
-    <h5 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-chat-square-text"></i> Appraisal Feedback</h5>
+<div class="vm-card mb-4">
+    <div class="vm-card-title">Appraisal Feedback</div>
     @if (!Model.FeedbackEntries.Any() && !Model.Evaluations.Any(e => !string.IsNullOrWhiteSpace(e.GeneralFeedback)))
     {
-        <div class="text-muted">No feedback has been recorded for you yet.</div>
+        <span class="tf-empty-msg">No feedback has been recorded for you yet.</span>
     }
     else
     {
-        <div class="list-group list-group-flush">
+        <div class="d-flex flex-column gap-2">
             @foreach (var f in Model.FeedbackEntries)
             {
-                <div class="list-group-item px-0">
+                <div class="vm-feedback-item">
                     <div class="d-flex justify-content-between align-items-start gap-2">
-                        <span class="badge bg-secondary-subtle text-secondary-emphasis">@f.FeedbackType</span>
-                        <span class="text-muted small">@f.DateCreated.ToString("MMM d, yyyy") &middot; @f.SubmittedBy</span>
+                        <span class="vm-chip-status">@f.FeedbackType</span>
+                        <span class="vm-file-meta">@f.DateCreated.ToString("MMM d, yyyy") &middot; @f.SubmittedBy</span>
                     </div>
-                    <div class="mt-1">@f.Comment</div>
+                    <div class="vm-text mt-2">@f.Comment</div>
                 </div>
             }
             @foreach (var e in Model.Evaluations.Where(e => !string.IsNullOrWhiteSpace(e.GeneralFeedback)))
             {
-                <div class="list-group-item px-0">
+                <div class="vm-feedback-item">
                     <div class="d-flex justify-content-between align-items-start gap-2">
-                        <span class="badge bg-primary-subtle text-primary-emphasis">Evaluation &mdash; @e.EvaluationPeriod</span>
-                        <span class="text-muted small">@e.EvaluationDate.ToString("MMM d, yyyy") &middot; @e.EvaluatorName</span>
+                        <span class="tf-leader-badge">Evaluation &mdash; @e.EvaluationPeriod</span>
+                        <span class="vm-file-meta">@e.EvaluationDate.ToString("MMM d, yyyy") &middot; @e.EvaluatorName</span>
                     </div>
-                    <div class="mt-1">@e.GeneralFeedback</div>
+                    <div class="vm-text mt-2">@e.GeneralFeedback</div>
                 </div>
             }
         </div>

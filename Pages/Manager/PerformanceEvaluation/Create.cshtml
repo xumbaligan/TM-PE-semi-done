@@ -5,10 +5,11 @@
     Layout = "_Layout";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2><i class="bi bi-clipboard-data"></i> New Performance Evaluation</h2>
-    <a class="btn btn-outline-secondary" asp-page="Index"><i class="bi bi-arrow-left"></i> Back</a>
+<div class="mb-3">
+    <h1 class="tf-page-title mb-1">New Performance Evaluation</h1>
+    <p class="tf-page-sub mb-0">Evaluate and recognize employee performance</p>
 </div>
+<hr class="page-divider" />
 
 @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
 {
@@ -17,57 +18,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
-
-@* ===================== Employee performance snapshot ===================== *@
-<style>
-    .stat-tile-clickable {
-        cursor: pointer;
-        transition: box-shadow .15s ease, transform .15s ease;
-    }
-
-    .stat-tile-clickable:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,.08);
-        transform: translateY(-1px);
-    }
-</style>
-<div class="row g-3 mb-4" id="statTiles">
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile1" data-metric="completed">
-            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-check2-circle"></i></div>
-            <div>
-                <div class="stat-label">Completed Job/Task</div>
-                <div class="stat-value" id="statCompleted">—</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile2" data-metric="ontime">
-            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-clock-history"></i></div>
-            <div>
-                <div class="stat-label">On-time Rate</div>
-                <div class="stat-value" id="statOnTime">—</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile3" data-metric="rescheduled">
-            <div class="stat-icon bg-warning-subtle text-warning" id="statTile3Icon"><i class="bi bi-arrow-repeat"></i></div>
-            <div>
-                <div class="stat-label" id="statTile3Label">Rescheduled</div>
-                <div class="stat-value" id="statTile3Value">—</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-tile stat-tile-clickable d-flex align-items-center gap-3" id="statTile4" data-metric="cancelled">
-            <div class="stat-icon bg-danger-subtle text-danger" id="statTile4Icon"><i class="bi bi-x-circle"></i></div>
-            <div>
-                <div class="stat-label" id="statTile4Label">Cancelled</div>
-                <div class="stat-value" id="statTile4Value">—</div>
-            </div>
-        </div>
-    </div>
-</div>
 
 @* ===================== Modal: stat tile drill-down list ===================== *@
 <div class="modal fade" id="recordsModal" tabindex="-1" aria-labelledby="recordsModalLabel" aria-hidden="true">
@@ -117,28 +67,97 @@
 <form method="post" id="evalForm">
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
     <input type="hidden" id="selectedRoleInput" name="SelectedRole" value="@Model.SelectedRole" />
+
     <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card p-4 mb-4">
-                <h5 class="mb-2">Select Employee Role</h5>
-                <div class="d-flex gap-2" id="roleFilterGroup">
-                    <button type="button" class="btn btn-outline-primary role-filter-btn" data-role="FieldTechnician">
-                        <i class="bi bi-tools"></i> Field Technician
-                    </button>
-                    <button type="button" class="btn btn-outline-primary role-filter-btn" data-role="OfficeStaff">
-                        <i class="bi bi-person-workspace"></i> Office Staff
-                    </button>
-                </div>
-            </div>
 
-            <div class="card p-4 mb-4">
-                <h5 class="mb-3">Evaluation Details</h5>
+            @*
+                The period is its own first step because changing either select
+                reloads the page (see reloadForPeriod below) - the server has to
+                recompute the period-scoped stats. Keeping it above the employee
+                and role pickers matches that order of operations.
+            *@
+            <!-- Step 1: Select Evaluation Period -->
+            <div class="tf-section mb-4">
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <div class="tf-step-badge">1</div>
+                    <div class="tf-section-title">Select Evaluation Period</div>
+                </div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Employee <span class="text-danger">*</span></label>
+                        <label class="tf-label">Period Month <span class="tf-required">*</span></label>
+                        <select asp-for="Evaluation.EvaluationPeriodMonth" id="periodMonthSelect" class="form-select">
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                <option value="@m">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Evaluation.EvaluationPeriodMonth" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="tf-label">Period Year <span class="tf-required">*</span></label>
+                        <select asp-for="Evaluation.EvaluationPeriodYear" id="periodYearSelect" class="form-select">
+                            @foreach (var y in Model.PeriodYearOptions)
+                            {
+                                <option value="@y">@y</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Evaluation.EvaluationPeriodYear" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Select Employee Role -->
+            <div class="tf-section mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="tf-step-badge">2</div>
+                    <div class="tf-section-title">Select Employee Role</div>
+                </div>
+
+                <div class="row g-3" id="roleFilterGroup">
+                    <div class="col-md-6">
+                        <button type="button" class="role-filter-btn eval-role-card" data-role="FieldTechnician">
+                            <span class="eval-role-icon"><i class="bi bi-tools"></i></span>
+                            <span class="eval-role-text">
+                                <span class="eval-role-title">Field Technician</span>
+                                <span class="eval-role-sub">Evaluate your field-based technicians</span>
+                            </span>
+                            <span class="eval-role-check">
+                                <i class="bi bi-circle eval-role-check-off"></i>
+                                <i class="bi bi-check-circle-fill eval-role-check-on"></i>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="button" class="role-filter-btn eval-role-card" data-role="OfficeStaff">
+                            <span class="eval-role-icon"><i class="bi bi-person-workspace"></i></span>
+                            <span class="eval-role-text">
+                                <span class="eval-role-title">Office Staff</span>
+                                <span class="eval-role-sub">Evaluate your office-based staff</span>
+                            </span>
+                            <span class="eval-role-check">
+                                <i class="bi bi-circle eval-role-check-off"></i>
+                                <i class="bi bi-check-circle-fill eval-role-check-on"></i>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Evaluation Details -->
+            <div class="tf-section mb-4">
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <div class="tf-step-badge">3</div>
+                    <div class="tf-section-title">Evaluation Details</div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="tf-label">Employee <span class="tf-required">*</span></label>
                         <select asp-for="Evaluation.EmployeeID" id="employeeSelect" class="form-select">
-                            <option value="">Select an employee</option>
+                            <option value="">Select an employee...</option>
                             @foreach (var emp in Model.EmployeeList)
                             {
                                 var s = Model.Stats.GetValueOrDefault(emp.EmployeeId) ?? new TM_PE.Model.EmployeePerformanceStats();
@@ -154,91 +173,140 @@
                                 </option>
                             }
                         </select>
-                        <span asp-validation-for="Evaluation.EmployeeID" class="text-danger"></span>
+                        <span asp-validation-for="Evaluation.EmployeeID" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Period Month <span class="text-danger">*</span></label>
-                        <select asp-for="Evaluation.EvaluationPeriodMonth" id="periodMonthSelect" class="form-select">
-                            @for (int m = 1; m <= 12; m++)
-                            {
-                                <option value="@m">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)</option>
-                            }
-                        </select>
-                        <span asp-validation-for="Evaluation.EvaluationPeriodMonth" class="text-danger"></span>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Period Year <span class="text-danger">*</span></label>
-                        <select asp-for="Evaluation.EvaluationPeriodYear" id="periodYearSelect" class="form-select">
-                            @foreach (var y in Model.PeriodYearOptions)
-                            {
-                                <option value="@y">@y</option>
-                            }
-                        </select>
-                        <span asp-validation-for="Evaluation.EvaluationPeriodYear" class="text-danger"></span>
-                    </div>
+
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Evaluation Date <span class="text-danger">*</span></label>
+                        <label class="tf-label">Evaluation Date <span class="tf-required">*</span></label>
                         <input asp-for="Evaluation.EvaluationDate" type="date" class="form-control"
                                value="@Model.Evaluation.EvaluationDate.ToString("yyyy-MM-dd")" />
-                        <span asp-validation-for="Evaluation.EvaluationDate" class="text-danger"></span>
-                        <div class="form-text">Also used as the appraisal date.</div>
+                        <span asp-validation-for="Evaluation.EvaluationDate" class="text-danger small"></span>
+                        <div class="tf-form-hint">Also used as the appraisal date.</div>
                     </div>
+
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Evaluator</label>
-                        <input class="form-control" value="@Model.CurrentManagerName" disabled />
-                        <div class="form-text">Automatically set to your manager account.</div>
+                        <label class="tf-label">Evaluator</label>
+                        <input class="form-control eval-evaluator" value="@Model.CurrentManagerName" disabled />
+                        <div class="tf-form-hint">Automatically set to your manager account.</div>
                     </div>
                 </div>
             </div>
 
-            <div class="card p-4 mb-4" id="noEmployeeNotice">
-                <div class="text-muted text-center py-3">Select an employee above to load their evaluation criteria.</div>
+            <!-- Step 4: Evaluation Criteria -->
+            <div class="tf-section mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="tf-step-badge">4</div>
+                    <div class="tf-section-title">Evaluation Criteria</div>
+                </div>
+
+                <div id="noEmployeeNotice">
+                    <div class="tf-empty-msg text-center py-3">Select an employee above to load their evaluation criteria.</div>
+                </div>
+
+                @* ===================== Field Technician criteria ===================== *@
+                <div class="d-none" id="fieldTechnicianCriteriaCard">
+                    <div class="tf-section-sub mb-3">
+                        Field Technician criteria &mdash; rate each from 0.5 to 4 stars. Click the left half of a
+                        star for a half rating, or the same rating again to clear it.
+                    </div>
+                    <div class="eval-criteria-table">
+                        <partial name="_CriteriaStarRows" model="Model.RowsFor(Model.FieldTechnicianCriteria)" />
+                    </div>
+                </div>
+
+                @* ===================== Office Staff criteria ===================== *@
+                <div class="d-none" id="officeStaffCriteriaCard">
+                    <div class="tf-section-sub mb-3">
+                        Office Staff criteria &mdash; rate each from 0.5 to 4 stars. Click the left half of a
+                        star for a half rating, or the same rating again to clear it.
+                    </div>
+                    <div class="eval-criteria-table">
+                        <partial name="_CriteriaStarRows" model="Model.RowsFor(Model.OfficeStaffCriteria)" />
+                    </div>
+                </div>
             </div>
 
-            @* ===================== Field Technician criteria ===================== *@
-            <div class="card p-4 mb-4 d-none" id="fieldTechnicianCriteriaCard">
-                <h5 class="mb-1">Field Technician Criteria</h5>
-                <div class="text-muted small mb-3">Rate each criterion from 0.5 to 4 stars — click the left half of a star for a half rating. Click the same rating again to clear it.</div>
-                <partial name="_CriteriaStarRows" model="Model.RowsFor(Model.FieldTechnicianCriteria)" />
-            </div>
+            <!-- Step 5: Feedback -->
+            <div class="tf-section mb-4">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <div class="tf-step-badge">5</div>
+                    <div class="tf-section-title">Feedback</div>
+                </div>
+                <p class="tf-section-sub mb-3">
+                    Summary of the employee's overall performance and areas for improvement.
+                </p>
 
-            @* ===================== Office Staff criteria ===================== *@
-            <div class="card p-4 mb-4 d-none" id="officeStaffCriteriaCard">
-                <h5 class="mb-1">Office Staff Criteria</h5>
-                <div class="text-muted small mb-3">Rate each criterion from 0.5 to 4 stars — click the left half of a star for a half rating. Click the same rating again to clear it.</div>
-                <partial name="_CriteriaStarRows" model="Model.RowsFor(Model.OfficeStaffCriteria)" />
-            </div>
-
-            <div class="card p-4">
-                <label class="form-label fw-semibold">Feedback</label>
-                <textarea asp-for="Evaluation.GeneralFeedback" class="form-control" rows="3" maxlength="1000"
+                <textarea asp-for="Evaluation.GeneralFeedback" class="form-control eval-feedback" rows="5" maxlength="1000"
                           placeholder="Overall feedback for this evaluation period..."></textarea>
-                <div class="form-text">Covers both the evaluation and the appraisal decision.</div>
+                <div class="tf-form-hint">Covers both the evaluation and the appraisal decision.</div>
             </div>
+
         </div>
 
         <div class="col-lg-4">
-            <div class="card p-4 mb-3 sticky-top" style="top:1rem">
-                <h6 class="text-muted">Overall Score (preview)</h6>
-                <div class="display-6 fw-bold" id="overallScorePreview">0.0</div>
-                <div class="text-muted small">out of 4</div>
-                <div class="mt-2 d-flex align-items-center gap-2">
-                    <span id="overallStarsPreview"></span>
-                    <span class="badge bg-primary-subtle text-primary" id="overallRatingPreview">—</span>
+            <div class="sticky-top" style="top:1rem">
+
+                @* ===================== Employee performance snapshot ===================== *@
+                <div class="row g-3 mb-3" id="statTiles">
+                    <div class="col-6">
+                        <div class="eval-stat eval-stat-primary d-flex align-items-start gap-2" id="statTile1" data-metric="completed">
+                            <div class="stat-icon icon-palette-primary"><i class="bi bi-check2-circle"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="stat-label">Completed Jobs/Tasks</div>
+                                <div class="stat-value" id="statCompleted">&mdash;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="eval-stat eval-stat-success d-flex align-items-start gap-2" id="statTile2" data-metric="ontime">
+                            <div class="stat-icon icon-palette-success"><i class="bi bi-clock-history"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="stat-label">On-Time Rate</div>
+                                <div class="stat-value" id="statOnTime">&mdash;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2" id="statTile3" data-metric="rescheduled">
+                            <div class="stat-icon icon-palette-warning" id="statTile3Icon"><i class="bi bi-arrow-repeat"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="stat-label" id="statTile3Label">Rescheduled</div>
+                                <div class="stat-value" id="statTile3Value">&mdash;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="eval-stat eval-stat-danger d-flex align-items-start gap-2" id="statTile4" data-metric="cancelled">
+                            <div class="stat-icon icon-palette-danger" id="statTile4Icon"><i class="bi bi-x-circle"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="stat-label" id="statTile4Label">Cancelled</div>
+                                <div class="stat-value" id="statTile4Value">&mdash;</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <hr />
+                <div class="eval-score-card mb-3">
+                    <div class="eval-score-label">Overall Score (preview)</div>
+                    <div class="eval-score-value" id="overallScorePreview">0.0</div>
+                    <div class="eval-score-out-of">out of 4</div>
+                    <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                        <span id="overallStarsPreview"></span>
+                        <span class="vm-status vm-status-pending" id="overallRatingPreview">&mdash;</span>
+                    </div>
+                </div>
 
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-outline-secondary" asp-page-handler="SaveDraft">
-                        <i class="bi bi-save"></i> Save as Draft
+                    <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft">
+                        Save as Draft
                     </button>
-                    <button type="submit" class="btn btn-primary" asp-page-handler="Finalize"
+                    <button type="submit" class="tf-btn-save" asp-page-handler="Finalize"
                             onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
-                        <i class="bi bi-check2-circle"></i> Finalize Evaluation
+                        Finalize Evaluation
                     </button>
                 </div>
-                <div class="form-text mt-2">A draft can still be edited later; finalizing locks it.</div>
+                <div class="tf-form-hint text-center mt-2">A draft can still be edited later; finalizing locks it.</div>
+
             </div>
         </div>
     </div>
@@ -379,26 +447,36 @@
                 document.getElementById('statCompleted').textContent = has ? opt.dataset.completed : '—';
                 document.getElementById('statOnTime').textContent = has ? opt.dataset.ontime + '%' : '—';
 
+                // Tone is set on the tile as well as the icon, because the
+                // tile itself is tinted - repainting only the glyph would
+                // leave an amber "Rejected Activities" card.
+                function setTileTone(tile, iconEl, tone) {
+                    tile.classList.remove('eval-stat-primary', 'eval-stat-success',
+                                          'eval-stat-warning', 'eval-stat-danger');
+                    tile.classList.add('eval-stat-' + tone);
+                    iconEl.className = 'stat-icon icon-palette-' + tone;
+                }
+
                 if (isOfficeStaff) {
-                    tile3Icon.className = 'stat-icon bg-danger-subtle text-danger';
+                    setTileTone(tile3, tile3Icon, 'danger');
                     tile3Icon.innerHTML = '<i class="bi bi-hand-thumbs-down"></i>';
                     tile3Label.textContent = 'Rejected Activities';
                     tile3Value.textContent = has ? opt.dataset.rejected : '—';
                     tile3.dataset.metric = 'rejected';
 
-                    tile4Icon.className = 'stat-icon bg-warning-subtle text-warning';
+                    setTileTone(tile4, tile4Icon, 'warning');
                     tile4Icon.innerHTML = '<i class="bi bi-exclamation-triangle"></i>';
                     tile4Label.textContent = 'Overdue Task';
                     tile4Value.textContent = has ? opt.dataset.overdue : '—';
                     tile4.dataset.metric = 'overdue';
                 } else {
-                    tile3Icon.className = 'stat-icon bg-warning-subtle text-warning';
+                    setTileTone(tile3, tile3Icon, 'warning');
                     tile3Icon.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
                     tile3Label.textContent = 'Rescheduled';
                     tile3Value.textContent = has ? opt.dataset.rescheduled : '—';
                     tile3.dataset.metric = 'rescheduled';
 
-                    tile4Icon.className = 'stat-icon bg-danger-subtle text-danger';
+                    setTileTone(tile4, tile4Icon, 'danger');
                     tile4Icon.innerHTML = '<i class="bi bi-x-circle"></i>';
                     tile4Label.textContent = 'Cancelled';
                     tile4Value.textContent = has ? opt.dataset.cancelled : '—';
@@ -626,7 +704,7 @@
                 if (item) showRecordDetail(item);
             });
 
-            document.querySelectorAll('.stat-tile-clickable').forEach(function (tile) {
+            document.querySelectorAll('#statTiles .eval-stat').forEach(function (tile) {
                 tile.addEventListener('click', async function () {
                     if (!employeeSelect.value) {
                         alert('Please select an employee first.');

@@ -143,37 +143,74 @@ body {
     }
 }
 
-    .sidebar h4 {
-        font-size: 1.15rem;
+.sidebar h4 {
+    font-size: 1.15rem;
+}
+
+/*
+       display: flex (rather than Bootstrap's block .nav-link) plus a
+       fixed-width icon slot lines every label up on the same left edge,
+       regardless of how wide each bi glyph happens to be - without it,
+       "Dashboard" and "Criteria" start at visibly different x positions.
+
+       position: relative is what the .active indicator bar below anchors to.
+    */
+.sidebar .nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .92rem;
+    font-weight: 500;
+    border-radius: 10px;
+    margin-bottom: 2px;
+    padding: 10px 14px;
+    color: rgba(255,255,255,.92);
+}
+
+    .sidebar .nav-link i {
+        font-size: 1.05rem;
+        width: 1.3rem;
+        text-align: center;
+        flex-shrink: 0;
     }
 
-    .sidebar .nav-link {
-        font-size: .9rem;
-        border-radius: 8px;
-        margin-bottom: 4px;
-        padding: 8px 14px;
+    .sidebar .nav-link:hover {
+        background: rgba(255,255,255,.1);
         color: #fff;
     }
 
-        .sidebar .nav-link:hover {
-            background: rgba(255,255,255,.15);
-            color: #fff;
-        }
-
-        .sidebar .nav-link.active {
-            background: linear-gradient(135deg, #47076f, #9f4cd6);
-            color: #fff;
-            font-weight: 700;
-        }
-
-    .sidebar .nav-section-label {
-        font-size: .68rem;
-        font-weight: 800;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,.8);
-        margin: 14px 10px 4px;
+    .sidebar .nav-link.active {
+        background: linear-gradient(90deg, #2c0a56, #6b2ba8);
+        color: #fff;
+        font-weight: 600;
     }
+
+        /*
+               Light bar pinned to the sidebar's left edge on the active item.
+               The negative offset stays inside the sidebar's own 1rem padding,
+               so it never pushes the scrollable area wider.
+            */
+        .sidebar .nav-link.active::before {
+            content: "";
+            position: absolute;
+            left: -.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 22px;
+            border-radius: 0 4px 4px 0;
+            background: #e5d3fa;
+        }
+
+.sidebar .nav-section-label {
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.55);
+    margin: 20px 14px 8px;
+}
 
 /*
    Brand lockup (logo badge + wordmark) at the top of the sidebar, matching
@@ -181,9 +218,9 @@ body {
    Tracking" wordmark from Figma.
 */
 .sidebar-logo-badge {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #1809ab, #9f4cd6);
     display: flex;
     align-items: center;
@@ -194,15 +231,15 @@ body {
 }
 
 .sidebar-brand {
-    font-weight: 700;
-    font-size: 1.05rem;
+    font-weight: 800;
+    font-size: 1.12rem;
     line-height: 1.15;
     color: #fff;
 }
 
 .sidebar-brand-sub {
-    font-size: .68rem;
-    color: rgba(255,255,255,.75);
+    font-size: .7rem;
+    color: rgba(255,255,255,.6);
 }
 
 .sidebar-divider {
@@ -212,11 +249,22 @@ body {
     margin: 12px 0;
 }
 
+/*
+   The mockup groups the profile tile and the log out link inside one
+   outlined panel at the bottom of the sidebar, rather than leaving them
+   floating loose against the background.
+*/
+.sidebar-footer {
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    padding: 10px;
+}
+
 .sidebar-profile-card {
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(159,76,214,.4);
-    border-radius: 12px;
-    padding: 8px 10px;
+    background: rgba(255,255,255,.05);
+    border: 1.5px solid rgba(159,76,214,.55);
+    border-radius: 11px;
+    padding: 9px 11px;
 }
 
 /*
@@ -269,16 +317,30 @@ body {
 }
 
 .sidebar-logout-link {
-    display: block;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
     color: #fff;
     font-weight: 800;
     font-size: .85rem;
     letter-spacing: .03em;
     text-decoration: none;
-    padding: 8px;
-    border-radius: 8px;
+    padding: 9px;
+    border-radius: 10px;
 }
+
+    /* The mockup sets the log out glyph in its own small tile. */
+    .sidebar-logout-link i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: rgba(255,255,255,.12);
+        font-size: .9rem;
+    }
 
     .sidebar-logout-link:hover {
         background: rgba(255,255,255,.1);
@@ -520,69 +582,6 @@ body {
     background: #a378c4;
     color: #000331;
 }
-
-/*
-   Status filter (Manager > Job Tickets/Task Assignments) - a custom
-   Bootstrap dropdown in place of a native <select>. A native select's open
-   list is OS-drawn in Chrome/Edge on Windows, so its hover/selected
-   highlight color can't be restyled with CSS at all - only a custom
-   dropdown-menu gives real control over that highlight color.
-*/
-.status-dropdown-btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: .5rem;
-    border: 1px solid rgba(2,2,54,.35);
-    color: #020236;
-    background: #fff;
-    text-align: left;
-    min-width: 220px;
-}
-
-    /* Bootstrap renders the caret as this pseudo-element right after the
-       button's text by default - margin-left: auto (on top of the flex
-       layout above) is what actually pins it to the far end of the button. */
-    .status-dropdown-btn::after {
-        margin-left: auto;
-    }
-
-    .status-dropdown-btn:hover,
-    .status-dropdown-btn:focus,
-    .status-dropdown-btn:active,
-    .status-dropdown-btn.show {
-        border-color: #020236 !important;
-        color: #020236 !important;
-        background: #fff !important;
-        box-shadow: 0 0 0 .2rem rgba(2,2,54,.15) !important;
-    }
-
-.status-dropdown-menu .dropdown-item:hover,
-.status-dropdown-menu .dropdown-item:focus {
-    background: rgba(2,2,54,.08);
-    color: #020236;
-}
-
-.status-dropdown-menu .dropdown-item.active {
-    background: #020236;
-    color: #fff;
-}
-
-/*
-   Plain native <select> dropdowns elsewhere (Field Technician status
-   update, Dashboard period selectors, Reports department filter) - same
-   navy border/focus-ring treatment as .status-dropdown-btn, without the
-   custom dropdown-menu markup those two needed for a stylable open-list
-   highlight.
-*/
-.form-select-navy {
-    border: 1px solid rgba(2,2,54,.35);
-}
-
-    .form-select-navy:focus {
-        border-color: #020236;
-        box-shadow: 0 0 0 .2rem rgba(2,2,54,.15);
-    }
 
 /* Solid navy highlight pill (e.g. "(You)" tags on assignee lists) instead of Bootstrap's default blue .bg-primary. */
 .badge-navy {
@@ -889,4 +888,1229 @@ body {
     padding: 1rem;
     color: #64748b;
     font-size: .9rem;
+}
+
+/* ===================== My Account (/Account) ===================== */
+/*
+   Self-service account screen, matched to the Figma mockup: a wide left
+   column holding "Account Overview" + "Employee's Information", and a
+   narrower right column holding "Change Password". Everything here is
+   scoped to .account-* so it can't leak into the Bootstrap .card usage on
+   every other page.
+*/
+.account-card {
+    background: #fff;
+    border: 1px solid rgba(2,2,54,.12);
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.05);
+    padding: 1.5rem;
+}
+
+/*
+   Card heading with the navy rule underneath it. Same #020236 and same
+   1px weight as .page-divider, so the rule inside a card reads as the same
+   system as the one under the page title.
+*/
+.account-card-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #020236;
+    padding-bottom: .6rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid #020236;
+}
+
+/* --- Account Overview: icon tile + label/value pairs --- */
+.account-info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+/*
+   Shared by the Account Overview tiles and the fields inside the employee
+   box - one label style, one value style, so the two blocks line up
+   visually even though their surrounding markup differs.
+*/
+.account-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #8b8ba7;
+    line-height: 1.2;
+    margin-bottom: .15rem;
+}
+
+.account-value {
+    font-size: .95rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+/* Names/roles/departments render uppercase in the mockup; the email doesn't. */
+.account-value-caps {
+    text-transform: uppercase;
+}
+
+/*
+   Inset panel inside "Employee's Information" - the mockup draws the
+   employee fields in their own bordered box rather than flat on the card.
+*/
+.account-employee-box {
+    border: 1.5px solid rgba(2,2,54,.35);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+/* --- Change Password form --- */
+/*
+   Same bordered input shell as the login screen (.login-input-group), with
+   the eye toggle sitting inside the border instead of Bootstrap's separate
+   .input-group-text button.
+*/
+.account-input-group {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    border: 1.5px solid rgba(2,2,54,.14);
+    border-radius: 9px;
+    box-shadow: 0 4px 5px rgba(0,0,0,.08);
+    padding: .6rem .9rem;
+    background: #fff;
+}
+
+    .account-input-group:focus-within {
+        border-color: #9f4cd6;
+    }
+
+    .account-input-group input {
+        border: 0;
+        outline: 0;
+        flex: 1;
+        min-width: 0;
+        font-size: .95rem;
+        background: transparent;
+    }
+
+    .account-input-group button {
+        border: 0;
+        background: none;
+        color: #020236;
+        padding: 0;
+        line-height: 1;
+        font-size: 1.05rem;
+    }
+
+.account-form-label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #020236;
+    margin-bottom: .35rem;
+}
+
+.account-form-hint {
+    font-size: .72rem;
+    color: #8b8ba7;
+    margin-top: .3rem;
+}
+
+/*
+   Primary CTA, same gradient as the login button so the only two
+   password-entry surfaces in the app share one button treatment.
+*/
+.account-btn-submit {
+    background: linear-gradient(90deg, #020236, #31055d, #47076f);
+    color: #fff;
+    border: 0;
+    border-radius: 9px;
+    font-weight: 700;
+    padding: .65rem 1.5rem;
+    box-shadow: 0 4px 5px rgba(0,0,0,.1);
+}
+
+    .account-btn-submit:hover,
+    .account-btn-submit:focus {
+        filter: brightness(1.12);
+        color: #fff;
+    }
+
+/* ===================== Task / ticket form pages (.tf-*) ===================== */
+/*
+   Stepped form shell used by Manager > Task Assignments > Create: a
+   read-only meta strip across the top, then numbered white section cards.
+   Scoped to .tf-* rather than overriding Bootstrap's .card / .form-control
+   globally, so the denser forms on other pages are untouched.
+*/
+.tf-page-title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.1;
+}
+
+.tf-page-sub {
+    font-size: .85rem;
+    color: #6b7280;
+}
+
+/* --- Read-only meta strip (task number / date created / assigned by) --- */
+.tf-meta-card {
+    background: #fff;
+    border: 1px solid rgba(2,2,54,.12);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.05);
+    padding: .9rem 1.25rem;
+}
+
+.tf-meta-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+    padding: .35rem 0;
+}
+
+/*
+   The hairline separators only make sense once the three items sit side by
+   side; below md they stack, so the rule would cut across them vertically.
+*/
+@media (min-width: 768px) {
+    .tf-meta-item + .tf-meta-item {
+        border-left: 1px solid rgba(2,2,54,.12);
+        padding-left: 1.5rem;
+    }
+}
+
+.tf-meta-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.tf-meta-label {
+    font-size: .7rem;
+    font-weight: 600;
+    color: #8b8ba7;
+    line-height: 1.2;
+}
+
+.tf-meta-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.25;
+}
+
+/* --- Numbered section cards --- */
+.tf-section {
+    background: #fff;
+    border: 1px solid rgba(2,2,54,.12);
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.05);
+    padding: 1.5rem;
+}
+
+.tf-step-badge {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #020236;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.tf-section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #020236;
+}
+
+.tf-section-sub {
+    font-size: .82rem;
+    color: #6b7280;
+}
+
+/* --- Fields --- */
+.tf-label {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #020236;
+    margin-bottom: .4rem;
+}
+
+.tf-required {
+    color: #dc3545;
+}
+
+/*
+   Applied to Bootstrap's own .form-control / .form-select rather than
+   replacing them, so asp-validation's is-invalid styling and the jQuery
+   validation hooks keep working exactly as before.
+*/
+.tf-section .form-control,
+.tf-section .form-select,
+.vm-card .form-control,
+.vm-card .form-select {
+    border: 1.5px solid rgba(2,2,54,.18);
+    border-radius: 9px;
+    padding: .65rem .9rem;
+    font-size: .9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,.04);
+}
+
+    .tf-section .form-control:focus,
+    .tf-section .form-select:focus,
+    .vm-card .form-control:focus,
+    .vm-card .form-select:focus {
+        border-color: #9f4cd6;
+        box-shadow: 0 0 0 .18rem rgba(159,76,214,.15);
+    }
+
+    .tf-section .form-control::placeholder,
+    .vm-card .form-control::placeholder {
+        color: #a9a9bd;
+    }
+
+/* Plain caption under a field (no icon) - Bootstrap's .form-text, restyled. */
+.tf-form-hint {
+    font-size: .75rem;
+    color: #8b8ba7;
+    margin-top: .3rem;
+}
+
+.tf-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: .45rem;
+    font-size: .78rem;
+    color: #6b7280;
+}
+
+    .tf-hint i {
+        flex-shrink: 0;
+        line-height: 1.45;
+    }
+
+/* --- Added employee / activity rows --- */
+/*
+   The mockup lists each added employee and activity as its own full-width
+   lavender row rather than an inline pill, so long names stay readable and
+   the remove control always sits in the same place.
+*/
+.tf-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    background: #f4ecfb;
+    border: 1px solid #d9c2ef;
+    border-radius: 8px;
+    padding: .6rem .9rem;
+    margin-bottom: .5rem;
+    font-size: .88rem;
+    font-weight: 700;
+    color: #020236;
+}
+
+    /* Lets a long name actually truncate instead of stretching the row. */
+    .tf-chip .text-truncate {
+        min-width: 0;
+    }
+
+.tf-chip-remove {
+    border: 0;
+    background: none;
+    color: #c0392b;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 .15rem;
+    flex-shrink: 0;
+}
+
+    .tf-chip-remove:hover {
+        color: #8e2a1e;
+    }
+
+.tf-empty-msg {
+    font-size: .8rem;
+    color: #8b8ba7;
+}
+
+/* --- Buttons --- */
+.tf-btn-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    background: #020236;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    font-weight: 700;
+    font-size: .88rem;
+    padding: .65rem 1.15rem;
+    white-space: nowrap;
+}
+
+    .tf-btn-add:hover,
+    .tf-btn-add:focus {
+        background: #0a0a4a;
+        color: #fff;
+    }
+
+/* Rendered as an <a> back to the index, so it needs the link decoration cleared. */
+.tf-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: #fff;
+    border: 1.5px solid rgba(2,2,54,.25);
+    border-radius: 9px;
+    color: #020236;
+    font-weight: 700;
+    font-size: .88rem;
+    padding: .6rem 2.25rem;
+}
+
+    .tf-btn-cancel:hover,
+    .tf-btn-cancel:focus {
+        background: #f4f4f8;
+        color: #020236;
+        text-decoration: none;
+    }
+
+/* Also rendered as an <a> (Field Technician details "Go back"), so link
+   decoration has to be cleared here too. */
+.tf-btn-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: linear-gradient(90deg, #020236, #31055d, #47076f);
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    font-weight: 700;
+    font-size: .88rem;
+    padding: .6rem 2.25rem;
+    box-shadow: 0 4px 5px rgba(0,0,0,.1);
+}
+
+    .tf-btn-save:hover,
+    .tf-btn-save:focus {
+        filter: brightness(1.12);
+        color: #fff;
+        text-decoration: none;
+    }
+
+/*
+   Outlined variant of .tf-btn-add - the Job Ticket mockup draws "Add Fiber
+   Plan" and "Add Technician" as white buttons with a solid navy plus glyph,
+   rather than the solid navy button the Task form uses.
+*/
+.tf-btn-add-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    background: #fff;
+    border: 1.5px solid rgba(2,2,54,.25);
+    border-radius: 9px;
+    color: #020236;
+    font-weight: 700;
+    font-size: .88rem;
+    padding: .65rem 1.15rem;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0,0,0,.04);
+}
+
+    .tf-btn-add-outline:hover,
+    .tf-btn-add-outline:focus {
+        background: #f4f4f8;
+        color: #020236;
+        border-color: rgba(2,2,54,.4);
+    }
+
+    .tf-btn-add-outline i {
+        font-size: 1rem;
+    }
+
+/*
+   Leader tag on the assignee rows. Deliberately not Bootstrap's
+   .badge bg-primary (stock blue) - this picks up the same lavender/navy
+   pair as the .tf-chip row it sits inside.
+*/
+.tf-leader-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #e6d5f7;
+    border: 1px solid #c9a9e8;
+    border-radius: 50rem;
+    color: #020236;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    padding: .2rem .7rem;
+}
+
+/* Leader radio inside an assignee row - navy instead of Bootstrap's blue. */
+.tf-chip .form-check-input {
+    border-color: rgba(2,2,54,.45);
+    margin-top: 0;
+}
+
+    .tf-chip .form-check-input:checked {
+        background-color: #020236;
+        border-color: #020236;
+    }
+
+    .tf-chip .form-check-input:focus {
+        border-color: #9f4cd6;
+        box-shadow: 0 0 0 .18rem rgba(159,76,214,.2);
+    }
+
+/*
+   Neutral status pill on a read-only .tf-chip row (Edit pages list activities
+   with their current status and no remove control). Same pill geometry as
+   .tf-leader-badge, deliberately grey so it reads as information rather than
+   as the highlighted Leader tag.
+*/
+.tf-chip-status {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid rgba(2,2,54,.2);
+    border-radius: 50rem;
+    color: #4b4b63;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    padding: .2rem .7rem;
+    flex-shrink: 0;
+}
+
+/* Read-only textarea inside a section card (e.g. Leader Remarks). */
+.tf-section .form-control[readonly] {
+    background: #f6f6fa;
+    color: #4b4b63;
+}
+
+/* ===================== Index view modals (.vm-*) ===================== */
+/*
+   Shared look for the "quick view" modals on Manager > Job Tickets and
+   Manager > Task Assignments: a gradient icon tile + title header, then
+   bordered info cards instead of Bootstrap's flat label/value rows.
+   Scoped to .vm-* so the other modals in the app (fiber plans, workload
+   monitoring, evaluation) keep Bootstrap's default modal styling.
+*/
+.vm-content {
+    border: 1px solid rgba(2,2,54,.15);
+    border-radius: 18px;
+}
+
+.vm-header {
+    align-items: flex-start;
+    gap: .9rem;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 0;
+}
+
+.vm-header-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.vm-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.15;
+}
+
+.vm-subtitle {
+    font-size: .85rem;
+    color: #6b7280;
+}
+
+/* Navy rule under the header, matching .page-divider on the index pages. */
+.vm-header-rule {
+    border: none;
+    border-top: 1px solid #020236;
+    margin: 0 1.5rem 1rem;
+}
+
+.vm-body {
+    padding: 0 1.5rem 1rem;
+}
+
+.vm-footer {
+    border-top: 0;
+    padding: .5rem 1.5rem 1.5rem;
+    gap: .5rem;
+}
+
+/* --- Bordered info cards inside the body --- */
+.vm-card {
+    border: 1px solid rgba(2,2,54,.15);
+    border-radius: 12px;
+    background: #fff;
+    padding: 1.1rem 1.25rem;
+}
+
+.vm-card-label {
+    font-size: .8rem;
+    font-weight: 700;
+    color: #020236;
+}
+
+/* Heading with its own rule, used by the Client Information / Location / Description cards. */
+.vm-card-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #020236;
+    padding-bottom: .5rem;
+    margin-bottom: .9rem;
+    border-bottom: 1px solid rgba(2,2,54,.2);
+}
+
+.vm-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: #8b8ba7;
+    line-height: 1.2;
+    margin-bottom: .2rem;
+}
+
+.vm-value {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .95rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+    .vm-value i {
+        color: #020236;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+.vm-text {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #3a3a52;
+    line-height: 1.5;
+}
+
+/*
+   Hairline between the columns of a stat grid. Only applied from md up -
+   below that the columns stack and a left rule would sit across them.
+*/
+@media (min-width: 768px) {
+    .vm-col-divider {
+        border-left: 1px solid rgba(2,2,54,.12);
+    }
+}
+
+/* Solid tile for the Client / Address / Phone icons. */
+.vm-icon-tile {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #1c0a4a, #47076f);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    flex-shrink: 0;
+}
+
+/* --- Pills --- */
+.vm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: #f4ecfb;
+    border: 1px solid #d9c2ef;
+    border-radius: 8px;
+    color: #020236;
+    font-size: .8rem;
+    font-weight: 700;
+    padding: .45rem .8rem;
+}
+
+.vm-count-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #f4ecfb;
+    border: 1px solid #d9c2ef;
+    border-radius: 50rem;
+    color: #020236;
+    font-size: .72rem;
+    font-weight: 800;
+    padding: .15rem .6rem;
+}
+
+/*
+   Status pill. The colour variants are deliberately separate from the
+   app-wide .badge-soft-* set: Pending here is the lavender the mockup uses,
+   not Bootstrap's grey secondary.
+*/
+.vm-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50rem;
+    font-size: .78rem;
+    font-weight: 800;
+    padding: .35rem .95rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.vm-status-pending {
+    background: #f0e6fa;
+    border: 1px solid #c9a9e8;
+    color: #47076f;
+}
+
+.vm-status-success {
+    background: #e4f4ec;
+    border: 1px solid #a9dcc0;
+    color: #219750;
+}
+
+.vm-status-info {
+    background: #e4eefa;
+    border: 1px solid #a8c6ea;
+    color: #1b5fa8;
+}
+
+.vm-status-warning {
+    background: #fdf1e3;
+    border: 1px solid #efc999;
+    color: #b3620d;
+}
+
+.vm-status-danger {
+    background: #fbe8e8;
+    border: 1px solid #edb0b0;
+    color: #a21919;
+}
+
+/* --- Activities table --- */
+.vm-table {
+    margin-bottom: 0;
+}
+
+    .vm-table > thead > tr > th {
+        background: #f4ecfb;
+        color: #020236;
+        font-size: .82rem;
+        font-weight: 800;
+        border-bottom: 0;
+        padding: .7rem .9rem;
+        white-space: nowrap;
+    }
+
+        .vm-table > thead > tr > th:first-child {
+            border-top-left-radius: 9px;
+            border-bottom-left-radius: 9px;
+        }
+
+        .vm-table > thead > tr > th:last-child {
+            border-top-right-radius: 9px;
+            border-bottom-right-radius: 9px;
+        }
+
+    .vm-table > tbody > tr > td {
+        border-bottom: 1px solid rgba(2,2,54,.08);
+        padding: .7rem .9rem;
+        font-size: .82rem;
+        vertical-align: middle;
+    }
+
+    .vm-table > tbody > tr:last-child > td {
+        border-bottom: 0;
+    }
+
+/* Row number chip in front of each activity name. */
+.vm-num-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #e6d5f7;
+    color: #020236;
+    font-size: .72rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+/* --- Footer buttons (same pair as the form pages) --- */
+.vm-btn-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: #fff;
+    border: 1.5px solid rgba(2,2,54,.25);
+    border-radius: 9px;
+    color: #020236;
+    font-weight: 700;
+    font-size: .88rem;
+    padding: .6rem 2.25rem;
+}
+
+    .vm-btn-close:hover,
+    .vm-btn-close:focus {
+        background: #f4f4f8;
+        color: #020236;
+    }
+
+.vm-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: linear-gradient(90deg, #020236, #31055d, #47076f);
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    font-weight: 700;
+    font-size: .88rem;
+    padding: .6rem 1.75rem;
+    box-shadow: 0 4px 5px rgba(0,0,0,.1);
+}
+
+    .vm-btn-primary:hover,
+    .vm-btn-primary:focus {
+        filter: brightness(1.12);
+        color: #fff;
+    }
+
+/* ===================== Performance Evaluation form (.eval-*) ===================== */
+/*
+   Manager > Evaluations > New. Reuses the .tf-* stepped-card shell from the
+   Job Ticket / Task forms; everything below is what that shell doesn't
+   already cover - the two role option cards, the tinted stat tiles in the
+   right rail, the score preview, and the criteria table.
+*/
+
+/* --- Step 1: role option cards --- */
+/*
+   These keep .role-filter-btn (the JS toggles .active on that selector to
+   drive the employee dropdown filter), so this is a visual override of the
+   small segmented pill into a full-width option card.
+*/
+.eval-role-card {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    width: 100%;
+    text-align: left;
+    padding: .9rem 1rem;
+    border: 1.5px solid rgba(2,2,54,.15);
+    border-radius: 11px;
+    background: #f4f4f8;
+    color: #020236;
+}
+
+    .eval-role-card:hover {
+        border-color: rgba(2,2,54,.35);
+    }
+
+    .eval-role-card.active {
+        background: linear-gradient(120deg, #1c0637, #47076f);
+        border-color: transparent;
+        color: #fff;
+    }
+
+.eval-role-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #1809ab, #9f4cd6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.eval-role-card.active .eval-role-icon {
+    background: rgba(255,255,255,.16);
+}
+
+.eval-role-text {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.eval-role-title {
+    font-size: .95rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.eval-role-sub {
+    font-size: .7rem;
+    font-weight: 500;
+    opacity: .7;
+    line-height: 1.3;
+}
+
+.eval-role-check {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    opacity: .55;
+}
+
+.eval-role-card.active .eval-role-check {
+    opacity: 1;
+}
+
+/*
+   Both check glyphs ship in the markup and CSS picks one - swapping a
+   Bootstrap Icons glyph by class alone isn't possible without hardcoding
+   its codepoint.
+*/
+.eval-role-check-on {
+    display: none;
+}
+
+.eval-role-card.active .eval-role-check-on {
+    display: inline;
+}
+
+.eval-role-card.active .eval-role-check-off {
+    display: none;
+}
+
+/* --- Right rail: stat tiles --- */
+.eval-stat {
+    border-radius: 12px;
+    border: 1px solid transparent;
+    padding: .85rem;
+    height: 100%;
+    cursor: pointer;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+    .eval-stat:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,.08);
+        transform: translateY(-1px);
+    }
+
+/*
+   Tone classes. Tiles 3 and 4 change meaning with the selected role
+   (Rescheduled/Cancelled vs Rejected Activities/Overdue), so applyStats()
+   swaps these at runtime alongside the icon's palette class.
+*/
+.eval-stat-primary {
+    background: #eef0fb;
+    border-color: #cfd5f2;
+}
+
+.eval-stat-success {
+    background: #e6f5ec;
+    border-color: #b6ddc6;
+}
+
+.eval-stat-warning {
+    background: #fdf3e4;
+    border-color: #efd6ad;
+}
+
+.eval-stat-danger {
+    background: #fceaea;
+    border-color: #eebcbc;
+}
+
+/*
+   Overrides the flat tint that .icon-palette-* would otherwise paint, so the
+   glyph sits in a light disc on the already-tinted tile. The palette class
+   still supplies the glyph colour.
+*/
+.eval-stat .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,.8);
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.eval-stat .stat-label {
+    font-size: .68rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #5b5b72;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.eval-stat .stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.15;
+}
+
+/* --- Right rail: score preview --- */
+.eval-score-card {
+    background: #f6f6fa;
+    border: 1px solid rgba(2,2,54,.12);
+    border-radius: 14px;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.eval-score-label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.eval-score-value {
+    font-size: 3.2rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.05;
+}
+
+.eval-score-out-of {
+    font-size: .82rem;
+    color: #8b8ba7;
+}
+
+/* --- Step 3: criteria table --- */
+/*
+   Scoped to this wrapper rather than the _CriteriaStarRows partial itself,
+   so the same partial keeps its current look on the Edit page.
+*/
+.eval-criteria-table table > thead > tr > th {
+    background: #f4ecfb;
+    color: #020236;
+    font-size: .82rem;
+    font-weight: 800;
+    border-bottom: 0;
+    padding: .7rem .9rem;
+    white-space: nowrap;
+}
+
+    .eval-criteria-table table > thead > tr > th:first-child {
+        border-top-left-radius: 9px;
+        border-bottom-left-radius: 9px;
+    }
+
+    .eval-criteria-table table > thead > tr > th:last-child {
+        border-top-right-radius: 9px;
+        border-bottom-right-radius: 9px;
+    }
+
+.eval-criteria-table table > tbody > tr > td {
+    border-bottom: 1px solid rgba(2,2,54,.08);
+    padding: .8rem .9rem;
+    vertical-align: middle;
+}
+
+.eval-criteria-table table > tbody > tr:last-child > td {
+    border-bottom: 0;
+}
+
+.eval-criteria-table .form-control {
+    background: #faf7fd;
+    border: 1.5px solid rgba(2,2,54,.15);
+    border-radius: 8px;
+}
+
+/* Evaluator is filled in from the session and shown read-only. */
+.eval-evaluator:disabled {
+    background: #f4ecfb;
+    color: #020236;
+    font-weight: 700;
+    opacity: 1;
+}
+
+/* Overall feedback box, tinted to match the mockup. */
+.eval-feedback {
+    background: #faf7fd;
+}
+
+/*
+   Page-level header for a details screen (Field Technician > job order):
+   the same gradient tile + title + reference-number pairing the .vm-* view
+   modals use, at page scale rather than inside a dialog.
+*/
+.vm-page-header {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+}
+
+/* Thumbnail card for an uploaded photo / file. */
+.vm-file-card {
+    border: 1px solid rgba(2,2,54,.15);
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
+    height: 100%;
+    position: relative;
+}
+
+.vm-file-thumb {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+
+.vm-file-thumb-placeholder {
+    height: 140px;
+    background: #f4ecfb;
+    color: #47076f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+}
+
+.vm-file-name {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #020236;
+}
+
+.vm-file-meta {
+    font-size: .7rem;
+    color: #8b8ba7;
+}
+
+/* Small outlined download button inside a file card. */
+.vm-btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    width: 100%;
+    text-decoration: none;
+    background: #fff;
+    border: 1.5px solid rgba(2,2,54,.25);
+    border-radius: 7px;
+    color: #020236;
+    font-weight: 700;
+    font-size: .75rem;
+    padding: .35rem .5rem;
+}
+
+    .vm-btn-sm:hover,
+    .vm-btn-sm:focus {
+        background: #f4f4f8;
+        color: #020236;
+    }
+
+/* Remove-file control, pinned to the corner of a file card. */
+.vm-file-remove {
+    position: absolute;
+    top: .35rem;
+    right: .35rem;
+    z-index: 2;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 50%;
+    background: #a21919;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+}
+
+/*
+   Fifth status tone, so the five evaluation ratings (Excellent / Very Good /
+   Good / Needs Improvement / Poor) each get their own pill instead of two of
+   them sharing the blue .vm-status-info.
+*/
+.vm-status-primary {
+    background: #eae6fa;
+    border: 1px solid #bfb4ea;
+    color: #2f1b8f;
+}
+
+/*
+   Plain-header variant of .vm-table for the Performance Records screens,
+   where the mockup shows column labels as bare text rather than the lavender
+   band the index/view-modal tables use.
+*/
+.vm-table-plain > thead > tr > th {
+    background: transparent;
+    color: #8b8ba7;
+    font-size: .75rem;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(2,2,54,.12);
+    padding: .6rem .9rem;
+    white-space: nowrap;
+}
+
+.vm-table-plain > tbody > tr > td {
+    border-bottom: 1px solid rgba(2,2,54,.08);
+    padding: .8rem .9rem;
+    vertical-align: middle;
+}
+
+.vm-table-plain > tbody > tr:last-child > td {
+    border-bottom: 0;
+}
+
+/* One entry in the Appraisal Feedback trail. */
+.vm-feedback-item {
+    border: 1px solid rgba(2,2,54,.12);
+    border-radius: 10px;
+    background: #faf7fd;
+    padding: .85rem 1rem;
 }

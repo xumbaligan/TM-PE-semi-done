@@ -5,13 +5,13 @@
     Layout = "_FieldTechnicianLayout";
     var badgeClass = Model.JobTicket.DisplayStatus switch
     {
-        "Completed" => "bg-success-subtle text-success",
-        "Completed Late" => "bg-warning-subtle text-warning-emphasis",
-        "In Progress" => "bg-info-subtle text-info",
-        "Cancelled" => "bg-danger-subtle text-danger",
-        "Reschedule Request" => "bg-warning-subtle text-warning-emphasis",
-        "Overdue" => "bg-danger-subtle text-danger-emphasis",
-        _ => "bg-secondary-subtle text-secondary"
+        "Completed" => "vm-status-success",
+        "Completed Late" => "vm-status-warning",
+        "In Progress" => "vm-status-info",
+        "Cancelled" => "vm-status-danger",
+        "Reschedule Request" => "vm-status-warning",
+        "Overdue" => "vm-status-danger",
+        _ => "vm-status-pending"
     };
 
     string FiberPlanDisplay(string? name) =>
@@ -38,217 +38,279 @@
     </div>
 }
 
-<div class="mb-3">
-    <h2 class="mb-1">@Model.JobTicket.JobType Job</h2>
-    <p class="text-muted mb-0">
-        Ticket #@Model.JobTicket.TicketNumber &middot; Viewing as <strong>@Model.CurrentEmployee.FullName</strong>
-        @if (Model.IsLeader)
-        {
-            <span class="badge rounded-pill badge-navy ms-1">Leader</span>
-        }
-        else
-        {
-            <span class="badge bg-light text-dark border ms-1">Member (view only)</span>
-        }
-    </p>
+@{
+    var jobTypeIcon = Model.JobTicket.JobType switch
+    {
+        "Installation" => "bi-hdd-network",
+        "Repair" => "bi-wrench-adjustable",
+        "Inspection" => "bi-tools",
+        "Maintenance" => "bi-gear-wide-connected",
+        _ => "bi-tools"
+    };
+}
+
+<div class="vm-page-header mb-3">
+    <div class="vm-header-icon"><i class="bi @jobTypeIcon"></i></div>
+    <div>
+        <div class="tf-page-title">@Model.JobTicket.JobType Job</div>
+        <div class="vm-subtitle">@Model.JobTicket.TicketNumber</div>
+    </div>
 </div>
 <hr class="page-divider" />
 
-<div class="wlm-card mb-3">
-    <div class="card-body p-4">
-
-        <div class="row g-3 mb-3">
-            <div class="col-sm-3">
-                <div class="text-muted small">Status</div>
-                <span class="status-badge @badgeClass">@Model.JobTicket.DisplayStatus</span>
+@* ===================== JOB SUMMARY ===================== *@
+@*
+    Three even columns per row so both rows line up on the same vertical
+    rules - the same 3x2 grid the Office Staff task details page and the
+    manager view modals use.
+*@
+<div class="vm-card mb-3">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="vm-label">Status</div>
+            <span class="vm-status @badgeClass">@Model.JobTicket.DisplayStatus</span>
+        </div>
+        <div class="col-md-4 vm-col-divider">
+            <div class="vm-label">@Model.JobTicket.ServiceDateLabel</div>
+            <div class="vm-value">
+                <i class="bi bi-calendar-event"></i>
+                @Model.JobTicket.ServiceDate.ToString("M/d/yyyy")
             </div>
-            <div class="col-sm-3">
-                <div class="text-muted small">@Model.JobTicket.ServiceDateLabel</div>
-                <div>@Model.JobTicket.ServiceDate.ToString("M/d/yyyy")</div>
-            </div>
-            <div class="col-sm-3">
-                <div class="text-muted small">Due Date</div>
-                <div>@(Model.JobTicket.DateOfCompletion?.ToString("M/d/yyyy") ?? "—")</div>
-            </div>
-            <div class="col-sm-3">
-                @if (Model.JobTicket.JobType == "Installation")
-                {
-                    <div class="text-muted small">Fiber Plan</div>
-                    <div>@FiberPlanDisplay(Model.JobTicket.FiberPlan)</div>
-                }
-                else
-                {
-                    <div class="text-muted small">Description</div>
-                    <div>@Model.JobTicket.Description</div>
-                }
-            </div>
-            <div class="col-sm-3">
-                <div class="text-muted small">Date Created</div>
-                <div>@Model.JobTicket.DateCreated.ToString("M/d/yyyy")</div>
-            </div>
-            @if (Model.JobTicket.DateCompleted.HasValue)
-            {
-                <div class="col-sm-3">
-                    <div class="text-muted small">Date Completed</div>
-                    <div>@Model.JobTicket.DateCompleted.Value.ToString("M/d/yyyy")</div>
-                </div>
-            }
-            <div class="col-sm-3">
-                <div class="text-muted small">Assigned By</div>
-                <div>@(Model.JobTicket.AssignedByEmployee?.FullName ?? "—")</div>
+        </div>
+        <div class="col-md-4 vm-col-divider">
+            <div class="vm-label">Assigned By</div>
+            <div class="vm-value">
+                <i class="bi bi-person-circle"></i>
+                @(Model.JobTicket.AssignedByEmployee?.FullName ?? "—")
             </div>
         </div>
 
-        @if (Model.JobTicket.JobType != TM_PE.Model.JobTypes.Maintenance)
-        {
-            <div class="row g-3 mb-3">
-                <div class="col-sm-4">
-                    <div class="text-muted small">Client</div>
-                    <div>@Model.JobTicket.ClientFullName</div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="text-muted small">Primary Number</div>
-                    <div>@Model.JobTicket.PrimaryNumber</div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="text-muted small">Secondary Number</div>
-                    <div>@(string.IsNullOrWhiteSpace(Model.JobTicket.SecondaryNumber) ? "—" : Model.JobTicket.SecondaryNumber)</div>
-                </div>
+        <div class="col-md-4">
+            <div class="vm-label">Date Created</div>
+            <div class="vm-value">
+                <i class="bi bi-calendar3"></i>
+                @Model.JobTicket.DateCreated.ToString("M/d/yyyy")
             </div>
-        }
-
-        <div class="mb-1">
-            <div class="text-muted small mb-2">Location</div>
-            <div class="mb-2">@Model.JobTicket.LocationAddress</div>
-            @if (!string.IsNullOrWhiteSpace(Model.JobTicket.NearestLandmark))
-            {
-                <div class="text-muted small">Nearest Landmark</div>
-                <div>@Model.JobTicket.NearestLandmark</div>
-            }
         </div>
-
+        <div class="col-md-4 vm-col-divider">
+            <div class="vm-label">Due Date</div>
+            <div class="vm-value">
+                <i class="bi bi-calendar-week"></i>
+                @(Model.JobTicket.DateOfCompletion?.ToString("M/d/yyyy") ?? "—")
+            </div>
+        </div>
+        <div class="col-md-4 vm-col-divider">
+            <div class="vm-label">Date Completed</div>
+            <div class="vm-value">
+                <i class="bi bi-calendar-check"></i>
+                @(Model.JobTicket.DateCompleted?.ToString("M/d/yyyy") ?? "—/—/—")
+            </div>
+        </div>
     </div>
 </div>
 
-@* ===================== ASSIGNED TEAM ===================== *@
-<div class="wlm-card mb-3">
-    <div class="card-body p-4">
-        <h6 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-people me-1"></i> Assigned Team</h6>
+@* ===================== DESCRIPTION / CLIENT / LOCATION ===================== *@
+<div class="row g-3 mb-3">
 
-        <div class="d-flex flex-wrap gap-2">
-            @if (Model.JobTicket.Assignments != null && Model.JobTicket.Assignments.Any())
+    @if (Model.JobTicket.JobType != TM_PE.Model.JobTypes.Maintenance)
+    {
+        <div class="col-lg-6">
+            <div class="vm-card">
+                <div class="vm-card-title">Client Information</div>
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="vm-icon-tile"><i class="bi bi-person-fill"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="vm-label">Client</div>
+                        <div class="vm-value">@Model.JobTicket.ClientFullName</div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="vm-icon-tile"><i class="bi bi-telephone-fill"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="vm-label">Primary Number</div>
+                                <div class="vm-value">@Model.JobTicket.PrimaryNumber</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 vm-col-divider">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="vm-icon-tile"><i class="bi bi-telephone"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="vm-label">Secondary Number</div>
+                                <div class="vm-value">@(string.IsNullOrWhiteSpace(Model.JobTicket.SecondaryNumber) ? "—" : Model.JobTicket.SecondaryNumber)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="col-lg-6">
+        @if (Model.JobTicket.JobType == "Installation")
+        {
+            <div class="vm-card">
+                <div class="vm-card-title">Fiber Plan</div>
+                <div class="vm-value">@FiberPlanDisplay(Model.JobTicket.FiberPlan)</div>
+            </div>
+        }
+        else
+        {
+            <div class="vm-card">
+                <div class="vm-card-title">Description</div>
+                <div class="vm-text">@Model.JobTicket.Description</div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-6">
+        <div class="vm-card">
+            <div class="vm-card-title">Location</div>
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="vm-icon-tile"><i class="bi bi-geo-alt-fill"></i></div>
+                <div class="overflow-hidden">
+                    <div class="vm-label">Address</div>
+                    <div class="vm-value">@Model.JobTicket.LocationAddress</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.JobTicket.NearestLandmark))
             {
-                @foreach (var a in Model.JobTicket.Assignments.Where(a => a.Employee != null))
-                {
-                    var isYou = a.EmployeeID == Model.CurrentEmployee.EmployeeId;
-                    <span class="badge rounded-pill @(a.IsLeader ? "badge-navy" : "bg-light text-dark border") px-3 py-2">
-                        @a.Employee!.FullName @(a.IsLeader ? "(Leader)" : "") @(isYou ? "(You)" : "")
-                    </span>
-                }
-            }
-            else
-            {
-                <span class="text-muted small">No employees assigned.</span>
+                <div class="d-flex align-items-center gap-3 mt-3">
+                    <div class="vm-icon-tile"><i class="bi bi-signpost-fill"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="vm-label">Nearest Landmark</div>
+                        <div class="vm-value">@Model.JobTicket.NearestLandmark</div>
+                    </div>
+                </div>
             }
         </div>
+    </div>
+
+</div>
+
+@* ===================== ASSIGNED TEAM ===================== *@
+<div class="vm-card mb-3">
+    <div class="vm-card-label mb-2">Assigned Team</div>
+
+    <div class="d-flex flex-wrap gap-2">
+        @if (Model.JobTicket.Assignments != null && Model.JobTicket.Assignments.Any(a => a.Employee != null))
+        {
+            @foreach (var a in Model.JobTicket.Assignments.Where(a => a.Employee != null))
+            {
+                var isYou = a.EmployeeID == Model.CurrentEmployee.EmployeeId;
+                <span class="vm-pill">
+                    @a.Employee!.FullName
+                    @if (a.IsLeader)
+                    {
+                        <span class="tf-leader-badge">Leader</span>
+                    }
+                    @if (isYou)
+                    {
+                        <span class="vm-chip-status">You</span>
+                    }
+                </span>
+            }
+        }
+        else
+        {
+            <span class="tf-empty-msg">No employees assigned.</span>
+        }
     </div>
 </div>
 
 @* ===================== STATUS + REMARKS (leader only) ===================== *@
 @if (Model.IsLeader && !Model.JobTicket.IsLockedFromFieldTechnicianEditing && Model.JobTicket.IsAccessibleToFieldTechnician)
 {
-    <div class="wlm-card mb-3">
-        <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase mb-3" style="color:#020236;"><i class="bi bi-flag me-1"></i> Update Status</h6>
-            <form method="post" asp-page-handler="Save" id="statusForm">
-                <input type="hidden" name="jobTicketId" value="@Model.JobTicket.JobTicketID" />
-                <div class="row g-2">
-                    <div class="col-sm-4">
-                        <label class="form-label small">Status</label>
-                        <div class="dropdown">
-                            <button class="btn status-dropdown-btn dropdown-toggle w-100" type="button" id="statusDropdownBtn"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                @Model.PendingStatus
-                            </button>
-                            <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="statusDropdownBtn">
-                                @foreach (var opt in TM_PE.Pages.FieldTechnician.DetailsModel.StatusOptions)
-                                {
-                                    @* Once work has left Pending it can never go back, so Pending is
-                                       only offered while it's still the current status — an Overdue
-                                       ticket is just an expired Pending one, so it counts too. Reschedule
-                                       Request can be selected by the team leader at any time — doing so
-                                       locks the ticket from further field-technician edits until the
-                                       manager approves/acts on the request. *@
-                                    if (opt == "Pending" && !Model.JobTicket.IsPendingOrOverdue)
-                                    {
-                                        continue;
-                                    }
+    <div class="vm-card mb-3">
+        <div class="vm-card-title">Update Status</div>
+        <form method="post" asp-page-handler="Save" id="statusForm">
+            <input type="hidden" name="jobTicketId" value="@Model.JobTicket.JobTicketID" />
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="tf-label">Status</label>
+                    <select id="statusSelect" name="status" class="form-select">
+                        @foreach (var opt in TM_PE.Pages.FieldTechnician.DetailsModel.StatusOptions)
+                        {
+                            @* Once work has left Pending it can never go back, so Pending is
+                               only offered while it's still the current status — an Overdue
+                               ticket is just an expired Pending one, so it counts too. Reschedule
+                               Request can be selected by the team leader at any time — doing so
+                               locks the ticket from further field-technician edits until the
+                               manager approves/acts on the request. *@
+                            if (opt == "Pending" && !Model.JobTicket.IsPendingOrOverdue)
+                            {
+                                continue;
+                            }
 
-                                    @* Prefilled from PendingStatus (an unsaved selection carried
-                                       through a photo-upload reload) rather than the saved
-                                       JobTicket.Status, so an in-progress edit isn't lost — but
-                                       nothing here is written to the database until Save. *@
-                                    <li><a class="dropdown-item @(opt == Model.PendingStatus ? "active" : "")" href="#" data-value="@opt">@opt</a></li>
-                                }
-                            </ul>
-                        </div>
-                        <input type="hidden" id="statusSelect" name="status" value="@Model.PendingStatus" />
-                        <div id="fileRequirementWarning"
-                             class="alert alert-warning small mt-2 d-none">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
-                            A photo or file must be uploaded before changing this job order to
-                            <strong>In Progress</strong> or <strong>Completed</strong>.
-                        </div>
-                    </div>
-                    <div class="col-sm-8">
-                        <label class="form-label small">Remarks</label>
-                        <input type="text" name="remarks" id="remarksInput" class="form-control" maxlength="500"
-                               value="@Model.PendingRemarks" placeholder="@remarksPlaceholder" />
+                            @* Prefilled from PendingStatus (an unsaved selection carried
+                               through a photo-upload reload) rather than the saved
+                               JobTicket.Status, so an in-progress edit isn't lost — but
+                               nothing here is written to the database until Save. *@
+                            if (opt == Model.PendingStatus)
+                            {
+                                <option value="@opt" selected>@opt</option>
+                            }
+                            else
+                            {
+                                <option value="@opt">@opt</option>
+                            }
+                        }
+                    </select>
+                    <div id="fileRequirementWarning"
+                         class="alert alert-warning small mt-2 d-none">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        A photo or file must be uploaded before changing this job order to
+                        <strong>In Progress</strong> or <strong>Completed</strong>.
                     </div>
                 </div>
-            </form>
-        </div>
+                <div class="col-md-8">
+                    <label class="tf-label">Remarks</label>
+                    <input type="text" name="remarks" id="remarksInput" class="form-control" maxlength="500"
+                           value="@Model.PendingRemarks" placeholder="@remarksPlaceholder" />
+                </div>
+            </div>
+        </form>
     </div>
 }
 else if (Model.IsLeader && Model.JobTicket.Status == "Reschedule Request")
 {
-    <div class="wlm-card mb-3">
-        <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase mb-2" style="color:#020236;"><i class="bi bi-flag me-1"></i> Update Status</h6>
-            <div class="alert alert-warning mb-0">
-                <i class="bi bi-hourglass-split me-1"></i>
-                A reschedule request is pending the manager's approval. You won't be able to
-                update the status, remarks, or files until the manager acts on it.
-            </div>
-            @if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
-            {
-                <div class="text-muted small mt-2">Reason submitted</div>
-                <div>@Model.JobTicket.Remarks</div>
-            }
+    <div class="vm-card mb-3">
+        <div class="vm-card-title">Update Status</div>
+        <div class="alert alert-warning mb-0">
+            <i class="bi bi-hourglass-split me-1"></i>
+            A reschedule request is pending the manager's approval. You won't be able to
+            update the status, remarks, or files until the manager acts on it.
         </div>
+        @if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
+        {
+            <div class="vm-label mt-3">Reason submitted</div>
+            <div class="vm-text">@Model.JobTicket.Remarks</div>
+        }
     </div>
 }
 else if (Model.IsLeader && !Model.JobTicket.IsLockedFromFieldTechnicianEditing && !Model.JobTicket.IsAccessibleToFieldTechnician)
 {
-    <div class="wlm-card mb-3">
-        <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase mb-2" style="color:#020236;"><i class="bi bi-flag me-1"></i> Update Status</h6>
-            <div class="alert alert-secondary mb-0">
-                <i class="bi bi-calendar-x me-1"></i>
-                This job order isn't accessible yet. It's scheduled for
-                <strong>@Model.JobTicket.ServiceDate.ToString("M/d/yyyy")</strong> —
-                you'll be able to update its status, remarks, and files once that date arrives.
-            </div>
+    <div class="vm-card mb-3">
+        <div class="vm-card-title">Update Status</div>
+        <div class="alert alert-secondary mb-0">
+            <i class="bi bi-calendar-x me-1"></i>
+            This job order isn't accessible yet. It's scheduled for
+            <strong>@Model.JobTicket.ServiceDate.ToString("M/d/yyyy")</strong> —
+            you'll be able to update its status, remarks, and files once that date arrives.
         </div>
     </div>
 }
 else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
 {
-    <div class="wlm-card mb-3">
-        <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase mb-2" style="color:#020236;"><i class="bi bi-flag me-1"></i> Remarks</h6>
-            <div class="text-muted">@Model.JobTicket.Remarks</div>
-        </div>
+    <div class="vm-card mb-3">
+        <div class="vm-card-title">Remarks</div>
+        <div class="vm-text">@Model.JobTicket.Remarks</div>
     </div>
 }
 
@@ -259,12 +321,12 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
 @{
     Func<string, string> historyBadgeClass = s => s switch
     {
-        "Completed" => "bg-success-subtle text-success",
-        "In Progress" => "bg-info-subtle text-info",
-        "Cancelled" => "bg-danger-subtle text-danger",
-        "Reschedule Request" => "bg-warning-subtle text-warning-emphasis",
-        "Rescheduled" => "bg-primary-subtle text-primary",
-        _ => "bg-secondary-subtle text-secondary"
+        "Completed" => "vm-status-success",
+        "In Progress" => "vm-status-info",
+        "Cancelled" => "vm-status-danger",
+        "Reschedule Request" => "vm-status-warning",
+        "Rescheduled" => "vm-status-info",
+        _ => "vm-status-pending"
     };
 
     // A "Rescheduled" entry is always logged by the manager (see Manager
@@ -283,50 +345,48 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
 }
 @if (Model.JobTicket.SubmissionHistory != null && Model.JobTicket.SubmissionHistory.Any())
 {
-    <div class="wlm-card mb-3">
-        <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase mb-1" style="color:#020236;"><i class="bi bi-clock-history me-1"></i> Ticket History</h6>
-            <p class="text-muted small mb-3">
-                Every status update logged for this job order - by the team leader or by the
-                manager - in order. Click <strong>View</strong> on any row to see the full
-                details for that update, including whatever photos or files were attached at
-                the time.
-            </p>
+    <div class="vm-card mb-3">
+        <div class="vm-card-label mb-1">Ticket History</div>
+        <p class="tf-section-sub mb-3">
+            Every status update logged for this job order &mdash; by the team leader or by the
+            manager &mdash; in order. Click <strong>View</strong> on any row to see the full
+            details for that update, including whatever photos or files were attached at
+            the time.
+        </p>
 
-            <div class="table-responsive">
-                <table class="table table-sm align-middle wlm-table mb-0">
-                    <thead>
+        <div class="table-responsive">
+            <table class="table vm-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Actor</th>
+                        <th>Remarks</th>
+                        <th>Date Changed</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var h in Model.JobTicket.SubmissionHistory)
+                    {
                         <tr>
-                            <th>Status</th>
-                            <th>Actor</th>
-                            <th>Remarks</th>
-                            <th>Date Changed</th>
-                            <th class="text-end">Action</th>
+                            <td>
+                                <span class="vm-status @historyBadgeClass(h.Status)">@h.Status</span>
+                            </td>
+                            <td class="text-nowrap fw-bold">@actorLabel(h)</td>
+                            <td class="text-truncate" style="max-width:260px;">
+                                @(string.IsNullOrWhiteSpace(h.Remarks) ? "—" : h.Remarks)
+                            </td>
+                            <td class="text-nowrap">@h.DateChanged.ToString("M/d/yyyy h:mm tt")</td>
+                            <td class="text-end">
+                                <button type="button" class="vm-btn-sm w-auto"
+                                        data-bs-toggle="modal" data-bs-target="#historyModal-@h.JobTicketSubmissionHistoryID">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var h in Model.JobTicket.SubmissionHistory)
-                        {
-                            <tr>
-                                <td>
-                                    <span class="status-badge @historyBadgeClass(h.Status)">@h.Status</span>
-                                </td>
-                                <td class="small text-nowrap">@actorLabel(h)</td>
-                                <td class="text-truncate" style="max-width:260px;">
-                                    @(string.IsNullOrWhiteSpace(h.Remarks) ? "—" : h.Remarks)
-                                </td>
-                                <td class="text-nowrap">@h.DateChanged.ToString("M/d/yyyy h:mm tt")</td>
-                                <td class="text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-navy"
-                                            data-bs-toggle="modal" data-bs-target="#historyModal-@h.JobTicketSubmissionHistoryID">
-                                        <i class="bi bi-eye me-1"></i> View
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 }
@@ -338,37 +398,48 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
     {
         <div class="modal fade" id="historyModal-@h.JobTicketSubmissionHistoryID" tabindex="-1"
              aria-labelledby="historyModalLabel-@h.JobTicketSubmissionHistoryID" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h6 class="modal-title fw-bold mb-0" id="historyModalLabel-@h.JobTicketSubmissionHistoryID">
-                            <i class="bi bi-clock-history me-1"></i> Submission Details
-                        </h6>
+            <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+                <div class="modal-content vm-content">
+
+                    <div class="modal-header vm-header">
+                        <div class="vm-header-icon"><i class="bi bi-clock-history"></i></div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="vm-title" id="historyModalLabel-@h.JobTicketSubmissionHistoryID">Submission Details</div>
+                            <div class="vm-subtitle">@Model.JobTicket.TicketNumber</div>
+                        </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div class="row g-3 mb-3">
-                            <div class="col-sm-6">
-                                <div class="text-muted small">Status</div>
-                                <span class="status-badge @historyBadgeClass(h.Status)">@h.Status</span>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="text-muted small">Actor</div>
-                                <div>@actorLabel(h)</div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="text-muted small">Date Changed</div>
-                                <div>@h.DateChanged.ToString("M/d/yyyy h:mm tt")</div>
+                    <hr class="vm-header-rule" />
+
+                    <div class="modal-body vm-body">
+
+                        <div class="vm-card mb-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="vm-label">Status</div>
+                                    <span class="vm-status @historyBadgeClass(h.Status)">@h.Status</span>
+                                </div>
+                                <div class="col-md-4 vm-col-divider">
+                                    <div class="vm-label">Actor</div>
+                                    <div class="vm-value">@actorLabel(h)</div>
+                                </div>
+                                <div class="col-md-4 vm-col-divider">
+                                    <div class="vm-label">Date Changed</div>
+                                    <div class="vm-value">
+                                        <i class="bi bi-calendar3"></i>
+                                        @h.DateChanged.ToString("M/d/yyyy h:mm tt")
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="text-muted small">Remarks</div>
-                            <div>@(string.IsNullOrWhiteSpace(h.Remarks) ? "—" : h.Remarks)</div>
+                        <div class="vm-card mb-3">
+                            <div class="vm-card-label mb-2">Remarks</div>
+                            <div class="vm-text">@(string.IsNullOrWhiteSpace(h.Remarks) ? "—" : h.Remarks)</div>
                         </div>
 
-                        <div>
-                            <div class="text-muted small mb-2">Uploaded Photos / Files</div>
+                        <div class="vm-card">
+                            <div class="vm-card-label mb-2">Uploaded Photos / Files</div>
                             @if (h.ArchivedSubmissions != null && h.ArchivedSubmissions.Any())
                             {
                                 <div class="row g-2">
@@ -377,21 +448,19 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
                                         var ext = System.IO.Path.GetExtension(sub.FileName);
                                         var isImage = TM_PE.Pages.FieldTechnician.DetailsModel.ImageExtensions.Contains(ext);
                                         <div class="col-md-3 col-sm-4 col-6">
-                                            <div class="card h-100">
+                                            <div class="vm-file-card">
                                                 @if (isImage)
                                                 {
-                                                    <img src="~/@sub.FilePath" class="card-img-top" style="height:110px; object-fit:cover;" alt="@sub.FileName" />
+                                                    <img src="~/@sub.FilePath" class="vm-file-thumb" alt="@sub.FileName" />
                                                 }
                                                 else
                                                 {
-                                                    <div class="d-flex align-items-center justify-content-center bg-light" style="height:110px;">
-                                                        <i class="bi bi-file-earmark-text" style="font-size:2rem;"></i>
-                                                    </div>
+                                                    <div class="vm-file-thumb-placeholder"><i class="bi bi-file-earmark-text"></i></div>
                                                 }
-                                                <div class="card-body p-2">
-                                                    <div class="small text-truncate" title="@sub.FileName">@sub.FileName</div>
-                                                    <div class="text-muted small">By @(sub.Employee?.FullName ?? "—")</div>
-                                                    <a asp-page-handler="Download" asp-route-submissionId="@sub.JobTicketSubmissionID" class="btn btn-sm btn-outline-navy w-100 mt-1">
+                                                <div class="p-2">
+                                                    <div class="vm-file-name text-truncate" title="@sub.FileName">@sub.FileName</div>
+                                                    <div class="vm-file-meta">By @(sub.Employee?.FullName ?? "—")</div>
+                                                    <a asp-page-handler="Download" asp-route-submissionId="@sub.JobTicketSubmissionID" class="vm-btn-sm mt-2">
                                                         <i class="bi bi-download"></i> Download
                                                     </a>
                                                 </div>
@@ -402,13 +471,16 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
                             }
                             else
                             {
-                                <div class="text-muted small">No photos or files were attached to this update.</div>
+                                <span class="tf-empty-msg">No photos or files were attached to this update.</span>
                             }
                         </div>
+
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+
+                    <div class="modal-footer vm-footer">
+                        <button type="button" class="vm-btn-close" data-bs-dismiss="modal">Close</button>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -416,99 +488,92 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
 }
 
 @* ===================== SUBMITTED PHOTOS / FILES ===================== *@
-<div id="submittedFilesSection" class="wlm-card mb-4">
-    <div class="wlm-card mb-4">
-        <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase mb-1" style="color:#020236;"><i class="bi bi-camera me-1"></i> Submitted Photos / Files</h6>
-            <p class="text-muted small mb-3">
-                @if (Model.IsLeader)
-                {
-                    <text>Upload proof-of-work photos or files below. Only you, as team leader, can upload for this job order.</text>
-                }
-                else
-                {
-                    <text>You can view and download files uploaded by the team leader. Only the leader can upload.</text>
-                }
-            </p>
+<div id="submittedFilesSection" class="vm-card mb-3">
+    <div class="vm-card-label mb-1">Submitted Photos / Files</div>
+    <p class="tf-section-sub mb-3">
+        @if (Model.IsLeader)
+        {
+            <text>Upload proof-of-work photos or files below. Only you, as team leader, can upload for this job order.</text>
+        }
+        else
+        {
+            <text>You can view and download files uploaded by the team leader. Only the leader can upload.</text>
+        }
+    </p>
 
-            @if (Model.IsLeader && !Model.JobTicket.IsLockedFromFieldTechnicianEditing && Model.JobTicket.IsAccessibleToFieldTechnician)
+    @if (Model.IsLeader && !Model.JobTicket.IsLockedFromFieldTechnicianEditing && Model.JobTicket.IsAccessibleToFieldTechnician)
+    {
+        <form method="post" enctype="multipart/form-data" asp-page-handler="UploadSubmission" id="uploadSubmissionForm" class="mb-3">
+            <input type="hidden" name="jobTicketId" value="@Model.JobTicket.JobTicketID" />
+            @* Kept in sync with the Status/Remarks fields above by JS so an
+               upload (a separate form submit) can carry the leader's unsaved
+               selection through the redirect and re-display it. IMPORTANT: the
+               server-side upload handler never persists these to the database —
+               they're display-only until the leader explicitly presses Save. *@
+            <input type="hidden"
+                   name="status"
+                   id="uploadStatus"
+                   value="@Model.PendingStatus" />
+
+            <input type="hidden"
+                   name="remarks"
+                   id="uploadRemarks"
+                   value="@Model.PendingRemarks" />
+            <div class="d-flex align-items-center gap-2">
+                <input type="file" name="submissionFile" id="submissionFileInput" class="form-control" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                <span id="uploadSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            </div>
+            <div class="tf-form-hint">Choosing a photo or file uploads it automatically.</div>
+        </form>
+    }
+
+    @if (Model.JobTicket.Submissions != null && Model.JobTicket.Submissions.Any())
+    {
+        <div class="row g-3">
+            @foreach (var sub in Model.JobTicket.Submissions)
             {
-                <form method="post" enctype="multipart/form-data" asp-page-handler="UploadSubmission" id="uploadSubmissionForm">
-                    <input type="hidden" name="jobTicketId" value="@Model.JobTicket.JobTicketID" />
-                    @* Kept in sync with the Status/Remarks fields above by JS so an
-                       upload (a separate form submit) can carry the leader's unsaved
-                       selection through the redirect and re-display it. IMPORTANT: the
-                       server-side upload handler never persists these to the database —
-                       they're display-only until the leader explicitly presses Save. *@
-                    <input type="hidden"
-                           name="status"
-                           id="uploadStatus"
-                           value="@Model.PendingStatus" />
-
-                    <input type="hidden"
-                           name="remarks"
-                           id="uploadRemarks"
-                           value="@Model.PendingRemarks" />
-                    <div class="d-flex align-items-center gap-2">
-                        <input type="file" name="submissionFile" id="submissionFileInput" class="form-control" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
-                        <span id="uploadSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status" aria-hidden="true"></span>
-                    </div>
-                    <div class="form-text">Choosing a photo or file uploads it automatically.</div>
-                </form>
-            }
-
-            @if (Model.JobTicket.Submissions != null && Model.JobTicket.Submissions.Any())
-            {
-                <div class="row g-3">
-                    @foreach (var sub in Model.JobTicket.Submissions)
-                    {
-                        var ext = System.IO.Path.GetExtension(sub.FileName);
-                        var isImage = TM_PE.Pages.FieldTechnician.DetailsModel.ImageExtensions.Contains(ext);
-                        <div class="col-md-3 col-sm-4 col-6">
-                            <div class="card h-100 position-relative">
-                                @if (Model.IsLeader && !Model.JobTicket.IsLockedFromFieldTechnicianEditing && Model.JobTicket.IsAccessibleToFieldTechnician)
-                                {
-                                    <form method="post" asp-page-handler="DeleteSubmission"
-                                          onsubmit="return confirm('Remove this file?');"
-                                          class="position-absolute top-0 end-0 m-1">
-                                        <input type="hidden" name="jobTicketId" value="@Model.JobTicket.JobTicketID" />
-                                        <input type="hidden" name="submissionId" value="@sub.JobTicketSubmissionID" />
-                                        <button type="submit" class="btn btn-sm btn-danger rounded-circle p-0"
-                                                style="width:24px; height:24px; line-height:1;" title="Remove file">
-                                            <i class="bi bi-x"></i>
-                                        </button>
-                                    </form>
-                                }
-                                @if (isImage)
-                                {
-                                    <img src="~/@sub.FilePath" class="card-img-top" style="height:150px; object-fit:cover;" alt="@sub.FileName" />
-                                }
-                                else
-                                {
-                                    <div class="d-flex align-items-center justify-content-center bg-light" style="height:150px;">
-                                        <i class="bi bi-file-earmark-text" style="font-size:2.5rem;"></i>
-                                    </div>
-                                }
-                                <div class="card-body p-2">
-                                    <div class="small text-truncate" title="@sub.FileName">@sub.FileName</div>
-                                    <div class="text-muted small">By @(sub.Employee?.FullName ?? "—")</div>
-                                    <div class="text-muted small">@sub.DateSubmitted.ToString("M/d/yyyy h:mm tt")</div>
-                                    <a asp-page-handler="Download" asp-route-submissionId="@sub.JobTicketSubmissionID" class="btn btn-sm btn-outline-navy w-100 mt-1">
-                                        <i class="bi bi-download"></i> Download
-                                    </a>
-                                </div>
-                            </div>
+                var ext = System.IO.Path.GetExtension(sub.FileName);
+                var isImage = TM_PE.Pages.FieldTechnician.DetailsModel.ImageExtensions.Contains(ext);
+                <div class="col-md-3 col-sm-4 col-6">
+                    <div class="vm-file-card">
+                        @if (Model.IsLeader && !Model.JobTicket.IsLockedFromFieldTechnicianEditing && Model.JobTicket.IsAccessibleToFieldTechnician)
+                        {
+                            <form method="post" asp-page-handler="DeleteSubmission"
+                                  onsubmit="return confirm('Remove this file?');">
+                                <input type="hidden" name="jobTicketId" value="@Model.JobTicket.JobTicketID" />
+                                <input type="hidden" name="submissionId" value="@sub.JobTicketSubmissionID" />
+                                <button type="submit" class="vm-file-remove" title="Remove file">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </form>
+                        }
+                        @if (isImage)
+                        {
+                            <img src="~/@sub.FilePath" class="vm-file-thumb" alt="@sub.FileName" />
+                        }
+                        else
+                        {
+                            <div class="vm-file-thumb-placeholder"><i class="bi bi-file-earmark-text"></i></div>
+                        }
+                        <div class="p-2">
+                            <div class="vm-file-name text-truncate" title="@sub.FileName">@sub.FileName</div>
+                            <div class="vm-file-meta">By @(sub.Employee?.FullName ?? "—")</div>
+                            <div class="vm-file-meta">@sub.DateSubmitted.ToString("M/d/yyyy h:mm tt")</div>
+                            <a asp-page-handler="Download" asp-route-submissionId="@sub.JobTicketSubmissionID" class="vm-btn-sm mt-2">
+                                <i class="bi bi-download"></i> Download
+                            </a>
                         </div>
-                    }
+                    </div>
                 </div>
             }
-            else
-            {
-                <div class="text-muted">No photos or files submitted yet.</div>
-            }
         </div>
-    </div>
+    }
+    else
+    {
+        <span class="tf-empty-msg">No photos or files submitted yet.</span>
+    }
 </div>
+
 <div class="d-flex justify-content-end gap-2 mb-4">
     @if (Model.IsLeader && !Model.JobTicket.IsLockedFromFieldTechnicianEditing && Model.JobTicket.IsAccessibleToFieldTechnician)
     {
@@ -520,16 +585,16 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
                    value="@Model.JobTicket.JobTicketID" />
 
             <button type="submit"
-                    class="btn btn-outline-secondary"
+                    class="tf-btn-cancel"
                     onclick="return confirm('Cancel this edit? Any files uploaded during this session will be removed.');">
                 Cancel
             </button>
         </form>
-        <button type="submit" form="statusForm" class="btn btn-navy">Save</button>
+        <button type="submit" form="statusForm" class="tf-btn-save">Save</button>
     }
     else
     {
-        <a asp-page="./Index" class="btn btn-outline-navy">Back to My Job Orders</a>
+        <a asp-page="./Index" class="tf-btn-save">Go back</a>
     }
 </div>
 
@@ -537,7 +602,6 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
     document.addEventListener("DOMContentLoaded", function () {
 
         const statusSelect = document.getElementById("statusSelect");
-        const statusDropdownBtn = document.getElementById("statusDropdownBtn");
         const remarksInput = document.getElementById("remarksInput");
         const submittedFilesSection = document.getElementById("submittedFilesSection");
         const submissionFileInput = document.getElementById("submissionFileInput");
@@ -545,25 +609,6 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
         const uploadSpinner = document.getElementById("uploadSpinner");
         const uploadStatus = document.getElementById("uploadStatus");
         const uploadRemarks = document.getElementById("uploadRemarks");
-
-    // The status control is a custom dropdown (not a native <select>) so its
-    // open-list highlight color can actually be styled - clicking an item
-    // updates the hidden #statusSelect input and dispatches a real "change"
-    // event on it, so every listener below that expects a native select's
-    // change event keeps working unmodified.
-    if (statusSelect && statusDropdownBtn) {
-        document.querySelectorAll('[aria-labelledby="statusDropdownBtn"] .dropdown-item').forEach(item => {
-            item.addEventListener("click", function (e) {
-                e.preventDefault();
-                document.querySelectorAll('[aria-labelledby="statusDropdownBtn"] .dropdown-item')
-                    .forEach(i => i.classList.remove("active"));
-                item.classList.add("active");
-                statusSelect.value = item.dataset.value;
-                statusDropdownBtn.textContent = item.textContent.trim();
-                statusSelect.dispatchEvent(new Event("change"));
-            });
-        });
-    }
 
     // Keep the upload form synchronized with the values currently selected
     // in the Status + Remarks form.

@@ -26,17 +26,16 @@
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Criteria</a>
 </form>
 
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover table-spaced mb-0">
+<div class="table-responsive wlm-card">
+    <table class="table align-middle table-hover wlm-table mb-0">
         <thead>
             <tr>
-                <th class="text-uppercase small text-muted">Criteria</th>
-                <th class="text-uppercase small text-muted">Description</th>
-                <th class="text-uppercase small text-muted">Role Type</th>
-                <th class="text-uppercase small text-muted">Weight</th>
-                <th class="text-uppercase small text-muted">Status</th>
-                <th></th>
+                <th>Criteria</th>
+                <th>Description</th>
+                <th>Role Type</th>
+                <th>Weight</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -76,7 +75,7 @@
                             <span class="status-badge status-badge-inactive">Inactive</span>
                         }
                     </td>
-                    <td>
+                    <td class="text-end">
                         <a class="btn btn-sm btn-outline-navy" asp-page="Edit" asp-route-id="@c.CriteriaId">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -85,7 +84,6 @@
             }
         </tbody>
     </table>
-  </div>
 </div>
 
 <script>

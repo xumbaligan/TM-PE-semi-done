@@ -6,216 +6,188 @@
     Layout = "_Layout";
 }
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-4">
-
-        <h3 class="fw-bold">Task Assignment Form</h3>
-        <p class="text-muted">
-            Fill out the task details, assign employees, and break the task into activities.
-        </p>
-
-        <form method="post" id="taskForm">
-
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
-
-            <!-- Task Number + Date Created -->
-            <div class="row mb-3">
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">
-                        # Task Number
-                    </label>
-
-                    <input class="form-control"
-                           value="@Model.NextTaskNumber"
-                           disabled />
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">
-                        Date Created
-                    </label>
-
-                    <input type="date"
-                           class="form-control"
-                           value="@Model.OfficeTask.DateCreated.ToString("yyyy-MM-dd")"
-                           disabled />
-
-                    <input type="hidden" asp-for="OfficeTask.DateCreated" />
-
-                    <span asp-validation-for="OfficeTask.DateCreated"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">
-                        Assigned By
-                    </label>
-
-                    <input class="form-control"
-                           value="@Model.CurrentManagerName"
-                           disabled />
-                </div>
-
-            </div>
-
-            <!-- Task Name -->
-            <div class="mb-3">
-
-                <label class="form-label fw-semibold">
-                    Task Name <span class="text-danger">*</span>
-                </label>
-
-                <input asp-for="OfficeTask.TaskName"
-                       class="form-control"
-                       placeholder="e.g. Quarterly inventory audit" />
-
-                <span asp-validation-for="OfficeTask.TaskName"
-                      class="text-danger"></span>
-
-            </div>
-
-            <!-- Description -->
-            <div class="mb-3">
-
-                <label class="form-label fw-semibold">
-                    Description
-                </label>
-
-                <textarea asp-for="OfficeTask.Description"
-                          rows="4"
-                          class="form-control"
-                          placeholder="Instructions, objectives, or additional details..."></textarea>
-
-                <span asp-validation-for="OfficeTask.Description"
-                      class="text-danger"></span>
-
-            </div>
-
-            <!-- Due Date -->
-            <div class="mb-4">
-
-                <label class="form-label fw-semibold">
-                    Due Date <span class="text-danger">*</span>
-                </label>
-
-                <input asp-for="OfficeTask.DueDate"
-                       type="date"
-                       min="@DateTime.Now.ToString("yyyy-MM-dd")"
-                       class="form-control w-50" />
-
-                <span asp-validation-for="OfficeTask.DueDate"
-                      class="text-danger"></span>
-
-            </div>
-
-            <!-- Assign Employees -->
-            <div class="card mb-3">
-                <div class="card-body">
-
-                    <h5 class="fw-semibold mb-3">
-                        👥 Assign Employees <span class="text-danger">*</span>
-                    </h5>
-
-                    <div class="row">
-
-                        <div class="col-md-10">
-
-                            <select id="employeeSelect" class="form-select">
-                                <option value="">Select an employee</option>
-                                @foreach (var emp in Model.EmployeeList)
-                                {
-                                    <option value="@emp.EmployeeId">@emp.FullName</option>
-                                }
-                            </select>
-
-                        </div>
-
-                        <div class="col-md-2">
-
-                            <button type="button"
-                                    id="addEmployeeBtn"
-                                    class="btn btn-primary w-100">
-                                + Add
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                    <!-- Selected Employees -->
-                    <div id="selectedEmployees" class="mt-3">
-                        <span class="text-muted small" id="noEmployeesMsg">No employees added yet.</span>
-                    </div>
-
-                    <div class="text-muted small mt-2" id="multiAssigneeHint" style="display:none;">
-                        More than one employee is assigned to this task. Activities are no longer assigned to a
-                        specific person &mdash; any assigned employee can pick up an activity.
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Activities -->
-            <div class="card mb-4">
-                <div class="card-body">
-
-                    <h5 class="fw-semibold mb-3">
-                        📋 Task Activities <span class="text-danger">*</span>
-                    </h5>
-
-                    <div class="row g-2">
-
-                        <div class="col-md-10">
-
-                            <input type="text"
-                                   id="activityInput"
-                                   class="form-control"
-                                   placeholder="Enter an activity name" />
-
-                        </div>
-
-                        <div class="col-md-2">
-
-                            <button type="button"
-                                    id="addActivityBtn"
-                                    class="btn btn-primary w-100">
-                                + Add
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                    <!-- Activities List -->
-                    <ul id="activitiesList" class="list-group mt-3">
-                        <li class="list-group-item text-muted small" id="noActivitiesMsg">No activities added yet.</li>
-                    </ul>
-
-                </div>
-            </div>
-
-            <!-- Footer Buttons -->
-            <div class="text-end">
-
-                <a asp-page="Index"
-                   class="btn btn-outline-secondary">
-                    Cancel
-                </a>
-
-                <button type="submit"
-                        class="btn btn-primary">
-                    Save Task
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
+<div class="mb-3">
+    <h1 class="tf-page-title mb-1">Task Assignment Form</h1>
+    <p class="tf-page-sub mb-0">
+        Fill out the task details, assign employees, and break the task into activities.
+    </p>
 </div>
 
+<form method="post" id="taskForm">
 
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <!-- Read-only meta strip: task number + date created + assigned by -->
+    <div class="tf-meta-card mb-4">
+        <div class="d-flex flex-column flex-md-row">
+
+            <div class="tf-meta-item">
+                <div class="tf-meta-icon"><i class="bi bi-tag-fill"></i></div>
+                <div class="overflow-hidden">
+                    <div class="tf-meta-label">Task Number</div>
+                    <div class="tf-meta-value">@Model.NextTaskNumber</div>
+                </div>
+            </div>
+
+            <div class="tf-meta-item">
+                <div class="tf-meta-icon"><i class="bi bi-calendar3"></i></div>
+                <div class="overflow-hidden">
+                    <div class="tf-meta-label">Date Created</div>
+                    <div class="tf-meta-value">@Model.OfficeTask.DateCreated.ToString("MM/dd/yyyy")</div>
+                </div>
+            </div>
+
+            <div class="tf-meta-item">
+                <div class="tf-meta-icon"><i class="bi bi-person-fill"></i></div>
+                <div class="overflow-hidden">
+                    <div class="tf-meta-label">Assigned by</div>
+                    <div class="tf-meta-value">@Model.CurrentManagerName</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @*
+        DateCreated is displayed read-only above but still has to reach the
+        server, so it keeps its hidden input exactly as before. The old
+        disabled inputs for task number and manager name never posted
+        anything - both are resolved server-side in OnPostAsync.
+    *@
+    <input type="hidden" asp-for="OfficeTask.DateCreated" />
+    <span asp-validation-for="OfficeTask.DateCreated" class="text-danger"></span>
+
+    <!-- Step 1: Task Details -->
+    <div class="tf-section mb-4">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <div class="tf-step-badge">1</div>
+            <div class="tf-section-title">Task Details</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="tf-label" asp-for="OfficeTask.TaskName">
+                Task Name <span class="tf-required">*</span>
+            </label>
+
+            <input asp-for="OfficeTask.TaskName"
+                   class="form-control"
+                   placeholder="e.g. Quarterly inventory audit" />
+
+            <span asp-validation-for="OfficeTask.TaskName" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="tf-label" asp-for="OfficeTask.Description">Description</label>
+
+            <textarea asp-for="OfficeTask.Description"
+                      rows="4"
+                      class="form-control"
+                      placeholder="Instructions, objectives, or additional details..."></textarea>
+
+            <span asp-validation-for="OfficeTask.Description" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-2" style="max-width:440px;">
+            <label class="tf-label" asp-for="OfficeTask.DueDate">
+                Due Date <span class="tf-required">*</span>
+            </label>
+
+            <input asp-for="OfficeTask.DueDate"
+                   type="date"
+                   min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                   class="form-control" />
+
+            <span asp-validation-for="OfficeTask.DueDate" class="text-danger small"></span>
+        </div>
+
+        <div class="tf-hint">
+            <i class="bi bi-info-circle"></i>
+            <span>
+                The final deadline to complete this task. If it isn't finished by this date,
+                the system will automatically mark it Overdue.
+            </span>
+        </div>
+
+    </div>
+
+    <!-- Step 2: Assign Employees -->
+    <div class="tf-section mb-4">
+
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="tf-step-badge">2</div>
+            <div class="tf-section-title">Assign Employees <span class="tf-required">*</span></div>
+        </div>
+        <p class="tf-section-sub mb-3">
+            Only active Office Staff with a user account can be assigned. Add at least one.
+        </p>
+
+        <div class="d-flex flex-column flex-sm-row gap-2">
+
+            <select id="employeeSelect" class="form-select flex-grow-1">
+                <option value="">Select an employee</option>
+                @foreach (var emp in Model.EmployeeList)
+                {
+                    <option value="@emp.EmployeeId">@emp.FullName</option>
+                }
+            </select>
+
+            <button type="button" id="addEmployeeBtn" class="tf-btn-add">
+                <i class="bi bi-plus-circle-fill"></i> Add Employees
+            </button>
+
+        </div>
+
+        <!-- Selected Employees -->
+        <div id="selectedEmployees" class="mt-3">
+            <span class="tf-empty-msg" id="noEmployeesMsg">No employees added yet.</span>
+        </div>
+
+        <div class="tf-empty-msg mt-2" id="multiAssigneeHint" style="display:none;">
+            More than one employee is assigned to this task. Activities are no longer assigned to a
+            specific person &mdash; any assigned employee can pick up an activity.
+        </div>
+
+    </div>
+
+    <!-- Step 3: Task Activities -->
+    <div class="tf-section mb-4">
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="tf-step-badge">3</div>
+            <div class="tf-section-title">Task Activities <span class="tf-required">*</span></div>
+        </div>
+
+        <div class="d-flex flex-column flex-sm-row gap-2">
+
+            <input type="text"
+                   id="activityInput"
+                   class="form-control flex-grow-1"
+                   placeholder="Enter an activity name" />
+
+            <button type="button" id="addActivityBtn" class="tf-btn-add">
+                <i class="bi bi-plus-circle-fill"></i> Add Activities
+            </button>
+
+        </div>
+
+        <!-- Activities List -->
+        <ul id="activitiesList" class="list-unstyled mt-3 mb-0">
+            <li class="tf-empty-msg" id="noActivitiesMsg">No activities added yet.</li>
+        </ul>
+
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="d-flex justify-content-end gap-2">
+
+        <a asp-page="Index" class="tf-btn-cancel">Cancel</a>
+
+        <button type="submit" class="tf-btn-save">Save Task</button>
+
+    </div>
+
+</form>
 
 @section Scripts {
     @{
@@ -252,10 +224,14 @@
                 addedEmployees.set(id, name);
                 noEmployeesMsg.style.display = 'none';
 
-                const badge = document.createElement('span');
-                badge.className = 'badge bg-primary me-2 p-2';
-                badge.dataset.employeeId = id;
-                badge.innerHTML = `${name} <span class="ms-2" style="cursor:pointer;" onclick="removeEmployee('${id}')">&times;</span>`;
+                const row = document.createElement('div');
+                row.className = 'tf-chip';
+                row.dataset.employeeId = id;
+                row.innerHTML = `
+                    <span class="text-truncate">${name}</span>
+                    <button type="button" class="tf-chip-remove" aria-label="Remove employee"
+                            onclick="removeEmployee('${id}')">&times;</button>
+                `;
 
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
@@ -263,7 +239,7 @@
                 hiddenInput.value = id;
                 hiddenInput.dataset.employeeId = id;
 
-                selectedEmployeesDiv.appendChild(badge);
+                selectedEmployeesDiv.appendChild(row);
                 selectedEmployeesDiv.appendChild(hiddenInput);
 
                 // Once assigned, an employee can't be picked again from the
@@ -305,11 +281,12 @@
                 noActivitiesMsg.style.display = 'none';
 
                 const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.className = 'tf-chip';
                 li.dataset.activityId = activityId;
                 li.innerHTML = `
-                    <span>${text}</span>
-                    <span class="text-danger" style="cursor:pointer;" onclick="removeActivity('${activityId}')">&times;</span>
+                    <span class="text-truncate">${text}</span>
+                    <button type="button" class="tf-chip-remove" aria-label="Remove activity"
+                            onclick="removeActivity('${activityId}')">&times;</button>
                     <input type="hidden" name="Activities" value="${text.replace(/"/g, '&quot;')}" />
                 `;
 

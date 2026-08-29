@@ -6,220 +6,169 @@
     Layout = "_Layout";
 }
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-4">
+<div class="mb-3">
+    <h1 class="tf-page-title mb-1">Edit Task</h1>
+    <p class="tf-page-sub mb-0">
+        Update the task details, reassign employees, or adjust its activities.
+    </p>
+</div>
 
-        <h3 class="fw-bold">Edit Task</h3>
-        <p class="text-muted">
-            Update the task details, reassign employees, or adjust its activities.
-        </p>
+<form method="post" id="taskForm">
 
-        <form method="post" id="taskForm">
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <input type="hidden" asp-for="OfficeTask.OfficeTaskID" />
 
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
-            <input type="hidden" asp-for="OfficeTask.OfficeTaskID" />
+    <!-- Read-only meta strip: task number + date created + assigned by -->
+    <div class="tf-meta-card mb-4">
+        <div class="d-flex flex-column flex-md-row">
 
-            <!-- Task Number + Date Created -->
-            <div class="row mb-3">
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">
-                        # Task Number
-                    </label>
-
-                    <input class="form-control"
-                           value="@Model.OfficeTask.TaskNumber"
-                           disabled />
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">
-                        Date Created
-                    </label>
-
-                    <input class="form-control"
-                           value="@Model.OfficeTask.DateCreated.ToString("MM/dd/yyyy")"
-                           disabled />
-                </div>
-
-            </div>
-
-            <!-- Assigned By -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">
-                        Assigned By
-                    </label>
-
-                    <input class="form-control"
-                           value="@(Model.OfficeTask.AssignedByEmployee?.FullName ?? "—")"
-                           disabled />
+            <div class="tf-meta-item">
+                <div class="tf-meta-icon"><i class="bi bi-tag-fill"></i></div>
+                <div class="overflow-hidden">
+                    <div class="tf-meta-label">Task Number</div>
+                    <div class="tf-meta-value">@Model.OfficeTask.TaskNumber</div>
                 </div>
             </div>
 
-            <!-- Task Name -->
-            <div class="mb-3">
-
-                <label class="form-label fw-semibold">
-                    Task Name <span class="text-danger">*</span>
-                </label>
-
-                <input asp-for="OfficeTask.TaskName"
-                       class="form-control"
-                       placeholder="e.g. Quarterly inventory audit" />
-
-                <span asp-validation-for="OfficeTask.TaskName"
-                      class="text-danger"></span>
-
-            </div>
-
-            <!-- Description -->
-            <div class="mb-3">
-
-                <label class="form-label fw-semibold">
-                    Description
-                </label>
-
-                <textarea asp-for="OfficeTask.Description"
-                          rows="4"
-                          class="form-control"
-                          placeholder="Instructions, objectives, or additional details..."></textarea>
-
-                <span asp-validation-for="OfficeTask.Description"
-                      class="text-danger"></span>
-
-            </div>
-
-            <!-- Due Date, Status, Progress -->
-            <div class="row mb-4">
-
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">
-                        Due Date <span class="text-danger">*</span>
-                    </label>
-
-                    <input asp-for="OfficeTask.DueDate"
-                           type="date"
-                           class="form-control" />
-
-                    <span asp-validation-for="OfficeTask.DueDate"
-                          class="text-danger"></span>
-                </div>
-
-                @* <div class="col-md-4">
-                        <label class="form-label fw-semibold">
-                            Status
-                        </label>
-
-                        <select asp-for="OfficeTask.Status" class="form-select">
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Overdue">Overdue</option>
-                        </select>
-
-                        <span asp-validation-for="OfficeTask.Status"
-                              class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">
-                            Progress (%)
-                        </label>
-
-                        <input asp-for="OfficeTask.Progress"
-                               type="number"
-                               min="0"
-                               max="100"
-                               class="form-control" />
-
-                        <span asp-validation-for="OfficeTask.Progress"
-                              class="text-danger"></span>
-                    </div> *@
-
-            </div>
-
-            <!-- Assign Employees -->
-            <div class="card mb-3">
-                <div class="card-body">
-
-                    <h5 class="fw-semibold mb-3">
-                        👥 Assigned Employees
-                    </h5>
-
-                    <!-- Assigned Employees (view only, cannot be added or removed here) -->
-                    <div class="d-flex flex-wrap gap-2">
-                        @if (Model.OfficeTask.Assignments != null && Model.OfficeTask.Assignments.Any(a => a.Employee != null))
-                        {
-                            @foreach (var a in Model.OfficeTask.Assignments.Where(a => a.Employee != null))
-                            {
-                                <span class="badge bg-primary p-2">@a.Employee!.FullName</span>
-                                <input type="hidden" name="SelectedEmployeeIds" value="@a.EmployeeID" />
-                            }
-                        }
-                        else
-                        {
-                            <span class="text-muted small">No employees assigned yet.</span>
-                        }
-                    </div>
-
+            <div class="tf-meta-item">
+                <div class="tf-meta-icon"><i class="bi bi-calendar3"></i></div>
+                <div class="overflow-hidden">
+                    <div class="tf-meta-label">Date Created</div>
+                    <div class="tf-meta-value">@Model.OfficeTask.DateCreated.ToString("MM/dd/yyyy")</div>
                 </div>
             </div>
 
-            <!-- Activities -->
-            <div class="card mb-4">
-                <div class="card-body">
-
-                    <h5 class="fw-semibold mb-3">
-                        📋 Task Activities
-                    </h5>
-
-                    <!-- Activities List (view only, cannot be added or removed here) -->
-                    <ul class="list-group">
-                        @if (Model.OfficeTask.Activities != null && Model.OfficeTask.Activities.Any())
-                        {
-                            @foreach (var act in Model.OfficeTask.Activities)
-                            {
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>
-                                        @act.ActivityName
-                                        @{
-                                            var assignedCount = Model.OfficeTask.Assignments?.Count ?? 0;
-                                        }
-                                    </span>
-                                    <span class="badge bg-secondary-subtle text-secondary">@act.Status</span>
-                                </li>
-                                <input type="hidden" name="KeptActivityIds" value="@act.ActivityID" />
-                            }
-                        }
-                        else
-                        {
-                            <li class="list-group-item text-muted small">No activities yet.</li>
-                        }
-                    </ul>
-
+            <div class="tf-meta-item">
+                <div class="tf-meta-icon"><i class="bi bi-person-fill"></i></div>
+                <div class="overflow-hidden">
+                    <div class="tf-meta-label">Assigned by</div>
+                    <div class="tf-meta-value">@(Model.OfficeTask.AssignedByEmployee?.FullName ?? "—")</div>
                 </div>
             </div>
 
-            <!-- Footer Buttons -->
-            <div class="text-end">
+        </div>
+    </div>
 
-                <a asp-page="Index"
-                   class="btn btn-outline-secondary">
-                    Cancel
-                </a>
+    <!-- Step 1: Task Details -->
+    <div class="tf-section mb-4">
 
-                <button type="submit"
-                        class="btn btn-primary">
-                    Save Changes
-                </button>
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <div class="tf-step-badge">1</div>
+            <div class="tf-section-title">Task Details</div>
+        </div>
 
-            </div>
+        <div class="mb-3">
+            <label class="tf-label" asp-for="OfficeTask.TaskName">
+                Task Name <span class="tf-required">*</span>
+            </label>
 
-        </form>
+            <input asp-for="OfficeTask.TaskName"
+                   class="form-control"
+                   placeholder="e.g. Quarterly inventory audit" />
+
+            <span asp-validation-for="OfficeTask.TaskName" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="tf-label" asp-for="OfficeTask.Description">Description</label>
+
+            <textarea asp-for="OfficeTask.Description"
+                      rows="4"
+                      class="form-control"
+                      placeholder="Instructions, objectives, or additional details..."></textarea>
+
+            <span asp-validation-for="OfficeTask.Description" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-2" style="max-width:440px;">
+            <label class="tf-label" asp-for="OfficeTask.DueDate">
+                Due Date <span class="tf-required">*</span>
+            </label>
+
+            <input asp-for="OfficeTask.DueDate"
+                   type="date"
+                   class="form-control" />
+
+            <span asp-validation-for="OfficeTask.DueDate" class="text-danger small"></span>
+        </div>
+
+        <div class="tf-hint">
+            <i class="bi bi-info-circle"></i>
+            <span>
+                The final deadline to complete this task. If it isn't finished by this date,
+                the system will automatically mark it Overdue.
+            </span>
+        </div>
+
+        @* Status and Progress were already commented out on this page before the
+           restyle - they're recalculated server-side, never edited by hand. *@
 
     </div>
-</div>
+
+    <!-- Step 2: Assigned Employees (view only, cannot be added or removed here) -->
+    <div class="tf-section mb-4">
+
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="tf-step-badge">2</div>
+            <div class="tf-section-title">Assigned Employees</div>
+        </div>
+        <p class="tf-section-sub mb-3">
+            Assignees are fixed at creation and can't be added or removed from this page.
+        </p>
+
+        @if (Model.OfficeTask.Assignments != null && Model.OfficeTask.Assignments.Any(a => a.Employee != null))
+        {
+            @foreach (var a in Model.OfficeTask.Assignments.Where(a => a.Employee != null))
+            {
+                <div class="tf-chip">
+                    <span class="text-truncate">@a.Employee!.FullName</span>
+                    <input type="hidden" name="SelectedEmployeeIds" value="@a.EmployeeID" />
+                </div>
+            }
+        }
+        else
+        {
+            <span class="tf-empty-msg">No employees assigned yet.</span>
+        }
+
+    </div>
+
+    <!-- Step 3: Task Activities (view only, cannot be added or removed here) -->
+    <div class="tf-section mb-4">
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="tf-step-badge">3</div>
+            <div class="tf-section-title">Task Activities</div>
+        </div>
+
+        @if (Model.OfficeTask.Activities != null && Model.OfficeTask.Activities.Any())
+        {
+            @foreach (var act in Model.OfficeTask.Activities)
+            {
+                <div class="tf-chip">
+                    <span class="text-truncate">@act.ActivityName</span>
+                    <span class="tf-chip-status">@act.Status</span>
+                    <input type="hidden" name="KeptActivityIds" value="@act.ActivityID" />
+                </div>
+            }
+        }
+        else
+        {
+            <span class="tf-empty-msg">No activities yet.</span>
+        }
+
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="d-flex justify-content-end gap-2">
+
+        <a asp-page="Index" class="tf-btn-cancel">Cancel</a>
+
+        <button type="submit" class="tf-btn-save">Save Changes</button>
+
+    </div>
+
+</form>
 
 @section Scripts {
     @{

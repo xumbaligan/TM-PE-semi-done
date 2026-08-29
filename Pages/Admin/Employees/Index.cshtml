@@ -26,17 +26,16 @@
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Employee</a>
 </form>
 
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover table-spaced mb-0">
+<div class="table-responsive wlm-card">
+    <table class="table align-middle table-hover wlm-table mb-0">
         <thead>
             <tr>
-                <th class="text-uppercase small text-muted">Name</th>
-                <th class="text-uppercase small text-muted">Department</th>
-                <th class="text-uppercase small text-muted">Role</th>
-                <th class="text-uppercase small text-muted">Date Hired</th>
-                <th class="text-uppercase small text-muted">Status</th>
-                <th></th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Role</th>
+                <th>Date Hired</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -60,7 +59,7 @@
                     data-role="@e.RoleType.ToString()">
                     <td>
                         <div class="d-flex align-items-center gap-2">
-                            <div class="avatar-circle">
+                            <div class="wlm-avatar">
                                 @(string.Join("", e.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
                             </div>
                             <div class="d-flex flex-column">
@@ -86,7 +85,7 @@
                             <span class="status-badge status-badge-inactive">Inactive</span>
                         }
                     </td>
-                    <td>
+                    <td class="text-end">
                         <a class="btn btn-sm btn-outline-navy" asp-page="Edit" asp-route-id="@e.EmployeeId">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -95,7 +94,6 @@
             }
         </tbody>
     </table>
-  </div>
 </div>
 @section Scripts {
     <script>

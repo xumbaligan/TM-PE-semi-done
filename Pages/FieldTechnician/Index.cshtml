@@ -27,7 +27,6 @@
                     <tr>
                         <th class="ps-3">Job Order</th>
                         <th>Job Type</th>
-                        <th>Client</th>
                         <th>Date</th>
                         <th>Status</th>
                         <th>Assigned By</th>
@@ -55,7 +54,6 @@
                                 <div class="fw-semibold">Ticket #@ticket.TicketNumber</div>
                             </td>
                             <td>@ticket.JobType</td>
-                            <td>@(ticket.JobType == TM_PE.Model.JobTypes.Maintenance ? "—" : ticket.ClientFullName)</td>
                             <td>@ticket.ServiceDate.ToString("M/d/yyyy")</td>
                             <td><span class="status-badge @badgeClass">@ticket.DisplayStatus</span></td>
                             <td class="text-muted">@(ticket.AssignedByEmployee?.FullName ?? "—")</td>
