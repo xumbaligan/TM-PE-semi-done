@@ -222,6 +222,12 @@ namespace TM_PE.Pages.Manager.PerformanceEvaluation
 
             await _context.SaveChangesAsync();
 
+            if (status == EvaluationStatus.Finalized)
+            {
+                await PerformanceRankingNotifier.NotifyTopAndBottomAsync(
+                    _context, evaluation.EvaluationPeriodMonth, evaluation.EvaluationPeriodYear, employee.RoleType);
+            }
+
             // Back to this same Create page rather than Details, so the
             // manager can evaluate the next employee right away. Only the
             // employee resets (there's no EmployeeId to carry forward, and the

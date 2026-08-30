@@ -4,6 +4,16 @@
     ViewData["Title"] = "My Account";
     Layout = Model.LayoutName;
     var emp = Model.Account.Employee;
+
+    // RoleType's enum names (FieldTechnician, OfficeStaff) have no space to
+    // begin with, so the uppercase display below rendered them as one
+    // run-together word ("FIELDTECHNICIAN") instead of two.
+    string RoleLabel(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.FieldTechnician => "Field Technician",
+        TM_PE.Model.RoleType.OfficeStaff => "Office Staff",
+        _ => rt.ToString()
+    };
 }
 
 <div class="mb-3">
@@ -80,7 +90,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="account-label">Role</div>
-                            <div class="account-value account-value-caps">@emp.RoleType</div>
+                            <div class="account-value account-value-caps">@RoleLabel(emp.RoleType)</div>
                         </div>
                         <div class="col-md-6">
                             <div class="account-label">Status</div>

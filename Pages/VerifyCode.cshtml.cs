@@ -27,10 +27,16 @@ namespace TM_PE.Pages
         [BindProperty]
         public string Code { get; set; } = string.Empty;
 
-        [TempData]
+        // Explicit, page-scoped keys - see ForgotPasswordModel.ErrorMessage
+        // for why: [TempData] defaults to the property name, and
+        // ForgotPassword/ResetPassword each declare their own same-named
+        // "ErrorMessage" property, so without distinct keys all three would
+        // share one TempData slot and a leftover message from one page
+        // could resurface on another.
+        [TempData(Key = "VC_ErrorMessage")]
         public string? ErrorMessage { get; set; }
 
-        [TempData]
+        [TempData(Key = "VC_StatusMessage")]
         public string? StatusMessage { get; set; }
 
         public string MaskedEmail { get; set; } = string.Empty;
@@ -50,6 +56,12 @@ namespace TM_PE.Pages
 
             MaskedEmail = MaskEmail(HttpContext.Session.GetString("PwReset_Email") ?? "");
             DevCode = HttpContext.Session.GetString("PwReset_DevCode");
+
+            // A fresh GET (arriving here right after ForgotPassword's
+            // success redirect) shouldn't still be showing an error from a
+            // previous attempt - StatusMessage is left alone though, since
+            // OnPostResendAsync's own redirect relies on it surviving here.
+            ErrorMessage = null;
 
             return Page();
         }
@@ -72,7 +84,10 @@ namespace TM_PE.Pages
                 || DateTime.UtcNow > expiry)
             {
                 ClearPendingReset();
-                ErrorMessage = "That code has expired. Please request a new one.";
+                // Targets ForgotPassword's own TempData key directly, not
+                // this page's ErrorMessage property - the message is meant
+                // to appear after the redirect below, on that page.
+                TempData["FP_ErrorMessage"] = "That code has expired. Please request a new one.";
                 return RedirectToPage("/ForgotPassword");
             }
 
@@ -83,7 +98,7 @@ namespace TM_PE.Pages
                 if (attempts >= MaxAttempts)
                 {
                     ClearPendingReset();
-                    ErrorMessage = "Too many incorrect attempts. Please request a new code.";
+                    TempData["FP_ErrorMessage"] = "Too many incorrect attempts. Please request a new code.";
                     return RedirectToPage("/ForgotPassword");
                 }
 
@@ -99,7 +114,7 @@ namespace TM_PE.Pages
             if (employee == null || account == null || !employee.IsActive || !account.IsActive)
             {
                 ClearPendingReset();
-                ErrorMessage = "This account is no longer available.";
+                TempData["FP_ErrorMessage"] = "This account is no longer available.";
                 return RedirectToPage("/ForgotPassword");
             }
 

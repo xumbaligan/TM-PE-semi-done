@@ -24,7 +24,11 @@ namespace TM_PE.Pages
         [BindProperty]
         public string ConfirmNewPassword { get; set; } = string.Empty;
 
-        [TempData]
+        // Explicit, page-scoped key - see ForgotPasswordModel.ErrorMessage
+        // for why: ForgotPassword/VerifyCode each declare their own
+        // same-named "ErrorMessage" property, so without distinct keys all
+        // three would share one TempData slot.
+        [TempData(Key = "RP_ErrorMessage")]
         public string? ErrorMessage { get; set; }
 
         public string Username { get; set; } = string.Empty;
@@ -60,7 +64,10 @@ namespace TM_PE.Pages
             if (account == null || account.Employee == null || !account.IsActive || !account.Employee.IsActive)
             {
                 HttpContext.Session.Remove("PwReset_VerifiedEmployeeId");
-                ErrorMessage = "This account is no longer available.";
+                // Targets ForgotPassword's own TempData key directly, not
+                // this page's ErrorMessage property - the message is meant
+                // to appear after the redirect below, on that page.
+                TempData["FP_ErrorMessage"] = "This account is no longer available.";
                 return RedirectToPage("/ForgotPassword");
             }
 

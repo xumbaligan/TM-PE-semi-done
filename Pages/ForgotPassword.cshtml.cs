@@ -23,7 +23,13 @@ namespace TM_PE.Pages
         [BindProperty]
         public string Email { get; set; } = string.Empty;
 
-        [TempData]
+        // Explicit key: [TempData] defaults to the property name, and
+        // VerifyCode/ResetPassword each declare their own "ErrorMessage"
+        // property too - without distinct keys they all share one slot in
+        // the same TempData dictionary, so a stale error from a failed
+        // attempt here could still be sitting there and show up on
+        // VerifyCode's page after a later, successful submission.
+        [TempData(Key = "FP_ErrorMessage")]
         public string? ErrorMessage { get; set; }
 
         public void OnGet()
@@ -34,6 +40,14 @@ namespace TM_PE.Pages
             HttpContext.Session.Remove("PwReset_Expiry");
             HttpContext.Session.Remove("PwReset_Attempts");
             HttpContext.Session.Remove("PwReset_DevCode");
+
+            // A fresh visit to step 1 starts the whole flow over, so any
+            // leftover message from a previous attempt - on this page or the
+            // ones after it - shouldn't still be waiting to appear.
+            ErrorMessage = null;
+            TempData.Remove("VC_ErrorMessage");
+            TempData.Remove("VC_StatusMessage");
+            TempData.Remove("RP_ErrorMessage");
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -60,6 +74,11 @@ namespace TM_PE.Pages
                 ErrorMessage = "No active account was found with that email address.";
                 return Page();
             }
+
+            // A prior failed attempt in this same browser session could still
+            // be sitting in TempData (it round-trips until something clears
+            // it) - this attempt succeeded, so make sure it doesn't linger.
+            ErrorMessage = null;
 
             var code = Random.Shared.Next(0, 10000).ToString("D4");
 

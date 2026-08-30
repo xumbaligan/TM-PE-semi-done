@@ -38,19 +38,7 @@
     </div>
 }
 
-@{
-    var jobTypeIcon = Model.JobTicket.JobType switch
-    {
-        "Installation" => "bi-hdd-network",
-        "Repair" => "bi-wrench-adjustable",
-        "Inspection" => "bi-tools",
-        "Maintenance" => "bi-gear-wide-connected",
-        _ => "bi-tools"
-    };
-}
-
 <div class="vm-page-header mb-3">
-    <div class="vm-header-icon"><i class="bi @jobTypeIcon"></i></div>
     <div>
         <div class="tf-page-title">@Model.JobTicket.JobType Job</div>
         <div class="vm-subtitle">@Model.JobTicket.TicketNumber</div>

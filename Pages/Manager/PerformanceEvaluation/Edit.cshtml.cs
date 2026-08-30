@@ -130,6 +130,13 @@ namespace TM_PE.Pages.Manager.PerformanceEvaluation
             }
 
             await _context.SaveChangesAsync();
+
+            if (status == EvaluationStatus.Finalized)
+            {
+                await PerformanceRankingNotifier.NotifyTopAndBottomAsync(
+                    _context, evaluation.EvaluationPeriodMonth, evaluation.EvaluationPeriodYear, evaluation.Employee!.RoleType);
+            }
+
             return RedirectToPage("Details", new { id = evaluation.EvaluationID });
         }
 

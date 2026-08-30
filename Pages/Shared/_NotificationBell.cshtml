@@ -15,6 +15,12 @@
 *@
 @{
     var notifEmployeeId = Context.Session.GetInt32("AuthEmployeeId");
+    if (notifEmployeeId != null)
+    {
+        // Checked on every page load rather than a background job - see
+        // DueSoonReminderChecker for why, and why it can't double-notify.
+        await DueSoonReminderChecker.EnsureNotifiedAsync(NotifDbContext, notifEmployeeId.Value);
+    }
     var initialNotifItems = notifEmployeeId == null
         ? new List<Notification>()
         : await NotifDbContext.Notifications

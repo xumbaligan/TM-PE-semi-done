@@ -277,9 +277,17 @@ select,
     color: #fff;
 }
 
-.sidebar-brand-sub {
-    font-size: .7rem;
-    color: rgba(255,255,255,.6);
+.sidebar-logo-orb {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.sidebar-wordmark {
+    height: 38px;
+    width: 153px;
+    display: block;
 }
 
 .sidebar-divider {
@@ -690,22 +698,21 @@ select,
     }
 
 /*
-   Solid navy action button - the same #020236 used for the active tab pill
-   (.wlm-tab-btn.active), the active role filter (.role-filter-btn.active)
-   and the department icon tile, so a primary CTA like "Generate Report"
-   reads as the same brand color as everywhere else instead of Bootstrap's
-   default blue .btn-primary.
+   Solid action button - same navy-plum-purple gradient as .tf-btn-save (the
+   Job Ticket/Task/Evaluation "Save" button), so a primary CTA like "Generate
+   Report" or "Add Employee" reads as the same brand color everywhere instead
+   of Bootstrap's default blue .btn-primary.
 */
 .btn-navy {
-    background: #020236;
-    border-color: #020236;
+    background: linear-gradient(90deg, #020236, #31055d, #47076f);
+    border-color: transparent;
     color: #fff;
 }
 
     .btn-navy:hover,
     .btn-navy:focus {
-        background: #0a0a4a;
-        border-color: #0a0a4a;
+        filter: brightness(1.12);
+        border-color: transparent;
         color: #fff;
     }
 
@@ -866,16 +873,17 @@ select,
 
 /*
    Stat-tile icon badges (Dashboard, New/Edit Evaluation, Workload Monitoring)
-   all share the same purple gradient now - the same one used for the
-   sidebar's own logo badge (see .sidebar-logo-badge) - instead of each
-   variant tinting a different color (blue/green/red/orange), so every icon
-   reads as one consistent brand instead of Bootstrap's stock severity colors.
+   all share the same purple gradient now - the same navy-to-plum-to-purple
+   gradient as .tf-btn-save (Task/Job Ticket/Evaluation "Save" buttons) -
+   instead of each variant tinting a different color (blue/green/red/orange),
+   so every icon reads as one consistent brand instead of Bootstrap's stock
+   severity colors.
 */
 .icon-palette-primary,
 .icon-palette-success,
 .icon-palette-danger,
 .icon-palette-warning {
-    background: linear-gradient(135deg, #31055d, #47076f);
+    background: linear-gradient(90deg, #020236, #31055d, #47076f);
     color: #fff;
 }
 
@@ -1462,7 +1470,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     align-items: center;
     justify-content: center;
     gap: .45rem;
-    background: #020236;
+    background: linear-gradient(90deg, #020236, #31055d, #47076f);
     border: 0;
     border-radius: 9px;
     color: #fff;
@@ -1474,7 +1482,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
     .tf-btn-add:hover,
     .tf-btn-add:focus {
-        background: #0a0a4a;
+        filter: brightness(1.12);
         color: #fff;
     }
 
