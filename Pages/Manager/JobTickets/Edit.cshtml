@@ -66,12 +66,19 @@
                 Job Type <span class="tf-required">*</span>
             </label>
 
-            <select asp-for="JobTicket.JobType" id="jobTypeSelect" class="form-select">
-                @foreach (var type in Model.JobTypeOptions)
-                {
-                    <option value="@type" selected="@(type == Model.JobTicket.JobType)">@type</option>
-                }
-            </select>
+            <div class="dropdown">
+                <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="jobTypeDropdownBtn"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    @Model.JobTicket.JobType
+                </button>
+                <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="jobTypeDropdownBtn">
+                    @foreach (var type in Model.JobTypeOptions)
+                    {
+                        <li><a class="dropdown-item @(type == Model.JobTicket.JobType ? "active" : "")" href="#" data-value="@type">@type</a></li>
+                    }
+                </ul>
+            </div>
+            <input type="hidden" asp-for="JobTicket.JobType" id="jobTypeSelect" />
 
             <span asp-validation-for="JobTicket.JobType" class="text-danger small"></span>
         </div>
@@ -107,19 +114,32 @@
                 <label class="tf-label" asp-for="JobTicket.FiberPlan">
                     Fiber Plan <span class="tf-required">*</span>
                 </label>
-                <select asp-for="JobTicket.FiberPlan" id="fiberPlanSelect" class="form-select">
-                    <option value="">Select a plan</option>
-                    @foreach (var plan in Model.FiberPlanOptions)
-                    {
-                        <option value="@plan.PlanName" selected="@(plan.PlanName == Model.JobTicket.FiberPlan)">@FiberPlanDisplay(plan.PlanName)</option>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.JobTicket.FiberPlan) && !Model.FiberPlanOptions.Any(p => p.PlanName == Model.JobTicket.FiberPlan))
-                    {
-                        <!-- This ticket's plan was later removed from the manager-maintained list;
-                             still show it here so the current value isn't silently lost. -->
-                        <option value="@Model.JobTicket.FiberPlan" selected="selected">@FiberPlanDisplay(Model.JobTicket.FiberPlan) (no longer offered)</option>
-                    }
-                </select>
+                @{
+                    var currentPlanOffered = Model.FiberPlanOptions.Any(p => p.PlanName == Model.JobTicket.FiberPlan);
+                    var currentPlanLabel = string.IsNullOrEmpty(Model.JobTicket.FiberPlan)
+                        ? "Select a plan"
+                        : FiberPlanDisplay(Model.JobTicket.FiberPlan) + (currentPlanOffered ? "" : " (no longer offered)");
+                }
+                <div class="dropdown">
+                    <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="fiberPlanDropdownBtn"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        @currentPlanLabel
+                    </button>
+                    <ul class="dropdown-menu status-dropdown-menu w-100" id="fiberPlanDropdownMenu" aria-labelledby="fiberPlanDropdownBtn">
+                        <li><a class="dropdown-item @(string.IsNullOrEmpty(Model.JobTicket.FiberPlan) ? "active" : "")" href="#" data-value="">Select a plan</a></li>
+                        @foreach (var plan in Model.FiberPlanOptions)
+                        {
+                            <li><a class="dropdown-item @(plan.PlanName == Model.JobTicket.FiberPlan ? "active" : "")" href="#" data-value="@plan.PlanName">@FiberPlanDisplay(plan.PlanName)</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.JobTicket.FiberPlan) && !currentPlanOffered)
+                        {
+                            <!-- This ticket's plan was later removed from the manager-maintained list;
+                                 still show it here so the current value isn't silently lost. -->
+                            <li><a class="dropdown-item active" href="#" data-value="@Model.JobTicket.FiberPlan">@FiberPlanDisplay(Model.JobTicket.FiberPlan) (no longer offered)</a></li>
+                        }
+                    </ul>
+                </div>
+                <input type="hidden" asp-for="JobTicket.FiberPlan" id="fiberPlanSelect" />
                 <span asp-validation-for="JobTicket.FiberPlan" class="text-danger small"></span>
             </div>
 
@@ -280,6 +300,7 @@
     }
 
     <script src="~/js/address-autocomplete.js"></script>
+    <script src="~/js/status-dropdown.js"></script>
     <script>
         (function () {
             // ---------------- ADDRESS AUTOCOMPLETE ----------------
@@ -363,7 +384,8 @@
                 applyClientInfoVisibility(type);
             }
 
-            jobTypeSelect.addEventListener('change', applyJobType);
+            wireStatusDropdown('jobTypeDropdownBtn', jobTypeSelect, { onChange: applyJobType });
+            wireStatusDropdown('fiberPlanDropdownBtn', fiberPlanSelect);
             applyJobType();
 
             // ---------------- SERVICE DATE (reschedule) ----------------
@@ -419,6 +441,22 @@
                         if (tag) tag.classList.remove('d-none');
                     }
                 });
+            });
+
+            // jobTypeSelect/fiberPlanSelect are now hidden inputs backing the
+            // custom dropdowns above, so the browser's native "required"
+            // blocking (and jQuery Validate, which ignores hidden fields by
+            // default) no longer catches an empty one - checked by hand here.
+            document.getElementById('ticketForm').addEventListener('submit', function (e) {
+                if (!jobTypeSelect.value) {
+                    e.preventDefault();
+                    alert('Please select a job type.');
+                    return;
+                }
+                if (fiberPlanSelect.hasAttribute('required') && !fiberPlanSelect.value) {
+                    e.preventDefault();
+                    alert('Please select a fiber plan.');
+                }
             });
         })();
     </script>

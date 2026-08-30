@@ -11,6 +11,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<TM_PE.Data.EmailService>();
+
 // Session backs the logged-in identity set at /Login (Employee ID + Role),
 // which the RBAC middleware below reads, and also backs the Field
 // Technician / Office Staff "who am I" keys those areas already relied on.
@@ -123,6 +125,9 @@ app.Use(async (context, next) =>
 
     bool IsPublicPath() =>
         path.StartsWithSegments("/Login") ||
+        path.StartsWithSegments("/ForgotPassword") ||
+        path.StartsWithSegments("/VerifyCode") ||
+        path.StartsWithSegments("/ResetPassword") ||
         path.StartsWithSegments("/Error") ||
         path.StartsWithSegments("/css") ||
         path.StartsWithSegments("/js") ||
@@ -166,6 +171,8 @@ app.Use(async (context, next) =>
         // isn't offered this page; it manages its own account like everyone
         // else's, through Admin > User Management.
         (path.StartsWithSegments("/Account") && Allowed("Manager", "FieldTechnician", "OfficeStaff")) ||
+        // Notification bell + "All Notifications" page - every role has one.
+        (path.StartsWithSegments("/Notifications") && Allowed("Manager", "Admin", "FieldTechnician", "OfficeStaff")) ||
         ((path == "/" || path.StartsWithSegments("/Index")) && Allowed("Manager", "Admin"));
 
     if (!authorized)

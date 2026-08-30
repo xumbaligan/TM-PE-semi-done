@@ -1,0 +1,80 @@
+@page
+@model TM_PE.Pages.Notifications.IndexModel
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = Model.LayoutName;
+}
+
+<div class="d-flex justify-content-between align-items-start gap-3 mb-1">
+    <div>
+        <h1 class="tf-page-title mb-1">Notifications</h1>
+        <p class="tf-page-sub mb-0">Everything that's happened across your work.</p>
+    </div>
+    @if (Model.Items.Any(n => !n.IsRead))
+    {
+        <button type="button" class="tf-btn-cancel" id="markAllReadBtn">Mark all as read</button>
+    }
+</div>
+<hr class="page-divider" />
+
+<div class="vm-card">
+    @if (!Model.Items.Any())
+    {
+        <span class="tf-empty-msg">No notifications yet.</span>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-2" id="notifList">
+            @foreach (var n in Model.Items)
+            {
+                <a href="@(string.IsNullOrWhiteSpace(n.Url) ? "#" : n.Url)"
+                   class="notif-row @(n.IsRead ? "" : "notif-row-unread") d-flex align-items-start gap-3"
+                   data-notif-id="@n.NotificationID">
+                    <div class="notif-row-icon"><i class="bi @n.Icon"></i></div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="notif-row-message">@n.Message</div>
+                        <div class="notif-row-date">@n.DateCreated.ToString("MMMM d, yyyy h:mm tt")</div>
+                    </div>
+                    @if (!n.IsRead)
+                    {
+                        <span class="notif-dot" title="Unread"></span>
+                    }
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // The layout's own topbar (see Pages/Shared/_NotificationBell.cshtml)
+            // already renders one #notifAntiForgeryForm on every page, this one included.
+            const token = document.querySelector('#notifAntiForgeryForm input[name="__RequestVerificationToken"]')?.value;
+
+            function post(handler, body) {
+                const form = new FormData();
+                if (token) form.append('__RequestVerificationToken', token);
+                if (body) Object.entries(body).forEach(([k, v]) => form.append(k, v));
+                return fetch('/Notifications?handler=' + handler, { method: 'POST', body: form });
+            }
+
+            document.querySelectorAll('.notif-row').forEach(row => {
+                row.addEventListener('click', function () {
+                    const id = row.dataset.notifId;
+                    if (id) post('MarkRead', { id });
+                });
+            });
+
+            const markAllBtn = document.getElementById('markAllReadBtn');
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', async function () {
+                    await post('MarkAllRead');
+                    document.querySelectorAll('.notif-row-unread').forEach(row => row.classList.remove('notif-row-unread'));
+                    document.querySelectorAll('.notif-dot').forEach(dot => dot.remove());
+                    markAllBtn.remove();
+                });
+            }
+        })();
+    </script>
+}

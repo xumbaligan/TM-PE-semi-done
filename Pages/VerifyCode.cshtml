@@ -1,7 +1,7 @@
 @page
-@model TM_PE.Pages.LoginModel
+@model TM_PE.Pages.VerifyCodeModel
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Verify Code";
     Layout = null;
 }
 
@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Pakonek Performance</title>
+    <title>Verify Code - Pakonek Performance</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -93,14 +93,6 @@
                 font-size: .95rem;
             }
 
-            .login-input-group button {
-                border: 0;
-                background: none;
-                color: #ccc6c6;
-                padding: 0;
-                line-height: 1;
-            }
-
         .login-forgot {
             color: var(--login-purple);
             font-weight: 700;
@@ -123,6 +115,19 @@
                 color: #fff;
             }
 
+        .code-input {
+            letter-spacing: .6em;
+            font-weight: 800;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .resend-btn {
+            background: none;
+            border: 0;
+            padding: 0;
+        }
+
         @@media (max-width: 767.98px) {
             .login-panel-dark {
                 padding: 1.75rem 1rem;
@@ -142,59 +147,52 @@
         </div>
         <div class="login-panel-light col-md-7">
             <h2 class="login-heading fw-bold mb-1">
-                WELCOME <span class="text-accent">BACK!</span>
+                VERIFY <span class="text-accent">CODE</span>
             </h2>
-            <p class="fw-semibold mb-4">Please Log In to your account now.</p>
+            <p class="fw-semibold mb-1">We sent a 4-digit code to</p>
+            <p class="fw-bold mb-4">@Model.MaskedEmail</p>
 
-            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
-            {
-                <div class="alert alert-success py-2 small">@Model.SuccessMessage</div>
-            }
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
             {
                 <div class="alert alert-danger py-2 small">@Model.ErrorMessage</div>
             }
+            @if (!string.IsNullOrEmpty(Model.StatusMessage))
+            {
+                <div class="alert alert-success py-2 small">@Model.StatusMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(Model.DevCode))
+            {
+                <div class="alert alert-warning py-2 small">
+                    Email delivery isn't configured yet, so here's your code for testing: <strong>@Model.DevCode</strong>
+                </div>
+            }
 
             <form method="post">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Username</label>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Verification Code</label>
                     <div class="login-input-group">
-                        <i class="bi bi-person-fill"></i>
-                        <input asp-for="Username" autofocus placeholder="Enter your username" />
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <input type="text" asp-for="Code" class="code-input" maxlength="4" inputmode="numeric"
+                               pattern="\d{4}" autofocus placeholder="0000" autocomplete="one-time-code" />
                     </div>
                 </div>
-                <div class="mb-2">
-                    <label class="form-label fw-bold">Password</label>
-                    <div class="login-input-group">
-                        <i class="bi bi-lock-fill"></i>
-                        <input type="password" asp-for="Password" maxlength="10" placeholder="Enter your password" />
-                        <button type="button" id="togglePassword" tabindex="-1" aria-label="Show password">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="text-end mb-4">
-                    <a asp-page="/ForgotPassword" class="login-forgot text-decoration-none">Forgot Password?</a>
-                </div>
-                <button type="submit" class="login-btn w-100 mb-4">LOG IN</button>
+                <button type="submit" class="login-btn w-100 mb-3">VERIFY</button>
             </form>
+
+            <form method="post" asp-page-handler="Resend" class="text-center mb-2">
+                <button type="submit" class="resend-btn login-forgot">Resend code</button>
+            </form>
+
+            <div class="text-center">
+                <a asp-page="/ForgotPassword" class="login-forgot text-decoration-none"><i class="bi bi-arrow-left"></i> Use a different email</a>
+            </div>
         </div>
     </div>
 
     <script>
-        (function () {
-            const toggleBtn = document.getElementById('togglePassword');
-            const passwordInput = document.getElementById('Password');
-            const icon = toggleBtn.querySelector('i');
-
-            toggleBtn.addEventListener('click', function () {
-                const isHidden = passwordInput.type === 'password';
-                passwordInput.type = isHidden ? 'text' : 'password';
-                icon.classList.toggle('bi-eye', !isHidden);
-                icon.classList.toggle('bi-eye-slash', isHidden);
-                toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-            });
-        })();
+        document.getElementById('Code').addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
     </script>
 </body>
 </html>

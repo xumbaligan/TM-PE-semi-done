@@ -110,12 +110,19 @@
 </div>
 
 @* ===================== DESCRIPTION / CLIENT / LOCATION ===================== *@
+@{
+    // Maintenance jobs carry no client — Location then pairs up with
+    // Description instead, so only those two need to match height. Every
+    // other job type shows Client Information beside Fiber Plan/Description,
+    // and Location drops to its own full-width row underneath.
+    bool hasClientInfo = Model.JobTicket.JobType != TM_PE.Model.JobTypes.Maintenance;
+}
 <div class="row g-3 mb-3">
 
-    @if (Model.JobTicket.JobType != TM_PE.Model.JobTypes.Maintenance)
+    @if (hasClientInfo)
     {
         <div class="col-lg-6">
-            <div class="vm-card">
+            <div class="vm-card h-100">
                 <div class="vm-card-title">Client Information</div>
 
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -153,22 +160,22 @@
     <div class="col-lg-6">
         @if (Model.JobTicket.JobType == "Installation")
         {
-            <div class="vm-card">
+            <div class="vm-card h-100">
                 <div class="vm-card-title">Fiber Plan</div>
                 <div class="vm-value">@FiberPlanDisplay(Model.JobTicket.FiberPlan)</div>
             </div>
         }
         else
         {
-            <div class="vm-card">
+            <div class="vm-card h-100">
                 <div class="vm-card-title">Description</div>
                 <div class="vm-text">@Model.JobTicket.Description</div>
             </div>
         }
     </div>
 
-    <div class="col-lg-6">
-        <div class="vm-card">
+    <div class="@(hasClientInfo ? "col-lg-12" : "col-lg-6")">
+        <div class="vm-card @(hasClientInfo ? "" : "h-100")">
             <div class="vm-card-title">Location</div>
 
             <div class="d-flex align-items-center gap-3">

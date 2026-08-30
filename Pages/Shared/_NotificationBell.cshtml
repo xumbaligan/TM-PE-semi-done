@@ -1,0 +1,26 @@
+@*
+    Persistent notification bell, included in every layout's topbar (upper
+    right corner). Its badge count and dropdown list are populated entirely
+    by wwwroot/js/notifications.js polling Pages/Notifications/Index.cshtml's
+    OnGetPollAsync handler - opening the dropdown, reading a notification, or
+    picking up a new one never triggers a full page reload; only actually
+    clicking through to a notification's own link does.
+*@
+<form id="notifAntiForgeryForm" class="d-none">@Html.AntiForgeryToken()</form>
+
+<div class="notif-bell-wrap dropdown">
+    <button type="button" class="notif-bell-btn" id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+        <i class="bi bi-bell"></i>
+        <span class="notif-badge d-none" id="notifBadge">0</span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end notif-dropdown" aria-labelledby="notifBellBtn">
+        <div class="notif-dropdown-header">
+            <span>Notifications</span>
+            <button type="button" class="notif-mark-all-btn" id="notifMarkAllBtn">Mark all read</button>
+        </div>
+        <div class="notif-dropdown-list" id="notifDropdownList">
+            <div class="notif-empty">No notifications yet.</div>
+        </div>
+        <a href="/Notifications" class="notif-dropdown-footer">View all</a>
+    </div>
+</div>

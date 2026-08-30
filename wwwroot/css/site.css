@@ -38,6 +38,46 @@ body {
 }
 
 /*
+   Every native <select>/.form-select in the system - status filters on
+   Manager > Job Tickets/Office Tasks, the Period/Employee selects on
+   Manager > Performance Evaluation, the Report Period select on Manager >
+   Performance Report, etc. - applied globally rather than per-page so a
+   dropdown added anywhere automatically matches. A deliberate border makes
+   every one read as a real control (not just Bootstrap's default hairline),
+   text always reads left-to-right (some contexts otherwise inherit a
+   centered text-align from an ancestor, e.g. a table cell), and hovering or
+   focusing the control plus the selected-option highlight all use the same
+   dark purple brand accent (matches .status-dropdown-btn/.progress-bar-brand)
+   instead of the browser's default blue.
+*/
+select,
+.form-select {
+    text-align: left;
+    border: 1.5px solid rgba(2,2,54,.25);
+}
+
+    select option {
+        text-align: left;
+    }
+
+    .form-select:hover {
+        border-color: #47076f;
+    }
+
+    .form-select:focus {
+        border-color: #47076f;
+        box-shadow: 0 0 0 .18rem rgba(71,7,111,.18);
+    }
+
+    /* Best-effort - only Chromium-based browsers let CSS reach into the
+       native dropdown popup at all; Firefox/Safari keep their own colors. */
+    select option:checked,
+    select option:hover {
+        background: linear-gradient(#47076f, #47076f);
+        color: #fff;
+    }
+
+/*
    position: sticky + align-self: flex-start keeps the sidebar pinned to
    exactly the viewport height, independent of its flex sibling (main). By
    default a flex row stretches every child to match the tallest one
@@ -871,6 +911,57 @@ body {
             color: #fff;
         }
 
+/*
+   Period-selector dropdowns (Month/Quarter/Year on the Dashboard, Department
+   on Manager > Performance Report) - a Bootstrap .dropdown with no color
+   variant, so previously unstyled. Bordered to read as a real control, with
+   the open menu's hover/selected state recolored to the brand's dark purple
+   (matches .progress-bar-brand) instead of Bootstrap's default blue.
+*/
+.status-dropdown-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    border: 1.5px solid rgba(2,2,54,.25);
+    border-radius: 9px;
+    background: #fff;
+    color: #020236;
+    font-weight: 600;
+    font-size: .85rem;
+    padding: .5rem .9rem;
+}
+
+    .status-dropdown-btn:hover,
+    .status-dropdown-btn:focus,
+    .status-dropdown-btn:active,
+    .status-dropdown-btn.show {
+        border-color: #47076f;
+        color: #020236;
+        background: #fff;
+    }
+
+.status-dropdown-menu {
+    border: 1.5px solid rgba(2,2,54,.15);
+    border-radius: 9px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.1);
+    padding: .35rem;
+}
+
+    .status-dropdown-menu .dropdown-item {
+        border-radius: 7px;
+        padding: .5rem .75rem;
+        font-size: .85rem;
+        color: #020236;
+    }
+
+    .status-dropdown-menu .dropdown-item:hover,
+    .status-dropdown-menu .dropdown-item:focus,
+    .status-dropdown-menu .dropdown-item.active {
+        background: #47076f;
+        color: #fff;
+    }
+
 /* ===================== Report charts ===================== */
 /* Chart.js needs a sized, positioned parent to render into. */
 .chart-box {
@@ -1171,7 +1262,9 @@ body {
 .tf-section .form-control,
 .tf-section .form-select,
 .vm-card .form-control,
-.vm-card .form-select {
+.vm-card .form-select,
+.tf-form-card .form-control,
+.tf-form-card .form-select {
     border: 1.5px solid rgba(2,2,54,.18);
     border-radius: 9px;
     padding: .65rem .9rem;
@@ -1180,15 +1273,29 @@ body {
 }
 
     .tf-section .form-control:focus,
-    .tf-section .form-select:focus,
     .vm-card .form-control:focus,
-    .vm-card .form-select:focus {
+    .tf-form-card .form-control:focus {
         border-color: #9f4cd6;
         box-shadow: 0 0 0 .18rem rgba(159,76,214,.15);
     }
 
+    /* Dropdowns get the same dark-purple hover/highlight as every other
+       <select> in the system (see the global select/.form-select rule
+       above) - kept separate from .form-control above so text inputs keep
+       their own lighter accent. */
+    .tf-section .form-select:hover,
+    .vm-card .form-select:hover,
+    .tf-form-card .form-select:hover,
+    .tf-section .form-select:focus,
+    .vm-card .form-select:focus,
+    .tf-form-card .form-select:focus {
+        border-color: #47076f;
+        box-shadow: 0 0 0 .18rem rgba(71,7,111,.18);
+    }
+
     .tf-section .form-control::placeholder,
-    .vm-card .form-control::placeholder {
+    .vm-card .form-control::placeholder,
+    .tf-form-card .form-control::placeholder {
         color: #a9a9bd;
     }
 
@@ -2187,4 +2294,282 @@ body {
     border-radius: 10px;
     background: #faf7fd;
     padding: .85rem 1rem;
+}
+
+/* ===================== Centred single-form pages (.tf-form-*) ===================== */
+/*
+   Admin > New Employee / New User Account / New Criteria: one short form,
+   centred in the content area rather than pinned to the left edge. Shares the
+   field styling of the .tf-section stepped cards above.
+*/
+.tf-form-page {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.tf-form-card {
+    background: #fff;
+    border: 1px solid rgba(2,2,54,.12);
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    padding: 2rem;
+}
+
+.tf-form-heading {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #020236;
+    line-height: 1.1;
+    padding-bottom: .85rem;
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid #020236;
+}
+
+/* Larger navy checkbox, sized to sit beside a full-height input. */
+.tf-check-input {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-top: 0;
+    border: 1.5px solid rgba(2,2,54,.45);
+    border-radius: 5px;
+}
+
+    .tf-check-input:checked {
+        background-color: #020236;
+        border-color: #020236;
+    }
+
+    .tf-check-input:focus {
+        border-color: #9f4cd6;
+        box-shadow: 0 0 0 .18rem rgba(159,76,214,.2);
+    }
+
+.tf-check-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #020236;
+}
+
+/* Server-generated value shown for reference but not editable (e.g. username). */
+.tf-input-locked:disabled,
+.tf-input-locked[readonly] {
+    background: #f4ecfb;
+    color: #020236;
+    font-weight: 600;
+    opacity: 1;
+}
+
+/* ===================== Notification bell (.notif-*) ===================== */
+/*
+   Topbar strip every layout renders above @RenderBody(), right-aligning the
+   bell to the page's upper-right corner. See Pages/Shared/_NotificationBell.cshtml
+   and wwwroot/js/notifications.js - the badge/dropdown are populated by
+   polling, never by a page reload.
+*/
+.app-topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: .75rem;
+}
+
+.notif-bell-wrap {
+    position: relative;
+}
+
+.notif-bell-btn {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    border: 1.5px solid rgba(2,2,54,.15);
+    background: #fff;
+    color: #020236;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+    .notif-bell-btn:hover,
+    .notif-bell-btn:focus {
+        background: #f4f4f8;
+    }
+
+.notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 50rem;
+    background: #a21919;
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}
+
+.notif-dropdown {
+    width: 360px;
+    max-width: 90vw;
+    padding: 0;
+    border: 1px solid rgba(2,2,54,.15);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(2,2,54,.15);
+    overflow: hidden;
+}
+
+.notif-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .85rem 1rem;
+    font-weight: 800;
+    color: #020236;
+    font-size: .92rem;
+    border-bottom: 1px solid rgba(2,2,54,.08);
+}
+
+.notif-mark-all-btn {
+    background: none;
+    border: 0;
+    color: #47076f;
+    font-weight: 700;
+    font-size: .75rem;
+    padding: 0;
+}
+
+    .notif-mark-all-btn:hover {
+        text-decoration: underline;
+    }
+
+.notif-dropdown-list {
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.notif-empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: #8b8ba7;
+    font-size: .82rem;
+}
+
+.notif-dropdown-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    padding: .7rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid rgba(2,2,54,.06);
+}
+
+    .notif-dropdown-item:last-child {
+        border-bottom: 0;
+    }
+
+    .notif-dropdown-item:hover {
+        background: #f8f6fb;
+    }
+
+.notif-dropdown-item-unread {
+    background: #f4ecfb;
+}
+
+.notif-dropdown-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #31055d, #47076f);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+}
+
+.notif-dropdown-item-message {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #020236;
+    line-height: 1.35;
+}
+
+.notif-dropdown-item-date {
+    font-size: .7rem;
+    color: #8b8ba7;
+    margin-top: .15rem;
+}
+
+.notif-dropdown-footer {
+    display: block;
+    text-align: center;
+    padding: .65rem;
+    font-size: .8rem;
+    font-weight: 700;
+    color: #47076f;
+    text-decoration: none;
+    border-top: 1px solid rgba(2,2,54,.08);
+}
+
+    .notif-dropdown-footer:hover {
+        background: #f8f6fb;
+    }
+
+/* Notifications/Index.cshtml's own "All Notifications" row list. */
+.notif-row {
+    text-decoration: none;
+    color: inherit;
+    padding: .85rem;
+    border-radius: 12px;
+    border: 1px solid rgba(2,2,54,.1);
+}
+
+    .notif-row:hover {
+        background: #f8f6fb;
+    }
+
+.notif-row-unread {
+    background: #f4ecfb;
+    border-color: #e5d3fa;
+}
+
+.notif-row-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #31055d, #47076f);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+}
+
+.notif-row-message {
+    font-size: .88rem;
+    font-weight: 700;
+    color: #020236;
+}
+
+.notif-row-date {
+    font-size: .72rem;
+    color: #8b8ba7;
+    margin-top: .2rem;
+}
+
+.notif-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #47076f;
+    margin-top: .35rem;
+    flex-shrink: 0;
 }

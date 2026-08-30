@@ -23,14 +23,21 @@
 <form method="get" class="wlm-card p-3 mb-4" id="reportFilters">
     <div class="row g-3 align-items-end">
         <div class="col-md-4">
-            <label class="form-label fw-semibold" for="Period">Report Period</label>
-            <select class="form-select" id="Period" name="Period">
-                <option value="">All Periods</option>
-                @foreach (var p in Model.PeriodOptions)
-                {
-                    <option value="@p.Value" selected="@(Model.Period == p.Value)">@p.Label</option>
-                }
-            </select>
+            <label class="form-label fw-semibold" for="periodDropdownBtn">Report Period</label>
+            <div class="dropdown">
+                <button class="btn status-dropdown-btn dropdown-toggle w-100" type="button" id="periodDropdownBtn"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    @Model.PeriodLabel
+                </button>
+                <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="periodDropdownBtn">
+                    <li><a class="dropdown-item @(string.IsNullOrWhiteSpace(Model.Period) ? "active" : "")" href="#" data-value="">All Periods</a></li>
+                    @foreach (var p in Model.PeriodOptions)
+                    {
+                        <li><a class="dropdown-item @(Model.Period == p.Value ? "active" : "")" href="#" data-value="@p.Value">@p.Label</a></li>
+                    }
+                </ul>
+            </div>
+            <input type="hidden" id="Period" name="Period" value="@Model.Period" />
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold" for="departmentDropdownBtn">Department</label>
@@ -243,7 +250,7 @@
     <script>
         (function () {
             const form = document.getElementById('reportFilters');
-            const periodSelect = document.getElementById('Period');
+            const periodInput = document.getElementById('Period');
             const deptSelect = document.getElementById('DepartmentId');
             const exportBtn = document.getElementById('exportCsvBtn');
 
@@ -254,28 +261,27 @@
                 if (!exportBtn) return;
                 const params = new URLSearchParams();
                 params.set('handler', 'ExportCsv');
-                if (periodSelect.value) params.set('Period', periodSelect.value);
+                if (periodInput.value) params.set('Period', periodInput.value);
                 if (deptSelect.value) params.set('DepartmentId', deptSelect.value);
                 exportBtn.href = window.location.pathname + '?' + params.toString();
             }
 
-            // Re-run the report as soon as a filter changes, so the manager
-            // doesn't have to remember to press Generate Report.
-            form.querySelectorAll('select').forEach(select => {
-                select.addEventListener('change', function () {
-                    refreshExportLink();
-                    form.submit();
+            // Picking an item in either dropdown fills its hidden input and
+            // re-runs the report, so the manager doesn't have to remember to
+            // press Generate Report.
+            function wireDropdown(menuAriaId, hiddenInput) {
+                document.querySelectorAll('[aria-labelledby="' + menuAriaId + '"] .dropdown-item').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        hiddenInput.value = item.dataset.value;
+                        refreshExportLink();
+                        form.submit();
+                    });
                 });
-            });
+            }
 
-            document.querySelectorAll('[aria-labelledby="departmentDropdownBtn"] .dropdown-item').forEach(item => {
-                item.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    deptSelect.value = item.dataset.value;
-                    refreshExportLink();
-                    form.submit();
-                });
-            });
+            wireDropdown('periodDropdownBtn', periodInput);
+            wireDropdown('departmentDropdownBtn', deptSelect);
 
             refreshExportLink();
         })();

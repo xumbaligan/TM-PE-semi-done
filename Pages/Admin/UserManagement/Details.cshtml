@@ -3,63 +3,135 @@
 @{
     ViewData["Title"] = "User Account Details";
     Layout = "_Admin";
-
-    string RoleBadgeClass(TM_PE.Model.RoleType rt) => rt switch
-    {
-        TM_PE.Model.RoleType.FieldTechnician => "role-badge-field-technician",
-        TM_PE.Model.RoleType.OfficeStaff => "role-badge-office-staff",
-        TM_PE.Model.RoleType.Manager => "role-badge-manager",
-        TM_PE.Model.RoleType.Admin => "role-badge-admin",
-        _ => "role-badge-office-staff"
-    };
+    var emp = Model.Account.Employee;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2><i class="bi bi-person-badge"></i> User Account Details</h2>
-    <a class="btn btn-outline-secondary" asp-page="Index"><i class="bi bi-arrow-left"></i> Back</a>
+<div class="mb-3">
+    <h2 class="mb-1 fw-bold">User Account Details</h2>
+    <p class="text-muted mb-0">View and manage user account information and access settings.</p>
 </div>
+<hr class="page-divider" />
 
 <div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card p-4 mb-4">
-            <h5 class="mb-3">Account</h5>
-            <div class="row g-3">
+    <div class="col-lg-8">
+
+        <div class="account-card mb-4">
+            <div class="account-card-title">Account Overview</div>
+            <div class="row g-4">
                 <div class="col-md-6">
-                    <div class="text-muted small">Username</div>
-                    <div class="fw-semibold"><code>@Model.Account.Username</code></div>
-                </div>
-                <div class="col-md-6">
-                    <div class="text-muted small">Status</div>
-                    <div>
-                        @if (Model.Account.IsActive)
-                        {
-                            <span class="status-badge status-badge-active">Active</span>
-                        }
-                        else
-                        {
-                            <span class="status-badge status-badge-inactive">Disabled</span>
-                        }
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-person-badge"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Username</div>
+                            <div class="account-value">@Model.Account.Username</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="text-muted small">Created</div>
-                    <div class="fw-semibold">@Model.Account.DateCreated.ToString("MMMM d, yyyy")</div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-calendar-check"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Hired At</div>
+                            <div class="account-value">@(emp != null ? emp.HiredAt.ToString("MMMM d, yyyy") : "—")</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="text-muted small">Last Login</div>
-                    <div class="fw-semibold">@(Model.Account.LastLogin.HasValue? Model.Account.LastLogin.Value.ToString("MMMM d, yyyy h:mm tt") : "Never")</div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-calendar3"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Account Created</div>
+                            <div class="account-value">@Model.Account.DateCreated.ToString("MMMM d, yyyy")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="account-info-icon"><i class="bi bi-hourglass-split"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="account-label">Last Login</div>
+                            <div class="account-value">
+                                @(Model.Account.LastLogin.HasValue
+                                                                ? Model.Account.LastLogin.Value.ToString("MMMM d, yyyy h:mm tt")
+                                                                : "Never")
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <form method="post" asp-page-handler="ToggleActive" class="mt-3">
-                <button type="submit" class="btn btn-sm @(Model.Account.IsActive ? "btn-outline-warning" : "btn-outline-success")">
-                    @(Model.Account.IsActive ? "Disable Account" : "Enable Account")
-                </button>
-            </form>
         </div>
 
-        <div class="card p-4">
-            <h5 class="mb-3">Reset Password</h5>
+        <div class="account-card">
+            <div class="account-card-title">Employee's Information</div>
+
+            @if (emp == null)
+            {
+                <div class="text-muted">Employee record not found.</div>
+            }
+            else
+            {
+                <div class="account-employee-box">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="account-label">Full Name</div>
+                            <div class="account-value account-value-caps">@emp.FullName</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Email</div>
+                            <div class="account-value">@emp.Email</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Role</div>
+                            <div class="account-value account-value-caps">@emp.RoleType</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Status</div>
+                            <div>
+                                <span class="status-badge @(Model.Account.IsActive ? "status-badge-active" : "status-badge-inactive")">
+                                    @(Model.Account.IsActive ? "Active" : "Disabled")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="account-label">Department</div>
+                            <div class="account-value account-value-caps">@(emp.Department?.DepartmentName ?? "—")</div>
+                        </div>
+                        @* Kept alongside the account status above - the two are set
+                           independently, and only the account one is toggled here. *@
+                        <div class="col-md-6">
+                            <div class="account-label">Employee Status</div>
+                            <div>
+                                <span class="status-badge @(emp.IsActive ? "status-badge-active" : "status-badge-inactive")">
+                                    @(emp.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <form method="post" asp-page-handler="ToggleActive" class="m-0">
+                    <button type="submit" class="tf-btn-cancel">
+                        @(Model.Account.IsActive ? "Disable Account" : "Enable Account")
+                    </button>
+                </form>
+
+                @if (emp != null)
+                {
+                    <a class="tf-btn-save" asp-page="/Admin/Employees/Edit" asp-route-id="@emp.EmployeeId">
+                        Edit Employee
+                    </a>
+                }
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+        <div class="account-card">
+            <div class="account-card-title">Reset Password</div>
+
             @if (!string.IsNullOrEmpty(Model.ResetMessage))
             {
                 <div class="alert alert-success py-2 small">@Model.ResetMessage</div>
@@ -68,69 +140,56 @@
             {
                 <div class="alert alert-danger py-2 small">@Model.ResetError</div>
             }
+
             <form method="post" asp-page-handler="ResetPassword">
-                <div class="mb-2">
-                    <label class="form-label">New Password</label>
-                    <input class="form-control" type="text" asp-for="NewPassword" maxlength="10" inputmode="numeric" pattern="\d{8,10}" />
-                    <div class="form-text">8-10 digits, numbers only.</div>
+                <div class="mb-3">
+                    <label class="account-form-label" for="NewPassword">New Password</label>
+                    <div class="account-input-group">
+                        <input type="password" asp-for="NewPassword" maxlength="10"
+                               inputmode="numeric" pattern="\d{8,10}" autocomplete="new-password" />
+                        <button type="button" data-password-toggle="NewPassword" tabindex="-1" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="account-form-hint">8-10 digits, numbers only.</div>
                 </div>
-                <div class="mb-2">
-                    <label class="form-label">Confirm New Password</label>
-                    <input class="form-control" type="text" asp-for="ConfirmNewPassword" maxlength="10" inputmode="numeric" pattern="\d{8,10}" />
+
+                <div class="mb-4">
+                    <label class="account-form-label" for="ConfirmNewPassword">Confirm New Password</label>
+                    <div class="account-input-group">
+                        <input type="password" asp-for="ConfirmNewPassword" maxlength="10"
+                               inputmode="numeric" pattern="\d{8,10}" autocomplete="new-password" />
+                        <button type="button" data-password-toggle="ConfirmNewPassword" tabindex="-1" aria-label="Show password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-primary btn-sm">Reset Password</button>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="account-btn-submit">Change password</button>
+                </div>
             </form>
         </div>
     </div>
-
-    <div class="col-lg-6">
-        <div class="card p-4">
-            <h5 class="mb-3">Employee Information</h5>
-            @if (Model.Account.Employee == null)
-            {
-                <div class="text-muted">Employee record not found.</div>
-            }
-            else
-            {
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="text-muted small">Full Name</div>
-                        <div class="fw-semibold">@Model.Account.Employee.FullName</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Email</div>
-                        <div class="fw-semibold">@Model.Account.Employee.Email</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Role Type</div>
-                        <div><span class="badge rounded-pill @RoleBadgeClass(Model.Account.Employee.RoleType)">@Model.Account.Employee.RoleType</span></div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Department</div>
-                        <div class="fw-semibold">@(Model.Account.Employee.Department?.DepartmentName ?? "—")</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Hired At</div>
-                        <div class="fw-semibold">@Model.Account.Employee.HiredAt.ToString("MMMM d, yyyy")</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-muted small">Employee Status</div>
-                        <div>
-                            @if (Model.Account.Employee.IsActive)
-                            {
-                                <span class="status-badge status-badge-active">Active</span>
-                            }
-                            else
-                            {
-                                <span class="status-badge status-badge-inactive">Inactive</span>
-                            }
-                        </div>
-                    </div>
-                </div>
-                <a class="btn btn-sm btn-outline-secondary mt-3" asp-page="/Admin/Employees/Edit" asp-route-id="@Model.Account.Employee.EmployeeId">
-                    <i class="bi bi-pencil"></i> Edit in Employee Management
-                </a>
-            }
-        </div>
-    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // One handler for both fields - each button names the input it controls
+        // via data-password-toggle, the same pattern as the My Account page.
+        document.querySelectorAll('[data-password-toggle]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.getElementById(btn.dataset.passwordToggle);
+                if (!input) return;
+
+                var icon = btn.querySelector('i');
+                var isHidden = input.type === 'password';
+
+                input.type = isHidden ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !isHidden);
+                icon.classList.toggle('bi-eye-slash', isHidden);
+                btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            });
+        });
+    </script>
+}

@@ -16,17 +16,23 @@
         <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
                value="@Model.Search" placeholder="Search by leader, job type, ticket #, or client..." />
     </div>
-    <select class="form-select" name="status" id="liveStatus" style="max-width:220px;">
-        <option value="">All Statuses</option>
-        <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
-        <option value="In Progress" selected="@(Model.StatusFilter == "In Progress")">In Progress</option>
-        <option value="Reschedule Request" selected="@(Model.StatusFilter == "Reschedule Request")">Reschedule Request</option>
-        <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
-        <option value="Completed Late" selected="@(Model.StatusFilter == "Completed Late")">Completed Late</option>
-        <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
-        <option value="Rescheduled" selected="@(Model.StatusFilter == "Rescheduled")">Rescheduled</option>
-        <option value="Overdue" selected="@(Model.StatusFilter == "Overdue")">Overdue</option>
-    </select>
+    @{
+        var statusOptions = new[] { "Pending", "In Progress", "Reschedule Request", "Completed", "Completed Late", "Cancelled", "Rescheduled", "Overdue" };
+    }
+    <div class="dropdown" style="max-width:220px;">
+        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="statusDropdownBtn"
+                data-bs-toggle="dropdown" aria-expanded="false">
+            @(string.IsNullOrEmpty(Model.StatusFilter) ? "All Statuses" : Model.StatusFilter)
+        </button>
+        <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="statusDropdownBtn">
+            <li><a class="dropdown-item @(string.IsNullOrEmpty(Model.StatusFilter) ? "active" : "")" href="#" data-value="">All Statuses</a></li>
+            @foreach (var s in statusOptions)
+            {
+                <li><a class="dropdown-item @(Model.StatusFilter == s ? "active" : "")" href="#" data-value="@s">@s</a></li>
+            }
+        </ul>
+    </div>
+    <input type="hidden" name="status" id="liveStatus" value="@Model.StatusFilter" />
     <a asp-page="Create" class="btn btn-navy ms-auto">
         <i class="bi bi-plus-lg"></i> Create New
     </a>
@@ -389,14 +395,15 @@
 }
 
 @section Scripts {
+    <script src="~/js/status-dropdown.js"></script>
     <script>
         const searchInput = document.getElementById('liveSearch');
-        const statusSelect = document.getElementById('liveStatus');
+        const statusInput = document.getElementById('liveStatus');
         const rows = document.querySelectorAll('tbody tr[data-ticketid]');
 
         function filterTable() {
             const searchVal = searchInput.value.toLowerCase().trim();
-            const statusVal = statusSelect.value.toLowerCase().trim();
+            const statusVal = statusInput.value.toLowerCase().trim();
             let visibleCount = 0;
 
             rows.forEach(row => {
@@ -425,7 +432,7 @@
         }
 
         searchInput.addEventListener('input', filterTable);
-        statusSelect.addEventListener('change', filterTable);
+        wireStatusDropdown('statusDropdownBtn', statusInput, { onChange: filterTable });
 
         // Apply immediately on load too, so a link that arrives with
         // ?status=... (e.g. from the Dashboard) actually filters the table

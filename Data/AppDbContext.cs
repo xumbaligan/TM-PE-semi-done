@@ -28,6 +28,7 @@ namespace TM_PE.Data
         public DbSet<EvaluationResult> EvaluationResults => Set<EvaluationResult>();
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
         public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
+        public DbSet<Notification> Notifications => Set<Notification>();
 
         protected override void OnModelCreating(ModelBuilder b)
         {
@@ -177,6 +178,17 @@ namespace TM_PE.Data
                 .WithMany()
                 .HasForeignKey(h => h.ActorEmployeeID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // A notification belongs entirely to its recipient - if that
+            // employee record is ever removed, its notifications go with it.
+            b.Entity<Notification>()
+                .HasOne(n => n.Employee)
+                .WithMany()
+                .HasForeignKey(n => n.EmployeeID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.Entity<Notification>()
+                .HasIndex(n => new { n.EmployeeID, n.IsRead });
         }
     }
 }

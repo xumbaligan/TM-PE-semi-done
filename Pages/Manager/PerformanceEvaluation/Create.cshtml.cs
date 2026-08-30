@@ -210,6 +210,16 @@ namespace TM_PE.Pages.Manager.PerformanceEvaluation
             evaluation.OverallRating = EvaluationScoring.RatingFor(overallScore);
 
             _context.PerformanceEvaluations.Add(evaluation);
+
+            NotificationHelper.Notify(_context, employee.EmployeeId,
+                status == EvaluationStatus.Finalized
+                    ? $"Your performance evaluation for {evaluation.EvaluationPeriod} has been finalized."
+                    : $"A new performance evaluation was created for you for {evaluation.EvaluationPeriod}.",
+                employee.RoleType == RoleType.FieldTechnician
+                    ? "/FieldTechnician/PerformanceRecords"
+                    : "/OfficeStaff/PerformanceRecords",
+                "bi-clipboard-data");
+
             await _context.SaveChangesAsync();
 
             // Back to this same Create page rather than Details, so the

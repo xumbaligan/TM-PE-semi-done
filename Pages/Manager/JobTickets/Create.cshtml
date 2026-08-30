@@ -75,13 +75,20 @@
                 Job Type <span class="tf-required">*</span>
             </label>
 
-            <select asp-for="JobTicket.JobType" id="jobTypeSelect" class="form-select" required>
-                <option value="">Select job type</option>
-                @foreach (var type in Model.JobTypeOptions)
-                {
-                    <option value="@type">@type</option>
-                }
-            </select>
+            <div class="dropdown">
+                <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="jobTypeDropdownBtn"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Select job type
+                </button>
+                <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="jobTypeDropdownBtn">
+                    <li><a class="dropdown-item active" href="#" data-value="">Select job type</a></li>
+                    @foreach (var type in Model.JobTypeOptions)
+                    {
+                        <li><a class="dropdown-item" href="#" data-value="@type">@type</a></li>
+                    }
+                </ul>
+            </div>
+            <input type="hidden" asp-for="JobTicket.JobType" id="jobTypeSelect" />
 
             <span asp-validation-for="JobTicket.JobType" class="text-danger small"></span>
         </div>
@@ -142,13 +149,20 @@
                 </label>
 
                 <div class="d-flex gap-2">
-                    <select asp-for="JobTicket.FiberPlan" id="fiberPlanSelect" class="form-select flex-grow-1">
-                        <option value="">Select a plan</option>
-                        @foreach (var plan in Model.FiberPlanOptions)
-                        {
-                            <option value="@plan.PlanName">@FiberPlanDisplay(plan.PlanName)</option>
-                        }
-                    </select>
+                    <div class="dropdown flex-grow-1">
+                        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="fiberPlanDropdownBtn"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            Select a plan
+                        </button>
+                        <ul class="dropdown-menu status-dropdown-menu w-100" id="fiberPlanDropdownMenu" aria-labelledby="fiberPlanDropdownBtn">
+                            <li><a class="dropdown-item active" href="#" data-value="">Select a plan</a></li>
+                            @foreach (var plan in Model.FiberPlanOptions)
+                            {
+                                <li><a class="dropdown-item" href="#" data-value="@plan.PlanName">@FiberPlanDisplay(plan.PlanName)</a></li>
+                            }
+                        </ul>
+                    </div>
+                    <input type="hidden" asp-for="JobTicket.FiberPlan" id="fiberPlanSelect" />
 
                     <button type="button" class="tf-btn-add-outline" id="openFiberPlanModalBtn"
                             data-bs-toggle="modal" data-bs-target="#fiberPlanModal">
@@ -260,13 +274,20 @@
         </p>
 
         <div class="d-flex flex-column flex-sm-row gap-2">
-            <select id="employeeSelect" class="form-select flex-grow-1">
-                <option value="">Select a field technician</option>
-                @foreach (var emp in Model.FieldTechnicianList)
-                {
-                    <option value="@emp.EmployeeId">@emp.FullName</option>
-                }
-            </select>
+            <div class="dropdown flex-grow-1">
+                <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="employeeDropdownBtn"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Select a field technician
+                </button>
+                <ul class="dropdown-menu status-dropdown-menu w-100" id="employeeDropdownMenu" aria-labelledby="employeeDropdownBtn">
+                    <li><a class="dropdown-item active" href="#" data-value="">Select a field technician</a></li>
+                    @foreach (var emp in Model.FieldTechnicianList)
+                    {
+                        <li><a class="dropdown-item" href="#" data-value="@emp.EmployeeId">@emp.FullName</a></li>
+                    }
+                </ul>
+            </div>
+            <input type="hidden" id="employeeSelect" />
 
             <button type="button" id="addEmployeeBtn" class="tf-btn-add-outline">
                 <i class="bi bi-plus-circle-fill"></i> Add Technician
@@ -326,6 +347,7 @@
     }
 
     <script src="~/js/address-autocomplete.js"></script>
+    <script src="~/js/status-dropdown.js"></script>
     <script>
             (function () {
                 // ---------------- ADDRESS AUTOCOMPLETE ----------------
@@ -408,7 +430,7 @@
                     applyClientInfoVisibility(type);
                 }
 
-                jobTypeSelect.addEventListener('change', applyJobType);
+                wireStatusDropdown('jobTypeDropdownBtn', jobTypeSelect, { onChange: applyJobType });
                 applyJobType();
 
                 // ---------------- DATE OF COMPLETION ----------------
@@ -443,36 +465,23 @@
     const preSelectedLeaderId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
                                                                                 Model.LeaderEmployeeId > 0 ? Model.LeaderEmployeeId.ToString() : null));
 
-    // Once a technician is selected, their option disappears from the
-    // dropdown; removing them from the list restores it in its original
-    // (alphabetical) position.
-    const originalOptions = Array.from(employeeSelect.options).filter(o => o.value !== '');
-    const optionMap = new Map();
-    originalOptions.forEach(o => optionMap.set(o.value, o));
+    // Once a technician is selected, their entry disappears from the
+    // dropdown menu (rather than being reordered on removal like the old
+    // <select> did - each entry just stays in its original alphabetical
+    // spot in the DOM and is toggled hidden/visible).
+    const employeeDropdownController = wireStatusDropdown('employeeDropdownBtn', employeeSelect);
+    const employeeItems = Array.from(document.querySelectorAll('#employeeDropdownMenu .dropdown-item[data-value]'))
+        .filter(i => i.dataset.value !== '');
+    const employeeNameById = new Map(employeeItems.map(i => [i.dataset.value, i.textContent.trim()]));
 
                 function hideOptionFromDropdown(id) {
-                    const opt = optionMap.get(id);
-                    if (opt && opt.parentElement === employeeSelect) {
-                        employeeSelect.removeChild(opt);
-                    }
+                    const item = employeeItems.find(i => i.dataset.value === id);
+                    if (item) item.closest('li').classList.add('d-none');
                 }
 
                 function restoreOptionToDropdown(id) {
-                    const opt = optionMap.get(id);
-                    if (!opt) return;
-                    const idx = originalOptions.indexOf(opt);
-                    let inserted = false;
-                    for (let i = idx + 1; i < originalOptions.length; i++) {
-                        const nextOpt = originalOptions[i];
-                        if (nextOpt.parentElement === employeeSelect) {
-                            employeeSelect.insertBefore(opt, nextOpt);
-                            inserted = true;
-                            break;
-                        }
-                    }
-                    if (!inserted) {
-                        employeeSelect.appendChild(opt);
-                    }
+                    const item = employeeItems.find(i => i.dataset.value === id);
+                    if (item) item.closest('li').classList.remove('d-none');
                 }
 
                 function renderEmployeeRow(id, name) {
@@ -563,7 +572,7 @@
 
                 addEmployeeBtn.addEventListener('click', function () {
                     const id = employeeSelect.value;
-                    const name = employeeSelect.options[employeeSelect.selectedIndex].text;
+                    const name = employeeNameById.get(id);
 
                     if (!id) return;
                     if (addedEmployees.has(id)) return;
@@ -582,12 +591,13 @@
                         refreshLeaderTags();
                     }
 
-                    employeeSelect.value = '';
+                    employeeDropdownController.selectByValue('', false);
                 });
 
                 // ---------------- FIBER PLANS MODAL ----------------
                 (function () {
                     const planSelect = document.getElementById('fiberPlanSelect');
+                    const fiberPlanController = wireStatusDropdown('fiberPlanDropdownBtn', planSelect);
                     const planList = document.getElementById('fiberPlanList');
                     const noPlansMsg = document.getElementById('noFiberPlansMsg');
                     const newPlanInput = document.getElementById('newFiberPlanInput');
@@ -627,13 +637,6 @@
                         noPlansMsg.classList.add('d-none');
                     }
 
-                    function addOption(name) {
-                        const opt = document.createElement('option');
-                        opt.value = name;
-                        opt.textContent = formatPlan(name);
-                        planSelect.appendChild(opt);
-                    }
-
                     addPlanBtn.addEventListener('click', async function () {
                         clearError();
                         const name = newPlanInput.value.trim();
@@ -670,7 +673,7 @@
                             }
 
                             addRow(data.id, data.name);
-                            addOption(data.name);
+                            fiberPlanController.addItem(data.name, formatPlan(data.name));
                             newPlanInput.value = '';
                         } catch (err) {
                             showError('Something went wrong. Please try again.');
@@ -719,13 +722,9 @@
                                 noPlansMsg.classList.remove('d-none');
                             }
 
-                            // If the plan being removed was selected in the main form,
-                            // clear the selection so a deleted plan can't be submitted.
-                            const opt = Array.from(planSelect.options).find(o => o.value === name);
-                            if (opt) {
-                                if (planSelect.value === name) planSelect.value = '';
-                                opt.remove();
-                            }
+                            // Clears the selection first if the plan being removed was
+                            // selected in the main form, so a deleted plan can't be submitted.
+                            fiberPlanController.removeItem(name);
                         } catch (err) {
                             showError('Something went wrong. Please try again.');
                             btn.disabled = false;
@@ -734,6 +733,21 @@
                 })();
 
                 document.getElementById('ticketForm').addEventListener('submit', function (e) {
+                    // jobTypeSelect/fiberPlanSelect are now hidden inputs backing the
+                    // custom dropdowns above, so the browser's native "required"
+                    // blocking (and jQuery Validate, which ignores hidden fields by
+                    // default) no longer catches an empty one - checked by hand here
+                    // instead, same as the technician/leader checks below.
+                    if (!jobTypeSelect.value) {
+                        e.preventDefault();
+                        alert('Please select a job type.');
+                        return;
+                    }
+                    if (fiberPlanSelect.hasAttribute('required') && !fiberPlanSelect.value) {
+                        e.preventDefault();
+                        alert('Please select a fiber plan.');
+                        return;
+                    }
                     if (addedEmployees.size < 2) {
                         e.preventDefault();
                         alert('Please assign at least 2 field technicians.');

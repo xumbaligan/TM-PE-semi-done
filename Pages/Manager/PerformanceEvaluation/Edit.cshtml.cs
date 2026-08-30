@@ -119,6 +119,16 @@ namespace TM_PE.Pages.Manager.PerformanceEvaluation
             evaluation.OverallScore = overallScore;
             evaluation.OverallRating = EvaluationScoring.RatingFor(overallScore);
 
+            if (status == EvaluationStatus.Finalized)
+            {
+                NotificationHelper.Notify(_context, evaluation.EmployeeID,
+                    $"Your performance evaluation for {evaluation.EvaluationPeriod} has been finalized.",
+                    evaluation.Employee!.RoleType == RoleType.FieldTechnician
+                        ? "/FieldTechnician/PerformanceRecords"
+                        : "/OfficeStaff/PerformanceRecords",
+                    "bi-clipboard-data");
+            }
+
             await _context.SaveChangesAsync();
             return RedirectToPage("Details", new { id = evaluation.EvaluationID });
         }

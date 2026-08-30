@@ -205,6 +205,11 @@ namespace TM_PE.Pages.OfficeStaff
                 activity.Status = "Submitted";
             }
 
+            NotificationHelper.Notify(_context, task.AssignedByEmployeeID,
+                $"A file was submitted for activity \"{activity.ActivityName}\" on task {task.TaskNumber}.",
+                $"/Manager/OfficeTask/Details/{officeTaskId}",
+                "bi-paperclip");
+
             await _context.SaveChangesAsync();
             await RecalculateTaskAsync(officeTaskId);
 

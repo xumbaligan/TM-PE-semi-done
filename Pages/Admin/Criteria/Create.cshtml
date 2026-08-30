@@ -5,43 +5,73 @@
     Layout = "_Admin";
 }
 
-<h2 class="mb-4">New Criteria</h2>
-<div class="card p-4" style="max-width:700px">
-    <form method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-        <div class="mb-3">
-            <label class="form-label">Criteria Name</label>
-            <input class="form-control" asp-for="Item.CriteriaName" />
-            <span asp-validation-for="Item.CriteriaName" class="text-danger"></span>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea class="form-control" asp-for="Item.Description"></textarea>
-        </div>
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="form-label">Role Type</label>
-                <select class="form-select" asp-for="Item.RoleType" id="roleTypeSelect">
-                    <option value="OfficeStaff">Office Staff</option>
-                    <option value="FieldTechnician">Field Technician</option>
-                </select>
+<div class="tf-form-page">
+    <div class="tf-form-card">
+
+        <div class="tf-form-heading">New Criteria</div>
+
+        <form method="post">
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-8">
+                    <label class="tf-label" asp-for="Item.CriteriaName">
+                        Criteria Name <span class="tf-required">*</span>
+                    </label>
+                    <input class="form-control" asp-for="Item.CriteriaName" placeholder="e.g. Communication skills" />
+                    <span asp-validation-for="Item.CriteriaName" class="text-danger small"></span>
+                </div>
+
+                @* Sits beside Criteria Name in the mockup rather than at the foot of the form. *@
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2 pb-2">
+                        <input class="form-check-input tf-check-input" type="checkbox" asp-for="Item.IsActive" />
+                        <label class="tf-check-label mb-0" asp-for="Item.IsActive">Active</label>
+                    </div>
+                </div>
             </div>
-            @*  <div class="col-md-6"><label class="form-label">Max Score (1-10)</label>
-            <input class="form-control" type="number" min="1" max="10" asp-for="Item.MaxScore" /></div> *@
-            <div class="col-md-6">
-                <label class="form-label">Weight (%)</label>
-                <input class="form-control" type="number" step="0.5" min="0.5" max="100" asp-for="Item.Weight" />
-                <span asp-validation-for="Item.Weight" class="text-danger"></span>
-                <div class="form-text fw-semibold" id="weightAvailableText"></div>
+
+            <div class="mb-3">
+                <label class="tf-label" asp-for="Item.Description">Description</label>
+                <textarea class="form-control" asp-for="Item.Description" rows="2"
+                          placeholder="Enter a description"></textarea>
             </div>
-        </div>
-        <div class="form-check mt-3 mb-3">
-            <input class="form-check-input" type="checkbox" asp-for="Item.IsActive" />
-            <label class="form-check-label">Active</label>
-        </div>
-        <button class="btn btn-primary">Save</button>
-        <a class="btn btn-secondary" asp-page="Index">Cancel</a>
-    </form>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="tf-label" asp-for="Item.RoleType">
+                        Role Type <span class="tf-required">*</span>
+                    </label>
+                    <select class="form-select" asp-for="Item.RoleType" id="roleTypeSelect">
+                        <option value="OfficeStaff">Office Staff</option>
+                        <option value="FieldTechnician">Field Technician</option>
+                    </select>
+                </div>
+
+                @*  <div class="col-md-6"><label class="form-label">Max Score (1-10)</label>
+                <input class="form-control" type="number" min="1" max="10" asp-for="Item.MaxScore" /></div> *@
+
+                <div class="col-md-6">
+                    <label class="tf-label" asp-for="Item.Weight">Weight (%)</label>
+                    <input class="form-control" type="number" step="0.5" min="0.5" max="100"
+                           asp-for="Item.Weight" placeholder="0" />
+                    <span asp-validation-for="Item.Weight" class="text-danger small"></span>
+
+                    @* Bootstrap's colour utilities carry !important, so the
+                       text-danger / text-muted toggle in the script below still
+                       wins over .tf-form-hint's grey. *@
+                    <div class="tf-form-hint fw-semibold" id="weightAvailableText"></div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a class="tf-btn-cancel" asp-page="Index">Cancel</a>
+                <button type="submit" class="tf-btn-save">Save Criteria</button>
+            </div>
+
+        </form>
+    </div>
 </div>
 
 @section Scripts {

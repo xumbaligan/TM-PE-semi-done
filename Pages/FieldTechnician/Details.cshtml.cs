@@ -536,6 +536,11 @@ namespace TM_PE.Pages.FieldTechnician
 
                 ticket.Status = JobTicketStatuses.RescheduleRequest;
                 ticket.Remarks = null;
+
+                NotificationHelper.Notify(_context, ticket.AssignedByEmployeeID,
+                    $"A reschedule was requested for job ticket {ticket.TicketNumber}.",
+                    $"/Manager/JobTickets/Details/{ticket.JobTicketID}",
+                    "bi-calendar-event");
             }
             else
             {
@@ -549,6 +554,11 @@ namespace TM_PE.Pages.FieldTechnician
                 ticket.Remarks = string.IsNullOrWhiteSpace(remarks)
                  ? null
                : remarks.Trim();
+
+                NotificationHelper.Notify(_context, ticket.AssignedByEmployeeID,
+                    $"Job ticket {ticket.TicketNumber} was updated to {status}.",
+                    $"/Manager/JobTickets/Details/{ticket.JobTicketID}",
+                    "bi-tools");
             }
 
             await _context.SaveChangesAsync();

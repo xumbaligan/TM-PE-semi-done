@@ -214,6 +214,11 @@ namespace TM_PE.Pages.Manager.JobTickets
                     IsLeader = employeeId == LeaderEmployeeId,
                     AssignedDate = DateTime.Now
                 });
+
+                NotificationHelper.Notify(_context, employeeId,
+                    $"You've been assigned a new {JobTicket.JobType} job: {JobTicket.TicketNumber}.",
+                    $"/FieldTechnician/Details/{JobTicket.JobTicketID}",
+                    "bi-briefcase");
             }
 
             await _context.SaveChangesAsync();

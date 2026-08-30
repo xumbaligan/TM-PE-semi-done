@@ -116,6 +116,11 @@ namespace TM_PE.Pages.Manager.OfficeTask
                     EmployeeID = employeeId,
                     AssignedDate = DateTime.Now
                 });
+
+                NotificationHelper.Notify(_context, employeeId,
+                    $"You've been assigned a new task: {OfficeTask.TaskName}.",
+                    $"/OfficeStaff/Details/{OfficeTask.OfficeTaskID}",
+                    "bi-card-checklist");
             }
 
             // Activities are no longer pre-assigned to a specific employee here.

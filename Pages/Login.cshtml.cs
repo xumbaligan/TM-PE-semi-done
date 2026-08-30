@@ -22,6 +22,12 @@ namespace TM_PE.Pages
 
         public string? ErrorMessage { get; set; }
 
+        // Set by ResetPasswordModel after a successful Forgot Password ->
+        // Verify Code -> Reset Password round trip, so the person lands back
+        // here knowing their new password actually took.
+        [TempData]
+        public string? SuccessMessage { get; set; }
+
         public void OnGet()
         {
             // Logging in again always starts clean.
@@ -69,7 +75,7 @@ namespace TM_PE.Pages
 
             return employee.RoleType switch
             {
-                RoleType.Admin => RedirectToPage("/Admin/Employees/Index"),
+                RoleType.Admin => RedirectToPage("/Index"),
                 RoleType.Manager => RedirectToPage("/Index"),
                 RoleType.FieldTechnician => RedirectToPage("/FieldTechnician/Index"),
                 RoleType.OfficeStaff => RedirectToPage("/OfficeStaff/Index"),
