@@ -5,25 +5,33 @@
     Layout = "_Layout";
 }
 <div class="mb-3">
-    <h2 class="mb-1"><i class="bi bi-card-checklist"></i> Task Assignments</h2>
-    <p class="text-muted mb-0">Office task assignments and progress tracking.</p>
+    <h1 class="tf-page-title mb-1">Task Assignments</h1>
+    <p class="tf-page-sub mb-0">Office task assignments and progress tracking.</p>
 </div>
 <hr class="page-divider" />
 
 <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <div class="input-group shadow-sm flex-grow-1" style="max-width:480px;">
-        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
-               value="@Model.Search" placeholder="Search by employee, task #, or task name..." />
+    <div class="search-input-group flex-grow-1" style="max-width:480px;">
+        <i class="bi bi-search"></i>
+        <input name="search" id="liveSearch" value="@Model.Search" placeholder="Search by employee, task #, or task name..." />
     </div>
-    <select class="form-select" name="status" id="liveStatus" style="max-width:220px;">
-        <option value="">All Statuses</option>
-        <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
-        <option value="In Progress" selected="@(Model.StatusFilter == "In Progress")">In Progress</option>
-        <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
-        <option value="Completed Late" selected="@(Model.StatusFilter == "Completed Late")">Completed Late</option>
-        <option value="Overdue" selected="@(Model.StatusFilter == "Overdue")">Overdue</option>
-    </select>
+    @{
+        var statusOptions = new[] { "Pending", "In Progress", "Completed", "Completed Late", "Overdue" };
+    }
+    <div class="dropdown" style="max-width:220px;">
+        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="statusDropdownBtn"
+                data-bs-toggle="dropdown" aria-expanded="false">
+            @(string.IsNullOrEmpty(Model.StatusFilter) ? "All Statuses" : Model.StatusFilter)
+        </button>
+        <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="statusDropdownBtn">
+            <li><a class="dropdown-item @(string.IsNullOrEmpty(Model.StatusFilter) ? "active" : "")" href="#" data-value="">All Statuses</a></li>
+            @foreach (var s in statusOptions)
+            {
+                <li><a class="dropdown-item @(Model.StatusFilter == s ? "active" : "")" href="#" data-value="@s">@s</a></li>
+            }
+        </ul>
+    </div>
+    <input type="hidden" name="status" id="liveStatus" value="@Model.StatusFilter" />
     <a asp-page="Create" class="btn btn-navy ms-auto">
         <i class="bi bi-plus-lg"></i> Create New
     </a>
@@ -35,31 +43,31 @@
 
 @if (Model.ActivityFilter == "pending-review")
 {
-    <div class="alert alert-info d-flex justify-content-between align-items-center py-2">
+    <div class="alert alert-purple d-flex justify-content-between align-items-center py-2">
         <span>Showing tasks with at least one activity awaiting review.</span>
         <a asp-page="./Index" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" class="small">Clear filter</a>
     </div>
 }
 else if (Model.ActivityFilter == "rejected")
 {
-    <div class="alert alert-warning d-flex justify-content-between align-items-center py-2">
+    <div class="alert alert-purple d-flex justify-content-between align-items-center py-2">
         <span>Showing tasks with at least one rejected activity awaiting resubmission.</span>
         <a asp-page="./Index" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" class="small">Clear filter</a>
     </div>
 }
 
 <div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table mb-0">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
         <thead>
             <tr>
-                <th>Task #</th>
-                <th>Task</th>
-                <th>Assignees</th>
-                <th>Activities</th>
-                <th>Status</th>
-                <th style="min-width:160px;">Progress</th>
-                <th>Due</th>
-                <th class="text-end">Actions</th>
+                <th style="width:8%">Task #</th>
+                <th style="width:20%">Task</th>
+                <th style="width:15%">Assignees</th>
+                <th style="width:9%">Activities</th>
+                <th style="width:11%">Status</th>
+                <th style="width:17%">Progress</th>
+                <th style="width:9%">Due</th>
+                <th class="text-end" style="width:11%">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -108,7 +116,7 @@ else if (Model.ActivityFilter == "rejected")
                     </td>
 
                     <td>
-                        <span class="text-primary fw-semibold">
+                        <span class="fw-semibold" style="color:#020236;">
                             @(item.Activities?.Count(a => a.Status == "Approved") ?? 0)/@(item.Activities?.Count ?? 0)
                         </span>
                     </td>
@@ -293,13 +301,13 @@ else if (Model.ActivityFilter == "rejected")
                         @if (item.Activities != null && item.Activities.Any())
                         {
                             <div class="table-responsive">
-                                <table class="table vm-table align-middle">
+                                <table class="table vm-table wlm-table-fixed align-middle">
                                     <thead>
                                         <tr>
-                                            <th>Activity</th>
-                                            <th>Status</th>
-                                            <th>Feedback</th>
-                                            <th>Created</th>
+                                            <th style="width:22%">Activity</th>
+                                            <th style="width:18%">Status</th>
+                                            <th style="width:40%">Feedback</th>
+                                            <th style="width:20%">Created</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -365,14 +373,15 @@ else if (Model.ActivityFilter == "rejected")
 }
 
 @section Scripts {
+    <script src="~/js/status-dropdown.js"></script>
     <script>
         const searchInput = document.getElementById('liveSearch');
-        const statusSelect = document.getElementById('liveStatus');
+        const statusInput = document.getElementById('liveStatus');
         const rows = document.querySelectorAll('tbody tr[data-taskid]');
 
         function filterTable() {
             const searchVal = searchInput.value.toLowerCase().trim();
-            const statusVal = statusSelect.value.toLowerCase().trim();
+            const statusVal = statusInput.value.toLowerCase().trim();
             let visibleCount = 0;
 
             rows.forEach(row => {
@@ -396,10 +405,16 @@ else if (Model.ActivityFilter == "rejected")
             if (emptyRow) {
                 emptyRow.style.display = visibleCount === 0 ? '' : 'none';
             }
+
+            // Re-paginate against whatever the filter just left visible, so
+            // Prev/Next and the page count match the filtered rows instead of
+            // the full unfiltered table (and the nav disappears entirely once
+            // the filtered set is small enough to fit on one page).
+            if (window.TFPagination) window.TFPagination.init(document.querySelector('table.wlm-table'));
         }
 
         searchInput.addEventListener('input', filterTable);
-        statusSelect.addEventListener('change', filterTable);
+        wireStatusDropdown('statusDropdownBtn', statusInput, { onChange: filterTable });
 
         // Apply immediately on load too, so a link that arrives with
         // ?status=... (e.g. from the Dashboard) actually filters the table

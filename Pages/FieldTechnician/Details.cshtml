@@ -240,35 +240,35 @@
             <input type="hidden" name="jobTicketId" value="@Model.JobTicket.JobTicketID" />
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="tf-label">Status</label>
-                    <select id="statusSelect" name="status" class="form-select">
-                        @foreach (var opt in TM_PE.Pages.FieldTechnician.DetailsModel.StatusOptions)
-                        {
-                            @* Once work has left Pending it can never go back, so Pending is
-                               only offered while it's still the current status — an Overdue
-                               ticket is just an expired Pending one, so it counts too. Reschedule
-                               Request can be selected by the team leader at any time — doing so
-                               locks the ticket from further field-technician edits until the
-                               manager approves/acts on the request. *@
-                            if (opt == "Pending" && !Model.JobTicket.IsPendingOrOverdue)
+                    <label class="tf-label" for="statusDropdownBtn">Status</label>
+                    <div class="dropdown">
+                        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="statusDropdownBtn"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            @Model.PendingStatus
+                        </button>
+                        <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="statusDropdownBtn">
+                            @foreach (var opt in TM_PE.Pages.FieldTechnician.DetailsModel.StatusOptions)
                             {
-                                continue;
-                            }
+                                @* Once work has left Pending it can never go back, so Pending is
+                                   only offered while it's still the current status — an Overdue
+                                   ticket is just an expired Pending one, so it counts too. Reschedule
+                                   Request can be selected by the team leader at any time — doing so
+                                   locks the ticket from further field-technician edits until the
+                                   manager approves/acts on the request. *@
+                                if (opt == "Pending" && !Model.JobTicket.IsPendingOrOverdue)
+                                {
+                                    continue;
+                                }
 
-                            @* Prefilled from PendingStatus (an unsaved selection carried
-                               through a photo-upload reload) rather than the saved
-                               JobTicket.Status, so an in-progress edit isn't lost — but
-                               nothing here is written to the database until Save. *@
-                            if (opt == Model.PendingStatus)
-                            {
-                                <option value="@opt" selected>@opt</option>
+                                @* Prefilled from PendingStatus (an unsaved selection carried
+                                   through a photo-upload reload) rather than the saved
+                                   JobTicket.Status, so an in-progress edit isn't lost — but
+                                   nothing here is written to the database until Save. *@
+                                <li><a class="dropdown-item @(opt == Model.PendingStatus ? "active" : "")" href="#" data-value="@opt">@opt</a></li>
                             }
-                            else
-                            {
-                                <option value="@opt">@opt</option>
-                            }
-                        }
-                    </select>
+                        </ul>
+                    </div>
+                    <input type="hidden" id="statusSelect" name="status" value="@Model.PendingStatus" />
                     <div id="fileRequirementWarning"
                          class="alert alert-warning small mt-2 d-none">
                         <i class="bi bi-exclamation-triangle me-1"></i>
@@ -362,14 +362,14 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
         </p>
 
         <div class="table-responsive">
-            <table class="table vm-table align-middle">
+            <table class="table vm-table wlm-table-fixed align-middle">
                 <thead>
                     <tr>
-                        <th>Status</th>
-                        <th>Actor</th>
-                        <th>Remarks</th>
-                        <th>Date Changed</th>
-                        <th class="text-end">Action</th>
+                        <th style="width:22%">Status</th>
+                        <th style="width:23%">Actor</th>
+                        <th style="width:23%">Remarks</th>
+                        <th style="width:22%">Date Changed</th>
+                        <th class="text-end" style="width:10%">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -605,10 +605,18 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
     }
 </div>
 
+<script src="~/js/status-dropdown.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
 
         const statusSelect = document.getElementById("statusSelect");
+        // The dropdown replaces a native <select>; re-dispatch a "change" event
+        // on the hidden input so every listener below keeps working unmodified.
+        if (statusSelect) {
+            wireStatusDropdown("statusDropdownBtn", statusSelect, {
+                onChange: function () { statusSelect.dispatchEvent(new Event("change")); }
+            });
+        }
         const remarksInput = document.getElementById("remarksInput");
         const submittedFilesSection = document.getElementById("submittedFilesSection");
         const submissionFileInput = document.getElementById("submissionFileInput");

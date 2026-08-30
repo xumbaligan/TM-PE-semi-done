@@ -1,17 +1,37 @@
+@using Microsoft.EntityFrameworkCore
+@using TM_PE.Data
+@using TM_PE.Model
+@inject AppDbContext NotifDbContext
 @*
     Persistent notification bell, included in every layout's topbar (upper
-    right corner). Its badge count and dropdown list are populated entirely
-    by wwwroot/js/notifications.js polling Pages/Notifications/Index.cshtml's
-    OnGetPollAsync handler - opening the dropdown, reading a notification, or
-    picking up a new one never triggers a full page reload; only actually
-    clicking through to a notification's own link does.
+    right corner). Rendered with the badge count and dropdown list already
+    filled in from the database (below) so there's nothing empty to flash on
+    a full page navigation while the first poll is still in flight; from then
+    on, wwwroot/js/notifications.js keeps both current by polling
+    Pages/Notifications/Index.cshtml's OnGetPollAsync handler - opening the
+    dropdown, reading a notification, or picking up a new one never triggers
+    a full page reload; only actually clicking through to a notification's
+    own link does.
 *@
+@{
+    var notifEmployeeId = Context.Session.GetInt32("AuthEmployeeId");
+    var initialNotifItems = notifEmployeeId == null
+        ? new List<Notification>()
+        : await NotifDbContext.Notifications
+            .Where(n => n.EmployeeID == notifEmployeeId.Value)
+            .OrderByDescending(n => n.DateCreated)
+            .Take(8)
+            .ToListAsync();
+    var initialUnreadCount = notifEmployeeId == null
+        ? 0
+        : await NotifDbContext.Notifications.CountAsync(n => n.EmployeeID == notifEmployeeId.Value && !n.IsRead);
+}
 <form id="notifAntiForgeryForm" class="d-none">@Html.AntiForgeryToken()</form>
 
 <div class="notif-bell-wrap dropdown">
     <button type="button" class="notif-bell-btn" id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
         <i class="bi bi-bell"></i>
-        <span class="notif-badge d-none" id="notifBadge">0</span>
+        <span class="notif-badge @(initialUnreadCount > 0 ? "" : "d-none")" id="notifBadge">@(initialUnreadCount > 99 ? "99+" : initialUnreadCount.ToString())</span>
     </button>
     <div class="dropdown-menu dropdown-menu-end notif-dropdown" aria-labelledby="notifBellBtn">
         <div class="notif-dropdown-header">
@@ -19,7 +39,23 @@
             <button type="button" class="notif-mark-all-btn" id="notifMarkAllBtn">Mark all read</button>
         </div>
         <div class="notif-dropdown-list" id="notifDropdownList">
-            <div class="notif-empty">No notifications yet.</div>
+            @if (!initialNotifItems.Any())
+            {
+                <div class="notif-empty">No notifications yet.</div>
+            }
+            else
+            {
+                @foreach (var n in initialNotifItems)
+                {
+                    <a href="@(string.IsNullOrEmpty(n.Url) ? "#" : n.Url)" class="notif-dropdown-item @(n.IsRead ? "" : "notif-dropdown-item-unread")" data-notif-id="@n.NotificationID">
+                        <div class="notif-dropdown-item-icon"><i class="bi @n.Icon"></i></div>
+                        <div class="overflow-hidden">
+                            <div class="notif-dropdown-item-message">@n.Message</div>
+                            <div class="notif-dropdown-item-date">@n.DateCreated.ToString("MMM d, h:mm tt")</div>
+                        </div>
+                    </a>
+                }
+            }
         </div>
         <a href="/Notifications" class="notif-dropdown-footer">View all</a>
     </div>

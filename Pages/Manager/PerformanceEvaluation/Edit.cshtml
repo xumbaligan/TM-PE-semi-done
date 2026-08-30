@@ -16,7 +16,7 @@
     <input type="hidden" asp-for="Evaluation.EvaluationID" />
 
     <div class="row g-4">
-        <div class="col-lg-8">
+        <div class="col-lg-8 order-2 order-lg-1">
 
             <div class="tf-section mb-4">
                 <div class="tf-section-title mb-3">Evaluation Details</div>
@@ -61,10 +61,37 @@
                 <div class="tf-form-hint">Covers both the evaluation and the appraisal decision.</div>
             </div>
 
+            @* Mobile only: score preview and Save/Finalize sit at the bottom of
+               the form itself here, below lg the desktop copy in the sidebar
+               (see below) takes over instead - only the stat tiles stay
+               pinned up top on mobile as a running reference while rating. *@
+            <div class="d-lg-none">
+                <div class="eval-score-card mb-3">
+                    <div class="eval-score-label">Overall Score (preview)</div>
+                    <div class="eval-score-value js-overall-score-preview">@Model.Evaluation.OverallScore.ToString("0.#")</div>
+                    <div class="eval-score-out-of">out of 4</div>
+                    <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                        <span class="js-overall-stars-preview"></span>
+                        <span class="vm-status vm-status-pending js-overall-rating-preview">@Model.Evaluation.OverallRating</span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft" asp-route-id="@Model.Evaluation.EvaluationID">
+                        Save as Draft
+                    </button>
+                    <button type="submit" class="tf-btn-save" asp-page-handler="Finalize" asp-route-id="@Model.Evaluation.EvaluationID"
+                            onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
+                        Finalize Evaluation
+                    </button>
+                </div>
+                <div class="tf-form-hint text-center mt-2">A draft can still be edited later; finalizing locks it.</div>
+            </div>
+
         </div>
 
-        <div class="col-lg-4">
-            <div class="sticky-top" style="top:1rem">
+        <div class="col-lg-4 order-1 order-lg-2">
+            <div class="sticky-top eval-sidebar-sticky">
 
                 @* ===================== Employee performance snapshot ===================== *@
                 <div class="row g-3 mb-3">
@@ -133,26 +160,32 @@
                     }
                 </div>
 
-                <div class="eval-score-card mb-3">
-                    <div class="eval-score-label">Overall Score (preview)</div>
-                    <div class="eval-score-value" id="overallScorePreview">@Model.Evaluation.OverallScore.ToString("0.#")</div>
-                    <div class="eval-score-out-of">out of 4</div>
-                    <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                        <span id="overallStarsPreview"></span>
-                        <span class="vm-status vm-status-pending" id="overallRatingPreview">@Model.Evaluation.OverallRating</span>
+                @* Desktop (lg+) only: score preview and Save/Finalize grouped
+                   with the tiles here, sticky together as one sidebar - the
+                   mobile copy at the bottom of the form (see above) takes
+                   over below lg instead. *@
+                <div class="d-none d-lg-block">
+                    <div class="eval-score-card mb-3">
+                        <div class="eval-score-label">Overall Score (preview)</div>
+                        <div class="eval-score-value js-overall-score-preview">@Model.Evaluation.OverallScore.ToString("0.#")</div>
+                        <div class="eval-score-out-of">out of 4</div>
+                        <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                            <span class="js-overall-stars-preview"></span>
+                            <span class="vm-status vm-status-pending js-overall-rating-preview">@Model.Evaluation.OverallRating</span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="d-grid gap-2">
-                    <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft" asp-route-id="@Model.Evaluation.EvaluationID">
-                        Save as Draft
-                    </button>
-                    <button type="submit" class="tf-btn-save" asp-page-handler="Finalize" asp-route-id="@Model.Evaluation.EvaluationID"
-                            onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
-                        Finalize Evaluation
-                    </button>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft" asp-route-id="@Model.Evaluation.EvaluationID">
+                            Save as Draft
+                        </button>
+                        <button type="submit" class="tf-btn-save" asp-page-handler="Finalize" asp-route-id="@Model.Evaluation.EvaluationID"
+                                onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
+                            Finalize Evaluation
+                        </button>
+                    </div>
+                    <div class="tf-form-hint text-center mt-2">A draft can still be edited later; finalizing locks it.</div>
                 </div>
-                <div class="tf-form-hint text-center mt-2">A draft can still be edited later; finalizing locks it.</div>
 
             </div>
         </div>
@@ -163,9 +196,13 @@
     <script src="~/js/star-rating.js" asp-append-version="true"></script>
     <script>
         (function () {
-            const scorePreview = document.getElementById('overallScorePreview');
-            const ratingPreview = document.getElementById('overallRatingPreview');
-            const starsPreview = document.getElementById('overallStarsPreview');
+            // Two copies of these exist (one in the sidebar for desktop, one
+            // at the bottom of the form for mobile - see the Razor markup
+            // above), only one of which is visible at a given breakpoint, so
+            // both need updating together rather than picked up by id.
+            const scorePreviews = document.querySelectorAll('.js-overall-score-preview');
+            const ratingPreviews = document.querySelectorAll('.js-overall-rating-preview');
+            const starsPreviews = document.querySelectorAll('.js-overall-stars-preview');
 
             const bands = [[3.6, 'Excellent'], [3.2, 'Very Good'], [2.8, 'Good'], [2.4, 'Needs Improvement'], [0, 'Poor']];
 
@@ -181,9 +218,9 @@
                     const stars = window.StarRating.snap(input.value || '0');
                     total += weight / 100 * stars;
                 });
-                scorePreview.textContent = total.toFixed(1);
-                ratingPreview.textContent = ratingFor(total);
-                starsPreview.innerHTML = window.StarRating.render(total);
+                scorePreviews.forEach(el => { el.textContent = total.toFixed(1); });
+                ratingPreviews.forEach(el => { el.textContent = ratingFor(total); });
+                starsPreviews.forEach(el => { el.innerHTML = window.StarRating.render(total); });
             }
 
             document.addEventListener('change', function (e) {

@@ -6,16 +6,15 @@
 }
 
 <div class="mb-3">
-    <h2 class="mb-1"><i class="bi bi-clipboard-data"></i> Performance Evaluation</h2>
-    <p class="text-muted mb-0">Employee evaluations and performance ratings.</p>
+    <h1 class="tf-page-title mb-1">Performance Evaluation</h1>
+    <p class="tf-page-sub mb-0">Employee evaluations and performance ratings.</p>
 </div>
 <hr class="page-divider" />
 
 <form method="get" class="d-flex flex-wrap gap-2 mb-3 align-items-center" id="evalFilters">
-    <div class="input-group shadow-sm flex-grow-1" style="max-width:400px;">
-        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input class="form-control border-start-0 ps-0" name="Search" id="liveSearch" value="@Model.Search"
-               placeholder="Search by employee or evaluator..." />
+    <div class="search-input-group flex-grow-1" style="max-width:400px;">
+        <i class="bi bi-search"></i>
+        <input name="Search" id="liveSearch" value="@Model.Search" placeholder="Search by employee or evaluator..." />
     </div>
     <input type="hidden" name="StatusFilter" id="liveStatus" value="@Model.StatusFilter" />
     <div class="role-filter" id="statusFilter">
@@ -28,17 +27,17 @@
 
 <div class="wlm-card">
     <div class="table-responsive">
-        <table class="table table-hover wlm-table mb-0 align-middle">
+        <table class="table table-hover wlm-table wlm-table-fixed mb-0 align-middle">
             <thead>
                 <tr>
-                    <th>Employee</th>
-                    <th>Period</th>
-                    <th>Evaluator</th>
-                    <th>Evaluation Date</th>
-                    <th>Rating</th>
-                    <th>Score</th>
-                    <th>Status</th>
-                    <th class="text-end">Action</th>
+                    <th style="width:15%">Employee</th>
+                    <th style="width:12%">Period</th>
+                    <th style="width:13%">Evaluator</th>
+                    <th style="width:14%">Evaluation Date</th>
+                    <th style="width:14%">Rating</th>
+                    <th style="width:10%">Score</th>
+                    <th style="width:12%">Status</th>
+                    <th class="text-end" style="width:10%">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -170,6 +169,12 @@
                 if (emptyRow) {
                     emptyRow.style.display = visibleCount === 0 ? '' : 'none';
                 }
+
+                // Re-paginate against whatever the filter just left visible, so
+                // Prev/Next and the page count match the filtered rows instead
+                // of the full unfiltered table (and the nav disappears
+                // entirely once the filtered set is small enough for one page).
+                if (window.TFPagination) window.TFPagination.init(document.querySelector('table.wlm-table'));
             }
 
             searchInput.addEventListener('input', filterTable);

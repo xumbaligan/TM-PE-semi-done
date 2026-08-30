@@ -1,7 +1,9 @@
-// Drives the notification bell in the topbar (see Pages/Shared/_NotificationBell.cshtml).
-// Everything here is AJAX against Pages/Notifications/Index.cshtml's handlers -
-// the badge count and dropdown list update on a timer and right after marking
-// something read, without ever reloading or navigating the page.
+// Drives the notification bell in the topbar (see Pages/Shared/_NotificationBell.cshtml,
+// which server-renders the current badge count/list so there's nothing empty
+// to flash on a full page navigation). From there, everything here is AJAX
+// against Pages/Notifications/Index.cshtml's handlers - the badge count and
+// dropdown list update on a timer and right after marking something read,
+// without ever reloading or navigating the page.
 (function () {
     const POLL_INTERVAL_MS = 20000;
 
@@ -26,6 +28,15 @@
         }[c]));
     }
 
+    function bindItemClicks() {
+        list.querySelectorAll('.notif-dropdown-item').forEach(function (item) {
+            item.addEventListener('click', function () {
+                const id = item.dataset.notifId;
+                if (id) post('MarkRead', { id: id });
+            });
+        });
+    }
+
     function render(items) {
         if (!items.length) {
             list.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
@@ -43,12 +54,7 @@
             </a>`;
         }).join('');
 
-        list.querySelectorAll('.notif-dropdown-item').forEach(function (item) {
-            item.addEventListener('click', function () {
-                const id = item.dataset.notifId;
-                if (id) post('MarkRead', { id: id });
-            });
-        });
+        bindItemClicks();
     }
 
     async function poll() {
@@ -78,6 +84,11 @@
         });
     }
 
+    // The bell is server-rendered with the current badge count/list already
+    // filled in (see _NotificationBell.cshtml), so there's nothing empty to
+    // flash while this first poll is in flight - just wire up clicks on
+    // what's already on the page, then quietly keep it fresh from here.
+    bindItemClicks();
     poll();
     setInterval(poll, POLL_INTERVAL_MS);
 })();

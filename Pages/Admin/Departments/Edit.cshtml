@@ -37,15 +37,31 @@
             </div>
 
             <div class="mb-3">
-                <label class="tf-label" asp-for="Department.RoleType">
+                <label class="tf-label" for="roleTypeDropdownBtn">
                     Role Type <span class="tf-required">*</span>
                 </label>
-                <select class="form-select" asp-for="Department.RoleType">
-                    <option value="OfficeStaff">Office Staff</option>
-                    <option value="FieldTechnician">Field Technician</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Admin">Admin</option>
-                </select>
+                @{
+                    var roleTypeOptions = new[] {
+                        ("OfficeStaff", "Office Staff"),
+                        ("FieldTechnician", "Field Technician"),
+                        ("Manager", "Manager"),
+                        ("Admin", "Admin")
+                    };
+                    var currentRoleLabel = roleTypeOptions.FirstOrDefault(r => r.Item1 == Model.Department.RoleType.ToString()).Item2 ?? "Select role type";
+                }
+                <div class="dropdown">
+                    <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="roleTypeDropdownBtn"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        @currentRoleLabel
+                    </button>
+                    <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="roleTypeDropdownBtn">
+                        @foreach (var r in roleTypeOptions)
+                        {
+                            <li><a class="dropdown-item @(Model.Department.RoleType.ToString() == r.Item1 ? "active" : "")" href="#" data-value="@r.Item1">@r.Item2</a></li>
+                        }
+                    </ul>
+                </div>
+                <input type="hidden" asp-for="Department.RoleType" id="roleTypeSelect" />
                 <span class="text-danger small" asp-validation-for="Department.RoleType"></span>
             </div>
 
@@ -57,3 +73,10 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/status-dropdown.js"></script>
+    <script>
+        wireStatusDropdown('roleTypeDropdownBtn', document.getElementById('roleTypeSelect'));
+    </script>
+}

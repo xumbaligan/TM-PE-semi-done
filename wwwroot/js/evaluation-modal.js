@@ -115,6 +115,13 @@
                         <td class="small">${r.Feedback ? escapeHtml(r.Feedback) : '<span class="text-muted">-</span>'}</td>
                     </tr>`).join('');
             }
+
+            // This modal (and its table) is shared and reused across every
+            // "View" button on the page, so it already existed - empty - for
+            // table-pagination.js's own page-load pass to find. Rebuilding it
+            // here both paginates a long criteria list and clears any leftover
+            // Prev/Next nav from a previous, longer evaluation shown in it.
+            if (window.TFPagination) window.TFPagination.init(body.closest('table'));
         }
 
         const feedback = document.getElementById('evalFeedback');

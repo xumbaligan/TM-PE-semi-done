@@ -15,16 +15,15 @@
 }
 
 <div class="mb-3">
-    <h2 class="mb-1">Departments</h2>
-    <p class="text-muted mb-0">Organizational units across Pakonek Solutions.</p>
+    <h1 class="tf-page-title mb-1">Departments</h1>
+    <p class="tf-page-sub mb-0">Organizational units across Pakonek Solutions.</p>
 </div>
 <hr class="page-divider" />
 
 <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <div class="input-group shadow-sm flex-grow-1" style="max-width:480px;">
-        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
-               value="@Model.Search" placeholder="Search departments..." />
+    <div class="search-input-group flex-grow-1" style="max-width:480px;">
+        <i class="bi bi-search"></i>
+        <input name="search" id="liveSearch" value="@Model.Search" placeholder="Search departments..." />
     </div>
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Department</a>
 </form>
@@ -139,13 +138,13 @@
 
             list.innerHTML = `
                 <div class="table-responsive wlm-card">
-                <table class="table align-middle table-hover wlm-table mb-0">
+                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
+                            <th style="width:32%">Name</th>
+                            <th style="width:32%">Email</th>
+                            <th style="width:18%">Role</th>
+                            <th style="width:18%">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -172,6 +171,12 @@
                     </tbody>
                 </table>
                 </div>`;
+
+            // This table is rebuilt from scratch every time the modal opens,
+            // so it never existed for table-pagination.js's own page-load
+            // pass to find - without this, a department with more than 6
+            // employees would just dump them all into the modal unpaginated.
+            if (window.TFPagination) window.TFPagination.init(list.querySelector('table'));
         }
     </script>
 }

@@ -38,6 +38,12 @@ namespace TM_PE.Pages.Manager.WorkLoadMonitoring
                 .Include(t => t.Assignments).ThenInclude(a => a.Employee)
                 .ToListAsync();
 
+            // Mirrors the office task refresh above, for the same reason: without
+            // it, a ticket's Status can still read Pending/In Progress here even
+            // though it's actually overdue, which undercounted every technician's
+            // workload below (see BuildTechnicianWorkloadSummary).
+            await JobTicketOverdueChecker.RefreshAsync(_db, jobTickets);
+
             var technicians = await _db.Employees
                 .Where(e => e.IsActive && e.RoleType == RoleType.FieldTechnician)
                 .Include(e => e.Department)
@@ -89,8 +95,13 @@ namespace TM_PE.Pages.Manager.WorkLoadMonitoring
             TechnicianTickets = technicians.Select(tech =>
             {
                 var assigned = tickets.Where(t => t.Assignments.Any(a => a.EmployeeID == tech.EmployeeId)).ToList();
+                // Overdue counts as active here too - it's still unresolved work,
+                // just late - matching BuildStaffTasks below (which already
+                // includes "Overdue" for Office Staff) and the Employee Workload
+                // Summary's own active-ticket count, so the same technician's
+                // "active" number doesn't disagree between the two views.
                 var active = assigned
-                    .Where(t => t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress)
+                    .Where(t => t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress or JobTicketStatuses.Overdue)
                     .OrderBy(t => t.ServiceDate)
                     .ToList();
 
@@ -199,15 +210,12 @@ namespace TM_PE.Pages.Manager.WorkLoadMonitoring
         // since JobTicket has no separate due date field).
         private void BuildTechnicianWorkloadSummary(List<JobTicket> tickets, List<Employee> technicians)
         {
-            var today = DateTime.Now.Date;
-
             TechnicianWorkload = technicians.Select(tech =>
             {
                 var assignedTickets = tickets.Where(t => t.Assignments.Any(a => a.EmployeeID == tech.EmployeeId)).ToList();
-                var activeTickets = assignedTickets.Count(t => t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress);
-                var overdueTickets = assignedTickets.Count(t =>
-                    t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress
-                    && t.ServiceDate.Date < today);
+                var activeTickets = assignedTickets.Count(t =>
+                    t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress or JobTicketStatuses.Overdue);
+                var overdueTickets = assignedTickets.Count(t => t.Status == JobTicketStatuses.Overdue);
                 var completedTickets = assignedTickets.Count(t => t.Status == JobTicketStatuses.Completed);
 
                 // Simple, transparent weighting consistent with the Office Staff

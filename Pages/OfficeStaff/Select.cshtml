@@ -10,21 +10,28 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-4">
 
-            <h3 class="fw-bold"><i class="bi bi-person-workspace me-1"></i> Employee Tasks</h3>
+            <h3 class="fw-bold">Employee Tasks</h3>
             <p class="text-muted">Select your name to view your assigned tasks.</p>
 
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
             <form method="post">
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Your Name</label>
-                    <select name="employeeId" class="form-select">
-                        <option value="">Select your name</option>
-                        @foreach (var emp in Model.OfficeStaff)
-                        {
-                            <option value="@emp.EmployeeId">@emp.FullName</option>
-                        }
-                    </select>
+                    <label class="form-label fw-semibold" for="employeeDropdownBtn">Your Name</label>
+                    <div class="dropdown">
+                        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="employeeDropdownBtn"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            Select your name
+                        </button>
+                        <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="employeeDropdownBtn">
+                            <li><a class="dropdown-item active" href="#" data-value="">Select your name</a></li>
+                            @foreach (var emp in Model.OfficeStaff)
+                            {
+                                <li><a class="dropdown-item" href="#" data-value="@emp.EmployeeId">@emp.FullName</a></li>
+                            }
+                        </ul>
+                    </div>
+                    <input type="hidden" name="employeeId" id="employeeSelect" value="" />
                     @if (!Model.OfficeStaff.Any())
                     {
                         <div class="form-text text-warning">No active Office Staff employees found.</div>
@@ -37,3 +44,10 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/status-dropdown.js"></script>
+    <script>
+        wireStatusDropdown('employeeDropdownBtn', document.getElementById('employeeSelect'));
+    </script>
+}

@@ -16,32 +16,36 @@
    re-upload now adds a new row instead of overwriting the last one. *@
 <div class="modal fade" id="historyModal-@Model.Activity.ActivityID" tabindex="-1" aria-labelledby="historyModalLabel-@Model.Activity.ActivityID" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="historyModalLabel-@Model.Activity.ActivityID">
-                    <i class="bi bi-clock-history"></i> History of Submission &mdash; @Model.Activity.ActivityName
-                </h5>
+        <div class="modal-content vm-content">
+            <div class="modal-header vm-header">
+                <div class="vm-header-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="vm-title" id="historyModalLabel-@Model.Activity.ActivityID">History of Submission</div>
+                    <div class="vm-subtitle">@Model.Activity.ActivityName</div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="text-muted small mb-3">
-                    <span class="fw-semibold">Reviewed By:</span> @(reviewedBy ?? "—")
+            <hr class="vm-header-rule" />
+            <div class="modal-body vm-body">
+                <div class="vm-card mb-3">
+                    <div class="vm-label">Reviewed By</div>
+                    <div class="vm-value">@(reviewedBy ?? "—")</div>
                 </div>
                 @if (!rejectedAttempts.Any())
                 {
-                    <div class="text-muted text-center py-3">No rejected submissions.</div>
+                    <span class="tf-empty-msg">No rejected submissions.</span>
                 }
                 else
                 {
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
+                        <table class="table vm-table wlm-table-fixed align-middle mb-0">
                             <thead>
-                                <tr class="text-muted small">
-                                    <th>File</th>
-                                    <th>Submitted By</th>
-                                    <th>Submitted On</th>
-                                    <th>Feedback</th>
-                                    <th>Reviewed On</th>
+                                <tr>
+                                    <th style="width:18%">File</th>
+                                    <th style="width:18%">Submitted By</th>
+                                    <th style="width:18%">Submitted On</th>
+                                    <th style="width:28%">Feedback</th>
+                                    <th style="width:18%">Reviewed On</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -68,8 +72,8 @@
                     </div>
                 }
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer vm-footer">
+                <button type="button" class="vm-btn-close" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

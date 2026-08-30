@@ -69,7 +69,7 @@
     <input type="hidden" id="selectedRoleInput" name="SelectedRole" value="@Model.SelectedRole" />
 
     <div class="row g-4">
-        <div class="col-lg-8">
+        <div class="col-lg-8 order-2 order-lg-1">
 
             @*
                 The period is its own first step because changing either select
@@ -86,24 +86,38 @@
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="tf-label">Period Month <span class="tf-required">*</span></label>
-                        <select asp-for="Evaluation.EvaluationPeriodMonth" id="periodMonthSelect" class="form-select">
-                            @for (int m = 1; m <= 12; m++)
-                            {
-                                <option value="@m">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)</option>
-                            }
-                        </select>
+                        <label class="tf-label" for="periodMonthDropdownBtn">Period Month <span class="tf-required">*</span></label>
+                        <div class="dropdown">
+                            <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="periodMonthDropdownBtn"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                @System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(Model.Evaluation.EvaluationPeriodMonth)
+                            </button>
+                            <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="periodMonthDropdownBtn">
+                                @for (int m = 1; m <= 12; m++)
+                                {
+                                    <li><a class="dropdown-item @(Model.Evaluation.EvaluationPeriodMonth == m ? "active" : "")" href="#" data-value="@m">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m)</a></li>
+                                }
+                            </ul>
+                        </div>
+                        <input type="hidden" asp-for="Evaluation.EvaluationPeriodMonth" id="periodMonthSelect" />
                         <span asp-validation-for="Evaluation.EvaluationPeriodMonth" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="tf-label">Period Year <span class="tf-required">*</span></label>
-                        <select asp-for="Evaluation.EvaluationPeriodYear" id="periodYearSelect" class="form-select">
-                            @foreach (var y in Model.PeriodYearOptions)
-                            {
-                                <option value="@y">@y</option>
-                            }
-                        </select>
+                        <label class="tf-label" for="periodYearDropdownBtn">Period Year <span class="tf-required">*</span></label>
+                        <div class="dropdown">
+                            <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="periodYearDropdownBtn"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                @Model.Evaluation.EvaluationPeriodYear
+                            </button>
+                            <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="periodYearDropdownBtn">
+                                @foreach (var y in Model.PeriodYearOptions)
+                                {
+                                    <li><a class="dropdown-item @(Model.Evaluation.EvaluationPeriodYear == y ? "active" : "")" href="#" data-value="@y">@y</a></li>
+                                }
+                            </ul>
+                        </div>
+                        <input type="hidden" asp-for="Evaluation.EvaluationPeriodYear" id="periodYearSelect" />
                         <span asp-validation-for="Evaluation.EvaluationPeriodYear" class="text-danger small"></span>
                     </div>
                 </div>
@@ -155,24 +169,37 @@
 
                 <div class="row g-3">
                     <div class="col-12">
-                        <label class="tf-label">Employee <span class="tf-required">*</span></label>
-                        <select asp-for="Evaluation.EmployeeID" id="employeeSelect" class="form-select">
-                            <option value="">Select an employee...</option>
-                            @foreach (var emp in Model.EmployeeList)
-                            {
-                                var s = Model.Stats.GetValueOrDefault(emp.EmployeeId) ?? new TM_PE.Model.EmployeePerformanceStats();
-                                <option value="@emp.EmployeeId"
-                                        data-roletype="@emp.RoleType"
-                                        data-completed="@s.CompletedJobsTasks"
-                                        data-ontime="@s.OnTimeRate.ToString("0")"
-                                        data-rescheduled="@s.Rescheduled"
-                                        data-cancelled="@s.Cancelled"
-                                        data-rejected="@s.RejectedActivities"
-                                        data-overdue="@s.OverdueTasks">
-                                    @emp.FullName (@emp.RoleType)
-                                </option>
-                            }
-                        </select>
+                        <label class="tf-label" for="employeeDropdownBtn">Employee <span class="tf-required">*</span></label>
+                        @{
+                            var selectedEmployee = Model.EmployeeList.FirstOrDefault(e => e.EmployeeId == Model.Evaluation.EmployeeID);
+                        }
+                        <div class="dropdown">
+                            <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100 text-start" id="employeeDropdownBtn"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                @(selectedEmployee != null ? $"{selectedEmployee.FullName} ({selectedEmployee.RoleType})" : "Select an employee...")
+                            </button>
+                            <ul class="dropdown-menu status-dropdown-menu w-100" id="employeeDropdownMenu" aria-labelledby="employeeDropdownBtn">
+                                <li><a class="dropdown-item @(selectedEmployee == null ? "active" : "")" href="#" data-value="">Select an employee...</a></li>
+                                @foreach (var emp in Model.EmployeeList)
+                                {
+                                    var s = Model.Stats.GetValueOrDefault(emp.EmployeeId) ?? new TM_PE.Model.EmployeePerformanceStats();
+                                    <li>
+                                        <a class="dropdown-item @(selectedEmployee?.EmployeeId == emp.EmployeeId ? "active" : "")" href="#" data-value="@emp.EmployeeId"
+                                           data-roletype="@emp.RoleType"
+                                           data-completed="@s.CompletedJobsTasks"
+                                           data-ontime="@s.OnTimeRate.ToString("0")"
+                                           data-rescheduled="@s.Rescheduled"
+                                           data-cancelled="@s.Cancelled"
+                                           data-rejected="@s.RejectedActivities"
+                                           data-overdue="@s.OverdueTasks">
+                                            @emp.FullName (@emp.RoleType)
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        <input type="hidden" name="Evaluation.EmployeeID" id="employeeSelect"
+                               value="@(Model.Evaluation.EmployeeID == 0 ? "" : Model.Evaluation.EmployeeID.ToString())" />
                         <span asp-validation-for="Evaluation.EmployeeID" class="text-danger small"></span>
                     </div>
 
@@ -181,7 +208,6 @@
                         <input asp-for="Evaluation.EvaluationDate" type="date" class="form-control"
                                value="@Model.Evaluation.EvaluationDate.ToString("yyyy-MM-dd")" />
                         <span asp-validation-for="Evaluation.EvaluationDate" class="text-danger small"></span>
-                        <div class="tf-form-hint">Also used as the appraisal date.</div>
                     </div>
 
                     <div class="col-md-6">
@@ -241,10 +267,36 @@
                 <div class="tf-form-hint">Covers both the evaluation and the appraisal decision.</div>
             </div>
 
+            @* Mobile only: score preview and Save/Finalize sit at the bottom of
+               the form itself here, below lg the desktop copy in the sidebar
+               (see below) takes over instead - only the stat tiles stay
+               pinned up top on mobile as a running reference while rating. *@
+            <div class="d-lg-none">
+                <div class="eval-score-card mb-3">
+                    <div class="eval-score-label">Overall Score (preview)</div>
+                    <div class="eval-score-value js-overall-score-preview">0.0</div>
+                    <div class="eval-score-out-of">out of 4</div>
+                    <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                        <span class="js-overall-stars-preview"></span>
+                        <span class="vm-status vm-status-pending js-overall-rating-preview">&mdash;</span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft">
+                        Save as Draft
+                    </button>
+                    <button type="submit" class="tf-btn-save" asp-page-handler="Finalize"
+                            onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
+                        Finalize Evaluation
+                    </button>
+                </div>
+            </div>
+
         </div>
 
-        <div class="col-lg-4">
-            <div class="sticky-top" style="top:1rem">
+        <div class="col-lg-4 order-1 order-lg-2">
+            <div class="sticky-top eval-sidebar-sticky">
 
                 @* ===================== Employee performance snapshot ===================== *@
                 <div class="row g-3 mb-3" id="statTiles">
@@ -286,26 +338,31 @@
                     </div>
                 </div>
 
-                <div class="eval-score-card mb-3">
-                    <div class="eval-score-label">Overall Score (preview)</div>
-                    <div class="eval-score-value" id="overallScorePreview">0.0</div>
-                    <div class="eval-score-out-of">out of 4</div>
-                    <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                        <span id="overallStarsPreview"></span>
-                        <span class="vm-status vm-status-pending" id="overallRatingPreview">&mdash;</span>
+                @* Desktop (lg+) only: score preview and Save/Finalize grouped
+                   with the tiles here, sticky together as one sidebar - the
+                   mobile copy at the bottom of the form (see above) takes
+                   over below lg instead. *@
+                <div class="d-none d-lg-block">
+                    <div class="eval-score-card mb-3">
+                        <div class="eval-score-label">Overall Score (preview)</div>
+                        <div class="eval-score-value js-overall-score-preview">0.0</div>
+                        <div class="eval-score-out-of">out of 4</div>
+                        <div class="mt-2 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                            <span class="js-overall-stars-preview"></span>
+                            <span class="vm-status vm-status-pending js-overall-rating-preview">&mdash;</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft">
+                            Save as Draft
+                        </button>
+                        <button type="submit" class="tf-btn-save" asp-page-handler="Finalize"
+                                onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
+                            Finalize Evaluation
+                        </button>
                     </div>
                 </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" class="tf-btn-cancel" asp-page-handler="SaveDraft">
-                        Save as Draft
-                    </button>
-                    <button type="submit" class="tf-btn-save" asp-page-handler="Finalize"
-                            onclick="return confirm('Finalize this evaluation? Once finalized it can no longer be edited.');">
-                        Finalize Evaluation
-                    </button>
-                </div>
-                <div class="tf-form-hint text-center mt-2">A draft can still be edited later; finalizing locks it.</div>
 
             </div>
         </div>
@@ -314,6 +371,7 @@
 
 @section Scripts {
     <script src="~/js/star-rating.js" asp-append-version="true"></script>
+    <script src="~/js/status-dropdown.js"></script>
     <script>
         (function () {
             // Changing the period reloads the page via GET so the server can
@@ -323,6 +381,7 @@
             const periodMonthSelect = document.getElementById('periodMonthSelect');
             const periodYearSelect = document.getElementById('periodYearSelect');
             const employeeSelect = document.getElementById('employeeSelect');
+            const employeeMenu = document.getElementById('employeeDropdownMenu');
             function reloadForPeriod() {
                 const params = new URLSearchParams();
                 params.set('Month', periodMonthSelect.value);
@@ -336,8 +395,17 @@
                 if (activeRoleBtn) params.set('SelectedRole', activeRoleBtn.dataset.role);
                 window.location.href = window.location.pathname + '?' + params.toString();
             }
-            periodMonthSelect.addEventListener('change', reloadForPeriod);
-            periodYearSelect.addEventListener('change', reloadForPeriod);
+            wireStatusDropdown('periodMonthDropdownBtn', periodMonthSelect, { onChange: reloadForPeriod });
+            wireStatusDropdown('periodYearDropdownBtn', periodYearSelect, { onChange: reloadForPeriod });
+            const employeeDropdown = wireStatusDropdown('employeeDropdownBtn', employeeSelect, { onChange: onEmployeeChange });
+
+            function employeeItems() {
+                return Array.from(employeeMenu.querySelectorAll('.dropdown-item'));
+            }
+            function getSelectedEmployeeItem() {
+                return employeeItems().find(i => (i.dataset.value || '') === employeeSelect.value);
+            }
+
             // ---- Role filter buttons (Field Technician / Office Staff) ----
             // Highlights the clicked button and narrows the Employee dropdown
             // to just that role, so the manager picks a role first, then a
@@ -347,18 +415,17 @@
             const roleButtons = document.querySelectorAll('.role-filter-btn');
 
             function applyRoleFilter(role) {
-                Array.from(employeeSelect.options).forEach(opt => {
-                    if (!opt.value) return; // always keep the "Select an employee" placeholder visible
-                    opt.hidden = !role || opt.getAttribute('data-roletype') !== role;
+                employeeItems().forEach(item => {
+                    if (!item.dataset.value) return; // always keep the "Select an employee" placeholder visible
+                    item.closest('li').hidden = !role || item.dataset.roletype !== role;
                 });
 
                 // If the currently selected employee no longer matches the
                 // chosen role (or no role is chosen at all anymore), clear the
-                // selection instead of leaving a hidden option selected.
-                const selectedOpt = employeeSelect.options[employeeSelect.selectedIndex];
-                if (selectedOpt && selectedOpt.value && (!role || selectedOpt.getAttribute('data-roletype') !== role)) {
-                    employeeSelect.value = '';
-                    employeeSelect.dispatchEvent(new Event('change'));
+                // selection instead of leaving a hidden item selected.
+                const selectedItem = getSelectedEmployeeItem();
+                if (selectedItem && selectedItem.dataset.value && (!role || selectedItem.dataset.roletype !== role)) {
+                    employeeDropdown.selectByValue('', true);
                 }
             }
 
@@ -373,7 +440,7 @@
                 // selection. Call it unconditionally too, so the tiles at the
                 // top pick up the newly active role immediately even when
                 // nothing was selected yet or the selection already matched.
-                applyStats(employeeSelect.options[employeeSelect.selectedIndex]);
+                applyStats(getSelectedEmployeeItem());
             }
 
             roleButtons.forEach(btn => {
@@ -383,9 +450,13 @@
             const noEmployeeNotice = document.getElementById('noEmployeeNotice');
             const ftCard = document.getElementById('fieldTechnicianCriteriaCard');
             const osCard = document.getElementById('officeStaffCriteriaCard');
-            const scorePreview = document.getElementById('overallScorePreview');
-            const ratingPreview = document.getElementById('overallRatingPreview');
-            const starsPreview = document.getElementById('overallStarsPreview');
+            // Two copies of these exist (one in the sidebar for desktop, one
+            // at the bottom of the form for mobile - see the Razor markup
+            // above), only one of which is visible at a given breakpoint, so
+            // both need updating together rather than picked up by id.
+            const scorePreviews = document.querySelectorAll('.js-overall-score-preview');
+            const ratingPreviews = document.querySelectorAll('.js-overall-rating-preview');
+            const starsPreviews = document.querySelectorAll('.js-overall-stars-preview');
 
             // Rating bands mirrored from Model.EvaluationScoring for the live
             // client-side preview only - the server always recalculates and is
@@ -415,9 +486,9 @@
                     const stars = window.StarRating.snap(input.value || '0');
                     total += weight / 100 * stars;
                 });
-                scorePreview.textContent = total.toFixed(1);
-                ratingPreview.textContent = ratingFor(total);
-                starsPreview.innerHTML = window.StarRating.render(total);
+                scorePreviews.forEach(el => { el.textContent = total.toFixed(1); });
+                ratingPreviews.forEach(el => { el.textContent = ratingFor(total); });
+                starsPreviews.forEach(el => { el.innerHTML = window.StarRating.render(total); });
             }
 
             const tile3 = document.getElementById('statTile3');
@@ -439,9 +510,9 @@
             // the tiles reflect the chosen role immediately - before an
             // employee has even been picked.
             function applyStats(opt) {
-                const has = opt && opt.value;
+                const has = opt && opt.dataset.value;
                 const activeRoleBtn = document.querySelector('.role-filter-btn.active');
-                const roleType = has ? opt.getAttribute('data-roletype') : (activeRoleBtn ? activeRoleBtn.dataset.role : '');
+                const roleType = has ? opt.dataset.roletype : (activeRoleBtn ? activeRoleBtn.dataset.role : '');
                 const isOfficeStaff = roleType === 'OfficeStaff';
 
                 document.getElementById('statCompleted').textContent = has ? opt.dataset.completed : '—';
@@ -484,9 +555,9 @@
                 }
             }
 
-            employeeSelect.addEventListener('change', function () {
-                const opt = employeeSelect.options[employeeSelect.selectedIndex];
-                const roleType = opt ? opt.getAttribute('data-roletype') : '';
+            function onEmployeeChange() {
+                const opt = getSelectedEmployeeItem();
+                const roleType = opt ? opt.dataset.roletype : '';
 
                 applyStats(opt);
 
@@ -503,7 +574,7 @@
                 setBlockEnabled(ftCard, isFieldTechnician);
                 setBlockEnabled(osCard, roleType === 'OfficeStaff');
                 recalcPreview();
-            });
+            }
 
             document.addEventListener('change', function (e) {
                 if (e.target.classList.contains('star-value-input')) recalcPreview();
@@ -522,10 +593,10 @@
                 // employee already selected - highlight the matching role
                 // button so the filter reflects it instead of showing neither
                 // button active.
-                const selectedOpt = employeeSelect.options[employeeSelect.selectedIndex];
-                const selectedRole = selectedOpt ? selectedOpt.getAttribute('data-roletype') : '';
+                const selectedOpt = getSelectedEmployeeItem();
+                const selectedRole = selectedOpt ? selectedOpt.dataset.roletype : '';
                 if (selectedRole) setActiveRole(selectedRole);
-                employeeSelect.dispatchEvent(new Event('change'));
+                onEmployeeChange();
             } else {
                 // No employee selected. The role button itself can still carry
                 // over though - from a postback with no employee chosen, or

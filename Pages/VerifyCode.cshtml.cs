@@ -49,11 +49,7 @@ namespace TM_PE.Pages
             }
 
             MaskedEmail = MaskEmail(HttpContext.Session.GetString("PwReset_Email") ?? "");
-
-            if (TempData["PwReset_DevCode"] is string devCode)
-            {
-                DevCode = devCode;
-            }
+            DevCode = HttpContext.Session.GetString("PwReset_DevCode");
 
             return Page();
         }
@@ -70,6 +66,7 @@ namespace TM_PE.Pages
             }
 
             MaskedEmail = MaskEmail(HttpContext.Session.GetString("PwReset_Email") ?? "");
+            DevCode = HttpContext.Session.GetString("PwReset_DevCode");
 
             if (!DateTime.TryParse(expiryRaw, null, System.Globalization.DateTimeStyles.RoundtripKind, out var expiry)
                 || DateTime.UtcNow > expiry)
@@ -116,6 +113,7 @@ namespace TM_PE.Pages
             HttpContext.Session.Remove("PwReset_Code");
             HttpContext.Session.Remove("PwReset_Expiry");
             HttpContext.Session.Remove("PwReset_Attempts");
+            HttpContext.Session.Remove("PwReset_DevCode");
             HttpContext.Session.SetInt32("PwReset_VerifiedEmployeeId", employee.EmployeeId);
 
             return RedirectToPage("/ResetPassword");
@@ -137,9 +135,13 @@ namespace TM_PE.Pages
             HttpContext.Session.SetInt32("PwReset_Attempts", 0);
 
             var sent = await _emailService.TrySendCodeAsync(email, code);
-            if (!sent)
+            if (sent)
             {
-                TempData["PwReset_DevCode"] = code;
+                HttpContext.Session.Remove("PwReset_DevCode");
+            }
+            else
+            {
+                HttpContext.Session.SetString("PwReset_DevCode", code);
             }
 
             StatusMessage = "A new code was sent.";
@@ -153,6 +155,7 @@ namespace TM_PE.Pages
             HttpContext.Session.Remove("PwReset_Code");
             HttpContext.Session.Remove("PwReset_Expiry");
             HttpContext.Session.Remove("PwReset_Attempts");
+            HttpContext.Session.Remove("PwReset_DevCode");
         }
 
         private static string MaskEmail(string email)

@@ -313,29 +313,36 @@
 @* ===================== Modal: Fiber Plans ===================== *@
 <div class="modal fade" id="fiberPlanModal" tabindex="-1" aria-labelledby="fiberPlanModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="fiberPlanModalLabel">Fiber Plans</h5>
+        <div class="modal-content vm-content">
+            <div class="modal-header vm-header">
+                <div class="vm-header-icon"><i class="bi bi-router"></i></div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="vm-title" id="fiberPlanModalLabel">Fiber Plans</div>
+                    <div class="vm-subtitle">Plans available for Installation tickets</div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="d-flex gap-2 mb-2">
-                    <input type="text" id="newFiberPlanInput" class="form-control" placeholder="e.g. 1299 or Fiber 500 Promo" maxlength="50" />
-                    <button type="button" id="addFiberPlanBtn" class="btn btn-primary text-nowrap">Add</button>
-                </div>
-                <div class="form-text mb-2">Letters, numbers, spaces, and . , - / ₱ # &amp; ( ) are allowed.</div>
-                <div id="fiberPlanModalError" class="text-danger small mb-2 d-none"></div>
+            <hr class="vm-header-rule" />
+            <div class="modal-body vm-body">
+                <div class="vm-card">
+                    <div class="d-flex gap-2 mb-2">
+                        <input type="text" id="newFiberPlanInput" class="form-control" placeholder="e.g. 1299 or Fiber 500 Promo" maxlength="50" />
+                        <button type="button" id="addFiberPlanBtn" class="btn btn-navy text-nowrap">Add</button>
+                    </div>
+                    <div class="tf-form-hint mb-2">Letters, numbers, spaces, and . , - / ₱ # &amp; ( ) are allowed.</div>
+                    <div id="fiberPlanModalError" class="text-danger small mb-2 d-none"></div>
 
-                <ul class="list-group" id="fiberPlanList">
-                    @foreach (var plan in Model.FiberPlanOptions)
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center" data-plan-id="@plan.FiberPlanID" data-plan-name="@plan.PlanName">
-                            <span>@FiberPlanDisplay(plan.PlanName)</span>
-                            <button type="button" class="btn btn-sm btn-link text-danger p-0 fiber-plan-delete-btn" title="Delete">&times;</button>
-                        </li>
-                    }
-                </ul>
-                <div id="noFiberPlansMsg" class="text-muted small mt-2 @(Model.FiberPlanOptions.Any() ? "d-none" : "")">No fiber plans yet.</div>
+                    <ul class="list-group" id="fiberPlanList">
+                        @foreach (var plan in Model.FiberPlanOptions)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center" data-plan-id="@plan.FiberPlanID" data-plan-name="@plan.PlanName">
+                                <span>@FiberPlanDisplay(plan.PlanName)</span>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0 fiber-plan-delete-btn" title="Delete">&times;</button>
+                            </li>
+                        }
+                    </ul>
+                    <div id="noFiberPlansMsg" class="tf-empty-msg mt-2 @(Model.FiberPlanOptions.Any() ? "d-none" : "")">No fiber plans yet.</div>
+                </div>
             </div>
         </div>
     </div>

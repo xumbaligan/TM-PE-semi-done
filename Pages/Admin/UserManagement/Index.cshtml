@@ -15,31 +15,30 @@
 }
 
 <div class="mb-3">
-    <h2 class="mb-1"><i class="bi bi-person-badge"></i> User Management</h2>
-    <p class="text-muted mb-0">Login accounts for every employee.</p>
+    <h1 class="tf-page-title mb-1">User Management</h1>
+    <p class="tf-page-sub mb-0">Login accounts for every employee.</p>
 </div>
 <hr class="page-divider" />
 
 <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <div class="input-group shadow-sm flex-grow-1" style="max-width:400px;">
-        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input class="form-control border-start-0 ps-0" id="liveSearch"
-               placeholder="Search by username or employee..." />
+    <div class="search-input-group flex-grow-1" style="max-width:400px;">
+        <i class="bi bi-search"></i>
+        <input id="liveSearch" placeholder="Search by username or employee..." />
     </div>
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New User Account</a>
 </form>
 
 <div class="table-responsive wlm-card">
-    <table class="table table-hover wlm-table mb-0 align-middle">
+    <table class="table table-hover wlm-table wlm-table-fixed mb-0 align-middle">
         <thead>
             <tr>
-                <th>Username</th>
-                <th>Employee</th>
-                <th>Role</th>
-                <th>Created</th>
-                <th>Last Login</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
+                <th style="width:15%">Username</th>
+                <th style="width:15%">Employee</th>
+                <th style="width:15%">Role</th>
+                <th style="width:15%">Created</th>
+                <th style="width:15%">Last Login</th>
+                <th style="width:15%">Status</th>
+                <th class="text-end" style="width:10%">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -133,6 +132,12 @@
             if (emptyRow) {
                 emptyRow.style.display = visibleCount === 0 ? '' : 'none';
             }
+
+            // Re-paginate against whatever the filter just left visible, so
+            // Prev/Next and the page count match the filtered rows instead of
+            // the full unfiltered table (and the nav disappears entirely once
+            // the filtered set is small enough to fit on one page).
+            if (window.TFPagination) window.TFPagination.init(document.querySelector('table.wlm-table'));
         }
 
         searchInput.addEventListener('input', filterTable);

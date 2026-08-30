@@ -6,16 +6,15 @@
 }
 
 <div class="mb-3">
-    <h2 class="mb-1">Employees</h2>
-    <p class="text-muted mb-0">Workforce profiles and deployment status.</p>
+    <h1 class="tf-page-title mb-1">Employees</h1>
+    <p class="tf-page-sub mb-0">Workforce profiles and deployment status.</p>
 </div>
 <hr class="page-divider" />
 
 <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <div class="input-group shadow-sm flex-grow-1" style="max-width:400px;">
-        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
-               value="@Model.Search" placeholder="Search by name or email..." />
+    <div class="search-input-group flex-grow-1" style="max-width:400px;">
+        <i class="bi bi-search"></i>
+        <input name="search" id="liveSearch" value="@Model.Search" placeholder="Search by name or email..." />
     </div>
     <input type="hidden" name="role" id="liveRole" value="@Model.Role" />
     <div class="role-filter" id="roleFilter">
@@ -27,15 +26,15 @@
 </form>
 
 <div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table mb-0">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Role</th>
-                <th>Date Hired</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
+                <th style="width:18%">Name</th>
+                <th style="width:18%">Department</th>
+                <th style="width:18%">Role</th>
+                <th style="width:18%">Date Hired</th>
+                <th style="width:18%">Status</th>
+                <th class="text-end" style="width:10%">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -128,6 +127,12 @@
             if (emptyRow) {
                 emptyRow.style.display = visibleCount === 0 ? '' : 'none';
             }
+
+            // Re-paginate against whatever the filter just left visible, so
+            // Prev/Next and the page count match the filtered rows instead of
+            // the full unfiltered table (and the nav disappears entirely once
+            // the filtered set is small enough to fit on one page).
+            if (window.TFPagination) window.TFPagination.init(document.querySelector('table.wlm-table'));
         }
 
         searchInput.addEventListener('input', filterTable);

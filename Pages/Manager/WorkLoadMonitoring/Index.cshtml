@@ -23,8 +23,8 @@
 </style>
 
 <div class="mb-3">
-    <h2 class="mb-1">Workload Monitoring</h2>
-    <p class="text-muted mb-0">Workforce profiles and deployment status.</p>
+    <h1 class="tf-page-title mb-1">Workload Monitoring</h1>
+    <p class="tf-page-sub mb-0">Workforce profiles and deployment status.</p>
 </div>
 <hr class="page-divider" />
 
@@ -54,13 +54,13 @@
         else
         {
             <div class="table-responsive wlm-card">
-                <table class="table align-middle table-hover wlm-table mb-0">
+                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
                     <thead>
                         <tr>
-                            <th>Technicians</th>
-                            <th>Departments</th>
-                            <th class="text-center">Active Tickets</th>
-                            <th class="text-center">Action</th>
+                            <th style="width:30%">Technicians</th>
+                            <th style="width:30%">Departments</th>
+                            <th class="text-center" style="width:30%">Active Tickets</th>
+                            <th class="text-center" style="width:10%">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -113,13 +113,13 @@
         else
         {
             <div class="table-responsive wlm-card">
-                <table class="table align-middle table-hover wlm-table mb-0">
+                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
                     <thead>
                         <tr>
-                            <th>Staff</th>
-                            <th>Departments</th>
-                            <th class="text-center">Active Tasks</th>
-                            <th class="text-center">Action</th>
+                            <th style="width:30%">Staff</th>
+                            <th style="width:30%">Departments</th>
+                            <th class="text-center" style="width:30%">Active Tasks</th>
+                            <th class="text-center" style="width:10%">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -174,17 +174,17 @@
             else
             {
                 <div class="table-responsive wlm-summary-scroll">
-                    <table class="table align-middle table-hover wlm-table mb-0">
+                    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
                         <thead>
                             <tr>
-                                <th>Employee</th>
-                                <th>Department</th>
-                                <th class="text-center">Active Tasks</th>
-                                <th class="text-center">Overdue</th>
-                                <th class="text-center">Completed</th>
-                                <th class="text-center">Pending Activities</th>
-                                <th class="text-center">Avg. Score</th>
-                                <th style="width:220px;">Workload</th>
+                                <th style="width:16%">Employee</th>
+                                <th style="width:12%">Department</th>
+                                <th class="text-center" style="width:10%">Active Tasks</th>
+                                <th class="text-center" style="width:10%">Overdue</th>
+                                <th class="text-center" style="width:10%">Completed</th>
+                                <th class="text-center" style="width:12%">Pending Activities</th>
+                                <th class="text-center" style="width:10%">Avg. Score</th>
+                                <th style="width:20%">Workload</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -255,15 +255,15 @@
             else
             {
                 <div class="table-responsive wlm-summary-scroll">
-                    <table class="table align-middle table-hover wlm-table mb-0">
+                    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
                         <thead>
                             <tr>
-                                <th>Technician</th>
-                                <th>Department</th>
-                                <th class="text-center">Active Tickets</th>
-                                <th class="text-center">Overdue</th>
-                                <th class="text-center">Completed</th>
-                                <th style="width:220px;">Workload</th>
+                                <th style="width:18%">Technician</th>
+                                <th style="width:14%">Department</th>
+                                <th class="text-center" style="width:14%">Active Tickets</th>
+                                <th class="text-center" style="width:14%">Overdue</th>
+                                <th class="text-center" style="width:14%">Completed</th>
+                                <th style="width:26%">Workload</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -351,15 +351,15 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table vm-table align-middle">
+                    <table class="table vm-table wlm-table-fixed align-middle">
                         <thead>
                             <tr>
-                                <th>Job ID</th>
-                                <th>Type of Job</th>
-                                <th>Client</th>
-                                <th>Status</th>
-                                <th>Date of Job</th>
-                                <th>Due Date</th>
+                                <th style="width:17%">Job ID</th>
+                                <th style="width:17%">Type of Job</th>
+                                <th style="width:17%">Client</th>
+                                <th style="width:16%">Status</th>
+                                <th style="width:17%">Date of Job</th>
+                                <th style="width:16%">Due Date</th>
                             </tr>
                         </thead>
                         <tbody id="technicianModalTicketList">
@@ -406,14 +406,14 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table vm-table align-middle">
+                    <table class="table vm-table wlm-table-fixed align-middle">
                         <thead>
                             <tr>
-                                <th>Task ID</th>
-                                <th>Task Name</th>
-                                <th>Status</th>
-                                <th>Date Created</th>
-                                <th>Due Date</th>
+                                <th style="width:20%">Task ID</th>
+                                <th style="width:20%">Task Name</th>
+                                <th style="width:20%">Status</th>
+                                <th style="width:20%">Date Created</th>
+                                <th style="width:20%">Due Date</th>
                             </tr>
                         </thead>
                         <tbody id="staffModalTaskList">
@@ -455,6 +455,10 @@
 
                     if (tickets.length === 0) {
                         list.innerHTML = '<tr><td colspan="6"><span class="tf-empty-msg">No active tickets</span></td></tr>';
+                        // Clears a leftover Prev/Next nav from a previous open
+                        // of this same modal for a technician who had more
+                        // than 6 tickets - this table is reused across opens.
+                        if (window.TFPagination) window.TFPagination.init(list.closest('table'));
                         return;
                     }
 
@@ -478,6 +482,13 @@
                         `;
                         list.appendChild(row);
                     });
+
+                    // These rows are rebuilt from scratch every time the modal
+                    // opens, so the table has whatever was there at page load
+                    // (nothing) by the time table-pagination.js's own pass ran -
+                    // without this, a technician with more than 6 active
+                    // tickets would just dump them all into the modal unpaginated.
+                    if (window.TFPagination) window.TFPagination.init(list.closest('table'));
                 });
             }
 
@@ -499,6 +510,10 @@
 
                     if (tasks.length === 0) {
                         list.innerHTML = '<tr><td colspan="5"><span class="tf-empty-msg">No active tasks</span></td></tr>';
+                        // Clears a leftover Prev/Next nav from a previous open
+                        // of this same modal for a staff member who had more
+                        // than 6 tasks - this table is reused across opens.
+                        if (window.TFPagination) window.TFPagination.init(list.closest('table'));
                         return;
                     }
 
@@ -521,6 +536,13 @@
                         `;
                         list.appendChild(row);
                     });
+
+                    // These rows are rebuilt from scratch every time the modal
+                    // opens, so the table has whatever was there at page load
+                    // (nothing) by the time table-pagination.js's own pass ran -
+                    // without this, a staff member with more than 6 active
+                    // tasks would just dump them all into the modal unpaginated.
+                    if (window.TFPagination) window.TFPagination.init(list.closest('table'));
                 });
             }
         })();

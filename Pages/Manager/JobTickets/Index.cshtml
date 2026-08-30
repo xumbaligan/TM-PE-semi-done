@@ -5,16 +5,15 @@
     Layout = "_Layout";
 }
 <div class="mb-3">
-    <h2 class="mb-1"><i class="bi bi-tools"></i> Job Ticket Management</h2>
-    <p class="text-muted mb-0">Field service tickets and technician assignments.</p>
+    <h1 class="tf-page-title mb-1">Job Ticket Management</h1>
+    <p class="tf-page-sub mb-0">Field service tickets and technician assignments.</p>
 </div>
 <hr class="page-divider" />
 
 <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <div class="input-group shadow-sm flex-grow-1" style="max-width:480px;">
-        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input class="form-control border-start-0 ps-0" name="search" id="liveSearch"
-               value="@Model.Search" placeholder="Search by leader, job type, ticket #, or client..." />
+    <div class="search-input-group flex-grow-1" style="max-width:480px;">
+        <i class="bi bi-search"></i>
+        <input name="search" id="liveSearch" value="@Model.Search" placeholder="Search by leader, job type, ticket #, or client..." />
     </div>
     @{
         var statusOptions = new[] { "Pending", "In Progress", "Reschedule Request", "Completed", "Completed Late", "Cancelled", "Rescheduled", "Overdue" };
@@ -39,15 +38,15 @@
 </form>
 
 <div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table mb-0">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
         <thead>
             <tr>
-                <th>Task Number</th>
-                <th>Job Type</th>
-                <th>Leader</th>
-                <th>Status</th>
-                <th>Due Date</th>
-                <th class="text-end">Actions</th>
+                <th style="width:18%">Task Number</th>
+                <th style="width:18%">Job Type</th>
+                <th style="width:18%">Leader</th>
+                <th style="width:18%">Status</th>
+                <th style="width:18%">Due Date</th>
+                <th class="text-end" style="width:10%">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -71,7 +70,7 @@
                     data-ticketid="@item.TicketNumber.ToLower()"
                     data-status="@item.DisplayStatus.ToLower()">
                     <td class="text-muted">@item.TicketNumber</td>
-                    <td class="fw-semibold">@item.JobType</td>
+                    <td class="fw-semibold" style="color:#020236;">@item.JobType</td>
                     <td>
                         @if (leader != null)
                         {
@@ -79,7 +78,7 @@
                                 <div class="wlm-avatar">
                                     @(string.Join("", leader.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
                                 </div>
-                                <span>@leader.FullName</span>
+                                <span style="color:#020236;">@leader.FullName</span>
                             </div>
                         }
                         else
@@ -104,7 +103,7 @@
                             @item.DisplayStatus
                         </span>
                     </td>
-                    <td class="text-muted">@item.ServiceDate.ToString("M/d/yyyy")</td>
+                    <td style="color:#020236;">@item.ServiceDate.ToString("M/d/yyyy")</td>
                     <td class="text-end">
                         <button type="button" class="btn btn-sm btn-outline-navy" title="View"
                                 data-bs-toggle="modal" data-bs-target="#viewModal-@item.JobTicketID">
@@ -429,6 +428,12 @@
             if (emptyRow) {
                 emptyRow.style.display = visibleCount === 0 ? '' : 'none';
             }
+
+            // Re-paginate against whatever the filter just left visible, so
+            // Prev/Next and the page count match the filtered rows instead of
+            // the full unfiltered table (and the nav disappears entirely once
+            // the filtered set is small enough to fit on one page).
+            if (window.TFPagination) window.TFPagination.init(document.querySelector('table.wlm-table'));
         }
 
         searchInput.addEventListener('input', filterTable);

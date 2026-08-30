@@ -42,7 +42,10 @@
         if (workload.length === 0) {
             showMessage('workloadDistributionMessage', emptyMsg);
         } else {
-            const bandColors = { Heavy: '#dc3545', Normal: '#6c757d', Idle: '#ffc107' };
+            // Purple brand family (matches the role-badge shading used
+            // elsewhere: darker = heavier) instead of Bootstrap's red/gray/
+            // yellow, so the bar colors stay on-palette with the rest of the app.
+            const bandColors = { Heavy: '#47076f', Normal: '#9f4cd6', Idle: '#cca8e3' };
 
             new Chart(document.getElementById('workloadDistributionChart'), {
                 type: 'bar',
@@ -51,7 +54,7 @@
                     datasets: [{
                         label: 'Workload points',
                         data: workload.map(w => Number(w.Points)),
-                        backgroundColor: workload.map(w => bandColors[w.Band] || '#adb5bd'),
+                        backgroundColor: workload.map(w => bandColors[w.Band] || '#9f4cd6'),
                         borderRadius: 4,
                         maxBarThickness: 18
                     }]

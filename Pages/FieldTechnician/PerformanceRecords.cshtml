@@ -152,34 +152,49 @@
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <div class="vm-card-label">Evaluation History</div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <label class="vm-label mb-0" for="periodFilter">Evaluation Period</label>
-            <select class="form-select form-select-sm" id="periodFilter" style="width:auto">
-                <option value="">All periods</option>
-                @foreach (var p in Model.Periods)
-                {
-                    <option value="@p">@p</option>
-                }
-            </select>
-            <label class="vm-label mb-0" for="yearFilter">Year</label>
-            <select class="form-select form-select-sm" id="yearFilter" style="width:auto">
-                <option value="">All years</option>
-                @foreach (var y in Model.Years)
-                {
-                    <option value="@y">@y</option>
-                }
-            </select>
+            <label class="vm-label mb-0" for="periodDropdownBtn">Evaluation Period</label>
+            <div class="dropdown">
+                <button type="button" class="btn status-dropdown-btn dropdown-toggle" id="periodDropdownBtn"
+                        data-bs-toggle="dropdown" aria-expanded="false" style="width:auto">
+                    All periods
+                </button>
+                <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="periodDropdownBtn">
+                    <li><a class="dropdown-item active" href="#" data-value="">All periods</a></li>
+                    @foreach (var p in Model.Periods)
+                    {
+                        <li><a class="dropdown-item" href="#" data-value="@p">@p</a></li>
+                    }
+                </ul>
+            </div>
+            <input type="hidden" id="periodFilter" value="" />
+
+            <label class="vm-label mb-0" for="yearDropdownBtn">Year</label>
+            <div class="dropdown">
+                <button type="button" class="btn status-dropdown-btn dropdown-toggle" id="yearDropdownBtn"
+                        data-bs-toggle="dropdown" aria-expanded="false" style="width:auto">
+                    All years
+                </button>
+                <ul class="dropdown-menu status-dropdown-menu" aria-labelledby="yearDropdownBtn">
+                    <li><a class="dropdown-item active" href="#" data-value="">All years</a></li>
+                    @foreach (var y in Model.Years)
+                    {
+                        <li><a class="dropdown-item" href="#" data-value="@y">@y</a></li>
+                    }
+                </ul>
+            </div>
+            <input type="hidden" id="yearFilter" value="" />
         </div>
     </div>
 
     <div class="table-responsive">
-        <table class="table vm-table-plain align-middle mb-0">
+        <table class="table vm-table-plain wlm-table-fixed align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Evaluation Period</th>
-                    <th style="width:180px">Overall Rating</th>
-                    <th style="width:120px">Score</th>
-                    <th style="width:160px">Evaluated By</th>
-                    <th class="text-end" style="width:90px">Action</th>
+                    <th style="width:39%">Evaluation Period</th>
+                    <th style="width:20%">Overall Rating</th>
+                    <th style="width:13%">Score</th>
+                    <th style="width:18%">Evaluated By</th>
+                    <th class="text-end" style="width:10%">Action</th>
                 </tr>
             </thead>
             <tbody id="historyBody">
@@ -242,45 +257,12 @@
     </div>
 </div>
 
-@* ===================== Feedback trail ===================== *@
-<div class="vm-card mb-4">
-    <div class="vm-card-title">Appraisal Feedback</div>
-    @if (!Model.FeedbackEntries.Any() && !Model.Evaluations.Any(e => !string.IsNullOrWhiteSpace(e.GeneralFeedback)))
-    {
-        <span class="tf-empty-msg">No feedback has been recorded for you yet.</span>
-    }
-    else
-    {
-        <div class="d-flex flex-column gap-2">
-            @foreach (var f in Model.FeedbackEntries)
-            {
-                <div class="vm-feedback-item">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <span class="vm-chip-status">@f.FeedbackType</span>
-                        <span class="vm-file-meta">@f.DateCreated.ToString("MMM d, yyyy") &middot; @f.SubmittedBy</span>
-                    </div>
-                    <div class="vm-text mt-2">@f.Comment</div>
-                </div>
-            }
-            @foreach (var e in Model.Evaluations.Where(e => !string.IsNullOrWhiteSpace(e.GeneralFeedback)))
-            {
-                <div class="vm-feedback-item">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <span class="tf-leader-badge">Evaluation &mdash; @e.EvaluationPeriod</span>
-                        <span class="vm-file-meta">@e.EvaluationDate.ToString("MMM d, yyyy") &middot; @e.EvaluatorName</span>
-                    </div>
-                    <div class="vm-text mt-2">@e.GeneralFeedback</div>
-                </div>
-            }
-        </div>
-    }
-</div>
-
 <partial name="_EvaluationModal" />
 
 @section Scripts {
     <script src="~/js/star-rating.js" asp-append-version="true"></script>
     <script src="~/js/evaluation-modal.js" asp-append-version="true"></script>
+    <script src="~/js/status-dropdown.js"></script>
     <script>
         (function () {
             const yearFilter = document.getElementById('yearFilter');
@@ -300,10 +282,16 @@
                 });
 
                 if (noMatch) noMatch.classList.toggle('d-none', visible > 0);
+
+                // Re-paginate against whatever the filter just left visible,
+                // so Prev/Next and the page count match the filtered rows
+                // instead of the full unfiltered history (and the nav
+                // disappears entirely once the filtered set fits one page).
+                if (window.TFPagination) window.TFPagination.init(document.querySelector('table.vm-table-plain'));
             }
 
-            yearFilter.addEventListener('change', applyFilters);
-            periodFilter.addEventListener('change', applyFilters);
+            wireStatusDropdown('yearDropdownBtn', yearFilter, { onChange: applyFilters });
+            wireStatusDropdown('periodDropdownBtn', periodFilter, { onChange: applyFilters });
         })();
     </script>
 }

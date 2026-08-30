@@ -7,10 +7,10 @@ using TM_PE.Model;
 namespace TM_PE.Pages.FieldTechnician
 {
     // Read-only "My Performance Records" for the logged-in Field Technician:
-    // their own evaluation history and appraisal feedback trail. Mirrors
-    // Manager/AppraisalRecords/Details, scoped to the current session's
-    // employee instead of an {id} route param, and with nothing to edit -
-    // a technician can only ever view their own record here.
+    // their own evaluation history. Mirrors Manager/AppraisalRecords/Details,
+    // scoped to the current session's employee instead of an {id} route
+    // param, and with nothing to edit - a technician can only ever view
+    // their own record here.
     public class PerformanceRecordsModel : PageModel
     {
         private readonly AppDbContext _context;
@@ -21,8 +21,6 @@ namespace TM_PE.Pages.FieldTechnician
         // Only Finalized evaluations are shown - a Draft is still a manager's
         // work in progress and hasn't been communicated to the employee yet.
         public List<Model.PerformanceEvaluation> Evaluations { get; set; } = new();
-
-        public List<Model.Feedback> FeedbackEntries { get; set; } = new();
 
         public EmployeePerformanceStats Stats { get; set; } = new();
 
@@ -87,12 +85,6 @@ namespace TM_PE.Pages.FieldTechnician
                 .Where(e => e.EmployeeID == employeeId.Value && e.EvaluationStatus == EvaluationStatus.Finalized)
                 .OrderByDescending(e => e.EvaluationDate)
                 .ThenByDescending(e => e.EvaluationID)
-                .ToListAsync();
-
-            FeedbackEntries = await _context.Feedbacks
-                .Where(f => f.EmployeeID == employeeId.Value)
-                .OrderByDescending(f => f.DateCreated)
-                .Take(10)
                 .ToListAsync();
 
             Stats = await EmployeePerformanceStatsBuilder.BuildForAsync(_context, employeeId.Value);

@@ -44,26 +44,53 @@
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="tf-label" for="Employee_RoleType">
+                    <label class="tf-label" for="employeeRoleDropdownBtn">
                         Role Type <span class="tf-required">*</span>
                     </label>
-                    <select class="form-select" asp-for="Employee.RoleType" id="Employee_RoleType">
-                        <option value="OfficeStaff">Office Staff</option>
-                        <option value="FieldTechnician">Field Technician</option>
-                        <option value="Manager">Manager</option>
-                        <option value="Admin">Admin</option>
-                    </select>
+                    @{
+                        var employeeRoleOptions = new[] {
+                            ("OfficeStaff", "Office Staff"),
+                            ("FieldTechnician", "Field Technician"),
+                            ("Manager", "Manager"),
+                            ("Admin", "Admin")
+                        };
+                        var currentEmployeeRoleLabel = employeeRoleOptions.FirstOrDefault(r => r.Item1 == Model.Employee.RoleType.ToString()).Item2 ?? "Select role type";
+                    }
+                    <div class="dropdown">
+                        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="employeeRoleDropdownBtn"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            @currentEmployeeRoleLabel
+                        </button>
+                        <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="employeeRoleDropdownBtn">
+                            @foreach (var r in employeeRoleOptions)
+                            {
+                                <li><a class="dropdown-item @(Model.Employee.RoleType.ToString() == r.Item1 ? "active" : "")" href="#" data-value="@r.Item1">@r.Item2</a></li>
+                            }
+                        </ul>
+                    </div>
+                    <input type="hidden" asp-for="Employee.RoleType" id="Employee_RoleType" />
                 </div>
 
                 <div class="col-md-6">
-                    <label class="tf-label" for="Employee_DepartmentId">Department</label>
-                    <select class="form-select" asp-for="Employee.DepartmentId" id="Employee_DepartmentId">
-                        <option value="">Select Department</option>
-                        @foreach (var d in Model.AllDepartments)
-                        {
-                            <option value="@d.DepartmentId" data-roletype="@d.RoleType">@d.DepartmentName</option>
-                        }
-                    </select>
+                    <label class="tf-label" for="employeeDepartmentDropdownBtn">Department</label>
+                    @{
+                        var selectedDepartment = Model.AllDepartments.FirstOrDefault(d => d.DepartmentId == Model.Employee.DepartmentId);
+                    }
+                    <div class="dropdown">
+                        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100 text-start" id="employeeDepartmentDropdownBtn"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            @(selectedDepartment != null ? selectedDepartment.DepartmentName : "Select Department")
+                        </button>
+                        <ul class="dropdown-menu status-dropdown-menu w-100" id="employeeDepartmentDropdownMenu" aria-labelledby="employeeDepartmentDropdownBtn">
+                            <li><a class="dropdown-item @(selectedDepartment == null ? "active" : "")" href="#" data-value="">Select Department</a></li>
+                            @foreach (var d in Model.AllDepartments)
+                            {
+                                <li><a class="dropdown-item @(selectedDepartment?.DepartmentId == d.DepartmentId ? "active" : "")" href="#" data-value="@d.DepartmentId" data-roletype="@d.RoleType">@d.DepartmentName</a></li>
+                            }
+                        </ul>
+                    </div>
+                    <input type="hidden" name="Employee.DepartmentId" id="Employee_DepartmentId"
+                           value="@(Model.Employee.DepartmentId == 0 ? "" : Model.Employee.DepartmentId.ToString())" />
                     <div class="tf-form-hint">Only departments matching the selected role type are shown.</div>
                 </div>
             </div>
@@ -77,6 +104,7 @@
     </div>
 </div>
 
+<script src="~/js/status-dropdown.js"></script>
 <script>
     // Letters only (e.g. Full Name)
     document.getElementById('Employee_FullName').addEventListener('keypress', function (e)
@@ -97,26 +125,27 @@
     (function () {
         const roleSelect = document.getElementById('Employee_RoleType');
         const deptSelect = document.getElementById('Employee_DepartmentId');
-        const deptOptions = Array.from(deptSelect.querySelectorAll('option[data-roletype]'));
+        const deptMenu = document.getElementById('employeeDepartmentDropdownMenu');
+        const deptItems = Array.from(deptMenu.querySelectorAll('.dropdown-item[data-roletype]'));
 
         function filterDepartments() {
             const selectedRole = roleSelect.value;
             let selectedStillValid = false;
 
-            deptOptions.forEach(function (opt) {
-                const matches = opt.dataset.roletype === selectedRole;
-                opt.hidden = !matches;
-                opt.disabled = !matches;
-                if (matches && opt.value === deptSelect.value) selectedStillValid = true;
+            deptItems.forEach(function (item) {
+                const matches = item.dataset.roletype === selectedRole;
+                item.closest('li').hidden = !matches;
+                if (matches && item.dataset.value === deptSelect.value) selectedStillValid = true;
             });
 
             if (!selectedStillValid) {
-                const firstMatch = deptOptions.find(o => o.dataset.roletype === selectedRole);
-                deptSelect.value = firstMatch ? firstMatch.value : '';
+                const firstMatch = deptItems.find(o => o.dataset.roletype === selectedRole);
+                deptDropdown.selectByValue(firstMatch ? firstMatch.dataset.value : '', false);
             }
         }
 
-        roleSelect.addEventListener('change', filterDepartments);
+        wireStatusDropdown('employeeRoleDropdownBtn', roleSelect, { onChange: filterDepartments });
+        const deptDropdown = wireStatusDropdown('employeeDepartmentDropdownBtn', deptSelect);
         filterDepartments();
     })();
 </script>

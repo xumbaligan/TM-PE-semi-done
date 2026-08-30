@@ -40,13 +40,26 @@
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="tf-label" asp-for="Item.RoleType">
+                    <label class="tf-label" for="roleTypeDropdownBtn">
                         Role Type <span class="tf-required">*</span>
                     </label>
-                    <select class="form-select" asp-for="Item.RoleType" id="roleTypeSelect">
-                        <option value="OfficeStaff">Office Staff</option>
-                        <option value="FieldTechnician">Field Technician</option>
-                    </select>
+                    @{
+                        var roleTypeOptions = new[] { ("OfficeStaff", "Office Staff"), ("FieldTechnician", "Field Technician") };
+                        var currentRoleLabel = roleTypeOptions.FirstOrDefault(r => r.Item1 == Model.Item.RoleType.ToString()).Item2 ?? "Select role type";
+                    }
+                    <div class="dropdown">
+                        <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100" id="roleTypeDropdownBtn"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            @currentRoleLabel
+                        </button>
+                        <ul class="dropdown-menu status-dropdown-menu w-100" aria-labelledby="roleTypeDropdownBtn">
+                            @foreach (var r in roleTypeOptions)
+                            {
+                                <li><a class="dropdown-item @(Model.Item.RoleType.ToString() == r.Item1 ? "active" : "")" href="#" data-value="@r.Item1">@r.Item2</a></li>
+                            }
+                        </ul>
+                    </div>
+                    <input type="hidden" asp-for="Item.RoleType" id="roleTypeSelect" />
                 </div>
 
                 @*  <div class="col-md-6"><label class="form-label">Max Score (1-10)</label>
@@ -75,9 +88,11 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/status-dropdown.js"></script>
     <script>
         (function () {
             const roleSelect = document.getElementById('roleTypeSelect');
+            wireStatusDropdown('roleTypeDropdownBtn', roleSelect, { onChange: updateWeightAvailability });
 
             // Weight already committed to active criteria of each Role Type,
             // so the remaining-percent indicator below can update as the
@@ -108,7 +123,6 @@
                 weightAvailableText.classList.toggle('text-muted', remaining >= 0);
             }
 
-            roleSelect.addEventListener('change', updateWeightAvailability);
             weightInput.addEventListener('input', updateWeightAvailability);
             updateWeightAvailability();
         })();

@@ -33,6 +33,7 @@ namespace TM_PE.Pages
             HttpContext.Session.Remove("PwReset_Code");
             HttpContext.Session.Remove("PwReset_Expiry");
             HttpContext.Session.Remove("PwReset_Attempts");
+            HttpContext.Session.Remove("PwReset_DevCode");
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -70,12 +71,17 @@ namespace TM_PE.Pages
 
             var sent = await _emailService.TrySendCodeAsync(employee.Email, code);
 
-            // Email delivery isn't configured/working yet - carry the code
-            // through TempData so VerifyCode can show it directly instead of
-            // silently stranding the visitor with no way to get it.
-            if (!sent)
+            // Email delivery isn't configured/working yet - carry the code in
+            // session (not TempData, which only survives a single redirect)
+            // so VerifyCode can keep showing it across an incorrect-attempt
+            // re-render instead of it vanishing after the first try.
+            if (sent)
             {
-                TempData["PwReset_DevCode"] = code;
+                HttpContext.Session.Remove("PwReset_DevCode");
+            }
+            else
+            {
+                HttpContext.Session.SetString("PwReset_DevCode", code);
             }
 
             return RedirectToPage("/VerifyCode");

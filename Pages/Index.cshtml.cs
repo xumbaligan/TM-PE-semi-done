@@ -231,11 +231,19 @@ public class IndexModel : PageModel
             .Include(t => t.Assignments)
             .ToListAsync();
 
+        // Without this, a ticket's Status can still read Pending/In Progress
+        // here even though it's actually overdue - the same live re-check the
+        // Office Task branch above already does, just for job tickets. Skipping
+        // it undercounted every field technician's workload: a ticket already
+        // flipped to Overdue elsewhere matched neither the "active" nor the old
+        // ad-hoc "overdue" check below, so it contributed zero points instead
+        // of the intended 4.
+        await JobTicketOverdueChecker.RefreshAsync(_db, jobTickets);
+
         var employees = await _db.Employees
             .Where(e => e.IsActive && (e.RoleType == RoleType.FieldTechnician || e.RoleType == RoleType.OfficeStaff))
             .ToListAsync();
 
-        var today = DateTime.Now.Date;
         var items = new List<WorkloadBarItem>();
 
         foreach (var emp in employees)
@@ -256,10 +264,9 @@ public class IndexModel : PageModel
             else
             {
                 var assignedTickets = jobTickets.Where(t => t.Assignments.Any(a => a.EmployeeID == emp.EmployeeId)).ToList();
-                var activeTickets = assignedTickets.Count(t => t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress);
-                var overdueTickets = assignedTickets.Count(t =>
-                    t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress
-                    && t.ServiceDate.Date < today);
+                var activeTickets = assignedTickets.Count(t =>
+                    t.Status is JobTicketStatuses.Pending or JobTicketStatuses.InProgress or JobTicketStatuses.Overdue);
+                var overdueTickets = assignedTickets.Count(t => t.Status == JobTicketStatuses.Overdue);
 
                 points = (activeTickets * 2) + (overdueTickets * 2);
             }

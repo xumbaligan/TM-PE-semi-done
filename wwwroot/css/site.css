@@ -774,6 +774,36 @@ select,
     border-bottom: 0;
 }
 
+/*
+   Every data table in the system: fixed, evenly-proportioned column widths
+   (set per <th> - see the pages that use this) instead of each column
+   auto-sizing to its own content, which left some columns (Description,
+   Name, Feedback...) far wider than others (Status, Weight...) and made
+   the table look lopsided, with no consistent right edge either. A value
+   that doesn't fit its column wraps onto a second line rather than
+   forcing the column wider or getting cut off.
+*/
+.wlm-table-fixed {
+    table-layout: fixed;
+    width: 100%;
+}
+
+    .wlm-table-fixed th,
+    .wlm-table-fixed td {
+        overflow-wrap: break-word;
+    }
+
+/*
+   Criteria's rows only ever hold a line of text/a badge, so they came out
+   visibly shorter than Employees' (whose rows are held open by the 36px
+   .wlm-avatar circle) even though both use .wlm-table's same base padding.
+   Extra top/bottom padding here brings Criteria's row height up to match.
+*/
+.wlm-table-row-lg > tbody > tr > td {
+    padding-top: 1.3rem;
+    padding-bottom: 1.3rem;
+}
+
 .wlm-avatar {
     width: 36px;
     height: 36px;
@@ -787,6 +817,24 @@ select,
     font-size: .75rem;
     flex-shrink: 0;
 }
+
+/*
+   One brand-purple alert instead of Bootstrap's default blue/yellow -
+   used where a page shows more than one alert variant for what's really
+   the same kind of notice (e.g. Manager > Tasks's "arrived here from a
+   Dashboard tile" banners), so they read as one consistent style instead
+   of looking like different severities.
+*/
+.alert-purple {
+    background: #f5ecfa;
+    color: #47076f;
+    border: 1px solid #e3c5f6;
+}
+
+    .alert-purple a {
+        color: #47076f;
+        font-weight: 700;
+    }
 
 .count-badge {
     display: inline-flex;
@@ -817,29 +865,18 @@ select,
 }
 
 /*
-   Palette-matched stat-tile icon tints (Dashboard) - navy/purple in place of
-   Bootstrap's default blue .bg-primary-subtle, and the same green/red used
-   by .status-badge-active / .count-badge-danger elsewhere, so Dashboard's
-   icons read as the same brand instead of Bootstrap's stock theme colors.
+   Stat-tile icon badges (Dashboard, New/Edit Evaluation, Workload Monitoring)
+   all share the same purple gradient now - the same one used for the
+   sidebar's own logo badge (see .sidebar-logo-badge) - instead of each
+   variant tinting a different color (blue/green/red/orange), so every icon
+   reads as one consistent brand instead of Bootstrap's stock severity colors.
 */
-.icon-palette-primary {
-    background: #ece4f7;
-    color: #31055d;
-}
-
-.icon-palette-success {
-    background: #e4f4ec;
-    color: #219750;
-}
-
-.icon-palette-danger {
-    background: #fbe8e8;
-    color: #a21919;
-}
-
+.icon-palette-primary,
+.icon-palette-success,
+.icon-palette-danger,
 .icon-palette-warning {
-    background: #fdf1e3;
-    color: #b3620d;
+    background: linear-gradient(135deg, #31055d, #47076f);
+    color: #fff;
 }
 
 /* Progress bar fill matched to the brand purple instead of Bootstrap's default blue. */
@@ -1100,6 +1137,47 @@ select,
         font-size: 1.05rem;
     }
 
+/*
+   Search boxes on every Index/list page - the same bordered input shell as
+   every other input in the app (Create/Edit forms' .form-control, the
+   account/login inputs above): 1.5px navy-tinted border, 9px radius, and a
+   purple focus glow - in place of Bootstrap's plainer, thinner
+   .input-group/.input-group-text look. Purely a restyle: the input's own
+   name/id/placeholder (and so the search behavior wired to it) don't change.
+*/
+.search-input-group {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    border: 1.5px solid rgba(2,2,54,.18);
+    border-radius: 9px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.04);
+    padding: .55rem .9rem;
+    background: #fff;
+}
+
+    .search-input-group:focus-within {
+        border-color: #9f4cd6;
+        box-shadow: 0 0 0 .18rem rgba(159,76,214,.15);
+    }
+
+    .search-input-group i {
+        color: #a9a9bd;
+    }
+
+    .search-input-group input {
+        border: 0;
+        outline: 0;
+        flex: 1;
+        min-width: 0;
+        font-size: .9rem;
+        background: transparent;
+    }
+
+        .search-input-group input::placeholder {
+            color: #a9a9bd;
+        }
+
 .account-form-label {
     font-size: .82rem;
     font-weight: 600;
@@ -1298,6 +1376,20 @@ select,
     .tf-form-card .form-control::placeholder {
         color: #a9a9bd;
     }
+
+/*
+   Every native <input type="date"> in the system (Job Ticket, Office Task,
+   and Performance Evaluation Create/Edit) - the field itself already picks
+   up the bordered/purple-focus look above via .form-control, but the
+   calendar icon browsers paint inside it defaults to plain black/gray.
+   Recolors that icon into the same brand purple - Chromium/WebKit browsers
+   only (::-webkit-calendar-picker-indicator has no Firefox equivalent), so
+   Firefox keeps its own native icon rather than being left broken.
+*/
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(21%) sepia(38%) saturate(3207%) hue-rotate(258deg) brightness(80%) contrast(96%);
+    cursor: pointer;
+}
 
 /* Plain caption under a field (no icon) - Bootstrap's .form-text, restyled. */
 .tf-form-hint {
@@ -2024,9 +2116,10 @@ select,
 }
 
 /*
-   Overrides the flat tint that .icon-palette-* would otherwise paint, so the
-   glyph sits in a light disc on the already-tinted tile. The palette class
-   still supplies the glyph colour.
+   Overrides the flat tint (and, now, the white glyph colour) that
+   .icon-palette-* would otherwise paint, so the glyph sits in a light disc
+   on the already-tinted tile - .icon-palette-*'s own white would disappear
+   against that same light disc, so this sets its own dark purple instead.
 */
 .eval-stat .stat-icon {
     display: flex;
@@ -2034,6 +2127,7 @@ select,
     justify-content: center;
     border-radius: 50%;
     background: rgba(255,255,255,.8);
+    color: #47076f;
     width: 32px;
     height: 32px;
     font-size: 1rem;
@@ -2057,6 +2151,32 @@ select,
 }
 
 /* --- Right rail: score preview --- */
+/*
+   New/Edit Evaluation's stat-tile sidebar. Reordered ahead of the form on
+   mobile (see Create/Edit.cshtml's order-1/order-lg-2) so the manager can
+   see it without scrolling past the whole rating form first, and kept
+   sticky there too - but on mobile the fixed navy .mobile-topbar (see
+   above, ~64px incl. padding) already occupies the very top of the
+   viewport, so this needs a larger top offset there or it would stick
+   partway underneath that bar instead of below it.
+
+   Bootstrap's .sticky-top utility carries its own z-index: 1020 - higher
+   than a Bootstrap .dropdown-menu's default 1000, which put this sidebar
+   in front of the notification bell's dropdown instead of behind it.
+   Nothing on this page needs to out-rank global chrome like that, so this
+   brings it back down below dropdowns/modals.
+*/
+.eval-sidebar-sticky {
+    top: 1rem;
+    z-index: 1;
+}
+
+@media (max-width: 991.98px) {
+    .eval-sidebar-sticky {
+        top: calc(64px + .75rem);
+    }
+}
+
 .eval-score-card {
     background: #f6f6fa;
     border: 1px solid rgba(2,2,54,.12);
@@ -2361,15 +2481,18 @@ select,
 
 /* ===================== Notification bell (.notif-*) ===================== */
 /*
-   Topbar strip every layout renders above @RenderBody(), right-aligning the
-   bell to the page's upper-right corner. See Pages/Shared/_NotificationBell.cshtml
-   and wwwroot/js/notifications.js - the badge/dropdown are populated by
-   polling, never by a page reload.
+   Every layout renders this right before @RenderBody(), inside the same
+   <main>. Floating it (rather than giving it its own flex row) pulls it up
+   to the page's upper-right corner and lets the page's own title/heading -
+   whatever markup that turns out to be, since every page's first block is
+   different - wrap in beside it at the same height, so the bell reads as
+   "level with" the page name instead of sitting in a separate strip above
+   it. See Pages/Shared/_NotificationBell.cshtml and wwwroot/js/notifications.js
+   - the badge/dropdown are populated by polling, never by a page reload.
 */
 .app-topbar {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: .75rem;
+    float: right;
+    margin: 0 0 .5rem 1rem;
 }
 
 .notif-bell-wrap {
