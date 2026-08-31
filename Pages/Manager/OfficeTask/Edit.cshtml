@@ -15,7 +15,7 @@
 
 <form method="post" id="taskForm">
 
-    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <partial name="_RestrictionModal" model="(string?)null" />
     <input type="hidden" asp-for="OfficeTask.OfficeTaskID" />
 
     <!-- Read-only meta strip: task number + date created + assigned by -->

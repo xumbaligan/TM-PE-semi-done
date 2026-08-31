@@ -1,0 +1,52 @@
+@model string
+@*
+    Shared "can't save yet" modal - replaces the old pattern of dumping
+    validation/restriction errors into a banner at the top of the page
+    (asp-validation-summary or a TempData ErrorMessage alert), which a
+    manager could easily miss above the fold. A page includes this once,
+    passing its TempData/ViewData error string as the model (or nothing, for
+    a page that only ever has ModelState errors) - either kind of error still
+    opens the same modal instead of a page-top banner.
+
+    asp-validation-summary works inside a partial the same as inline, since a
+    partial shares its caller's ViewData/ModelState by default.
+*@
+<div class="modal fade" id="tfRestrictionModal" tabindex="-1" aria-labelledby="tfRestrictionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger d-flex align-items-center gap-2" id="tfRestrictionModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Can't save yet
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (!string.IsNullOrWhiteSpace(Model))
+                {
+                    <p class="mb-0">@Model</p>
+                }
+                <div asp-validation-summary="All" class="text-danger mb-0"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-navy" data-bs-dismiss="modal">Got it</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Deferred to DOMContentLoaded rather than run inline: this partial can
+    // render above the page's own bootstrap.bundle.min.js <script> tag
+    // (that lives at the bottom of the shared layout), so `bootstrap` isn't
+    // defined yet at the point this markup is parsed.
+    document.addEventListener('DOMContentLoaded', function () {
+        var modalEl = document.getElementById('tfRestrictionModal');
+        if (!modalEl) return;
+
+        var hasCustomMessage = @Html.Raw(string.IsNullOrWhiteSpace(Model) ? "false" : "true");
+        var hasValidationErrors = modalEl.querySelectorAll('.validation-summary-errors li').length > 0;
+
+        if (hasCustomMessage || hasValidationErrors) {
+            new bootstrap.Modal(modalEl).show();
+        }
+    });
+</script>

@@ -13,13 +13,7 @@
     };
 }
 
-@if (!string.IsNullOrEmpty(Model.ErrorMessage))
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @Model.ErrorMessage
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+<partial name="_RestrictionModal" model="Model.ErrorMessage" />
 
 <div class="vm-page-header mb-3">
     <div class="vm-header-icon"><i class="bi bi-clipboard-data"></i></div>
@@ -42,7 +36,7 @@
             <div class="vm-label">Progress</div>
             <div class="d-flex align-items-center gap-2">
                 <div class="progress flex-grow-1" style="height:8px; min-width:80px;">
-                    <div class="progress-bar" role="progressbar"
+                    <div class="progress-bar progress-bar-brand" role="progressbar"
                          style="width:@(Model.OfficeTask.Progress)%;"
                          aria-valuenow="@Model.OfficeTask.Progress" aria-valuemin="0" aria-valuemax="100">
                     </div>

@@ -277,13 +277,22 @@ namespace TM_PE.Pages.Manager.PerformanceEvaluation
 
             if (wantsTickets)
             {
+                // Matches EmployeePerformanceStatsBuilder's own period test: a
+                // ticket counts toward this period if its deadline falls
+                // inside it, or - for one that's actually done - if it was
+                // finished (DateCompleted) inside it. Keeping both in sync
+                // means the tile's count and this drill-down list never
+                // disagree about which tickets belong to the period.
                 var assignments = await _context.JobTicketAssignments
                     .Include(a => a.JobTicket).ThenInclude(t => t!.Submissions)
                     .Include(a => a.JobTicket).ThenInclude(t => t!.RescheduleHistory)
                     .Where(a => a.EmployeeID == employeeId && a.JobTicket != null
-                        && a.JobTicket!.DateOfCompletion != null
-                        && a.JobTicket.DateOfCompletion.Value.Date >= periodStart.Date
-                        && a.JobTicket.DateOfCompletion.Value.Date <= periodEnd.Date)
+                        && ((a.JobTicket!.DateOfCompletion != null
+                                && a.JobTicket.DateOfCompletion.Value.Date >= periodStart.Date
+                                && a.JobTicket.DateOfCompletion.Value.Date <= periodEnd.Date)
+                            || (a.JobTicket!.DateCompleted != null
+                                && a.JobTicket.DateCompleted.Value.Date >= periodStart.Date
+                                && a.JobTicket.DateCompleted.Value.Date <= periodEnd.Date)))
                     .ToListAsync();
 
                 var ticketIds = assignments.Select(a => a.JobTicketID).ToList();
@@ -387,11 +396,20 @@ namespace TM_PE.Pages.Manager.PerformanceEvaluation
 
             if (wantsTasks)
             {
+                // Matches EmployeePerformanceStatsBuilder's own period test: a
+                // task counts toward this period if it's due inside it, or -
+                // for one that's actually done - if it was finished
+                // (DateCompleted) inside it, so the tile's count and this
+                // drill-down list never disagree about which tasks belong to
+                // the period.
                 var assignments = await _context.TaskAssignments
                     .Include(a => a.OfficeTask).ThenInclude(t => t!.Activities)
                     .Where(a => a.EmployeeID == employeeId && a.OfficeTask != null
-                        && a.OfficeTask!.DueDate.Date >= periodStart.Date
-                        && a.OfficeTask.DueDate.Date <= periodEnd.Date)
+                        && ((a.OfficeTask!.DueDate.Date >= periodStart.Date
+                                && a.OfficeTask.DueDate.Date <= periodEnd.Date)
+                            || (a.OfficeTask!.DateCompleted != null
+                                && a.OfficeTask.DateCompleted.Value.Date >= periodStart.Date
+                                && a.OfficeTask.DateCompleted.Value.Date <= periodEnd.Date)))
                     .ToListAsync();
 
                 var activityIds = assignments.SelectMany(a => a.OfficeTask!.Activities).Select(x => x.ActivityID).ToList();

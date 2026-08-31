@@ -20,6 +20,19 @@
         // Checked on every page load rather than a background job - see
         // DueSoonReminderChecker for why, and why it can't double-notify.
         await DueSoonReminderChecker.EnsureNotifiedAsync(NotifDbContext, notifEmployeeId.Value);
+        await OverdueReminderChecker.EnsureNotifiedAsync(NotifDbContext, notifEmployeeId.Value);
+
+        // Role-specific reminders - only relevant (and only queried) for the
+        // role they're about, same recompute-on-read/dedup style as above.
+        var notifRoleType = Context.Session.GetString("AuthRoleType");
+        if (notifRoleType == "Manager")
+        {
+            await EvaluationPeriodReminderChecker.EnsureNotifiedAsync(NotifDbContext, notifEmployeeId.Value);
+        }
+        else if (notifRoleType == "Admin")
+        {
+            await NoAccountReminderChecker.EnsureNotifiedAsync(NotifDbContext, notifEmployeeId.Value);
+        }
     }
     var initialNotifItems = notifEmployeeId == null
         ? new List<Notification>()

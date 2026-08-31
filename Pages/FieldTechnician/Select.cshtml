@@ -13,7 +13,7 @@
             <h3 class="fw-bold">Field Technician</h3>
             <p class="text-muted">Select your name to view your assigned job orders.</p>
 
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <partial name="_RestrictionModal" model="(string?)null" />
 
             <form method="post">
                 <div class="mb-3">

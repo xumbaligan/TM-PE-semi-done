@@ -257,9 +257,24 @@ namespace TM_PE.Pages.Manager.OfficeTask
                     // Only counts as a fresh rejection if it's actually transitioning
                     // into Rejected now - re-saving an already-Rejected activity
                     // (e.g. just editing its feedback) must not inflate the count.
+                    bool isFreshTransition = activity.Status != statuses[i];
                     if (statuses[i] == "Rejected" && activity.Status != "Rejected")
                     {
                         activity.RejectionCount++;
+                    }
+
+                    // Only on a fresh transition - re-saving an already-reviewed
+                    // activity (e.g. just tweaking feedback text) shouldn't send
+                    // the employee the same "was approved/rejected" notice again.
+                    if (isFreshTransition && activity.AssignedEmployeeID.HasValue)
+                    {
+                        var activityMessage = statuses[i] == "Approved"
+                            ? $"Your activity \"{activity.ActivityName}\" was approved."
+                            : $"Your activity \"{activity.ActivityName}\" was rejected.{(string.IsNullOrWhiteSpace(newFeedback) ? "" : " Feedback: " + newFeedback)}";
+                        NotificationHelper.Notify(_context, activity.AssignedEmployeeID,
+                            activityMessage,
+                            $"/OfficeStaff/Details/{officeTaskId}",
+                            statuses[i] == "Approved" ? "bi-check2-circle" : "bi-x-circle");
                     }
 
                     activity.Status = statuses[i];

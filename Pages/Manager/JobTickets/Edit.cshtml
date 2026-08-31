@@ -18,7 +18,7 @@
 
 <form method="post" id="ticketForm">
 
-    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <partial name="_RestrictionModal" model="(string?)null" />
     <input type="hidden" asp-for="JobTicket.JobTicketID" />
 
     <!-- Read-only meta strip: ticket number + date created + assigned by -->

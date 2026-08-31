@@ -28,12 +28,8 @@ public class EditModel : PageModel
         var namePattern = new System.Text.RegularExpressions.Regex(@"^[A-Za-z\s'-]+$");
         var emailPattern = new System.Text.RegularExpressions.Regex(@"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,6}$");
 
-        // Allowed email domains only
-        var allowedDomains = new[]
-        {
-        "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
-        "icloud.com", "live.com", "msn.com", "mail.com"
-    };
+        // Allowed email domains - Gmail only
+        var allowedDomains = new[] { "gmail.com" };
 
         var existingEmail = await _db.Employees
             .FirstOrDefaultAsync(e => e.Email == Employee.Email && e.EmployeeId != Employee.EmployeeId);
@@ -71,7 +67,7 @@ public class EditModel : PageModel
             if (!allowedDomains.Contains(domain))
             {
                 ModelState.AddModelError("Employee.Email",
-                    $"Email domain '@{domain}' is not allowed. Use: gmail.com, yahoo.com, outlook.com, etc.");
+                    $"Email domain '@{domain}' is not allowed. Only @gmail.com addresses are accepted.");
             }
             else if (existingEmail != null)
             {
@@ -86,6 +82,17 @@ public class EditModel : PageModel
         }
 
         _db.Attach(Employee).State = EntityState.Modified;
+
+        // The username is fixed at creation from the employee's role and ID
+        // (see UsernamePolicy.BuildUsername) and never client-editable, so a
+        // role change here must regenerate it the same way or the account's
+        // username would keep advertising the employee's old role.
+        var account = await _db.UserAccounts.FirstOrDefaultAsync(a => a.EmployeeID == Employee.EmployeeId);
+        if (account != null)
+        {
+            account.Username = UsernamePolicy.BuildUsername(Employee);
+        }
+
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

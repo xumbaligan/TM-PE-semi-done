@@ -245,6 +245,11 @@ namespace TM_PE.Pages.FieldTechnician
                 DateSubmitted = DateTime.Now
             });
 
+            NotificationHelper.Notify(_context, ticket.AssignedByEmployeeID,
+                $"A file was submitted for job ticket {ticket.TicketNumber}.",
+                $"/Manager/JobTickets/Details/{ticket.JobTicketID}",
+                "bi-paperclip");
+
             await _context.SaveChangesAsync();
 
             return RedirectToPage(new
@@ -559,6 +564,22 @@ namespace TM_PE.Pages.FieldTechnician
                     $"Job ticket {ticket.TicketNumber} was updated to {status}.",
                     $"/Manager/JobTickets/Details/{ticket.JobTicketID}",
                     "bi-tools");
+
+                // The leader is the only one who can change status, so the rest of
+                // the assigned team only ever finds out about a cancellation from
+                // the manager unless notified directly here.
+                if (status == JobTicketStatuses.Cancelled)
+                {
+                    foreach (var teammateId in ticket.Assignments
+                        .Where(a => a.EmployeeID != employeeId.Value)
+                        .Select(a => a.EmployeeID))
+                    {
+                        NotificationHelper.Notify(_context, teammateId,
+                            $"Job ticket {ticket.TicketNumber} was cancelled.",
+                            $"/FieldTechnician/Details/{ticket.JobTicketID}",
+                            "bi-x-circle");
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();

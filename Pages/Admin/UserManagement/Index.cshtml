@@ -23,7 +23,15 @@
 <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <div class="search-input-group flex-grow-1" style="max-width:400px;">
         <i class="bi bi-search"></i>
-        <input id="liveSearch" placeholder="Search by username or employee..." />
+        <input name="search" id="liveSearch" value="@Model.Search" placeholder="Search by username or employee..." />
+    </div>
+    <input type="hidden" name="role" id="liveRole" value="@Model.Role" />
+    <div class="role-filter" id="roleFilter">
+        <button type="button" class="role-filter-btn @(string.IsNullOrEmpty(Model.Role) ? "active" : "")" data-value="">All Roles</button>
+        <button type="button" class="role-filter-btn @(Model.Role == "Admin" ? "active" : "")" data-value="Admin">Admin</button>
+        <button type="button" class="role-filter-btn @(Model.Role == "Manager" ? "active" : "")" data-value="Manager">Manager</button>
+        <button type="button" class="role-filter-btn @(Model.Role == "OfficeStaff" ? "active" : "")" data-value="OfficeStaff">Office Staff</button>
+        <button type="button" class="role-filter-btn @(Model.Role == "FieldTechnician" ? "active" : "")" data-value="FieldTechnician">Field Technician</button>
     </div>
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New User Account</a>
 </form>
@@ -56,7 +64,8 @@
                 @foreach (var a in Model.Accounts)
                 {
                     <tr data-username="@a.Username.ToLower()"
-                        data-employee="@((a.Employee?.FullName ?? "").ToLower())">
+                        data-employee="@((a.Employee?.FullName ?? "").ToLower())"
+                        data-role="@(a.Employee?.RoleType.ToString() ?? "")">
                         <td><code class="username-text">@a.Username</code></td>
                         <td>
                             @if (a.Employee != null)
@@ -112,20 +121,30 @@
 @section Scripts {
     <script>
         const searchInput = document.getElementById('liveSearch');
+        const roleInput = document.getElementById('liveRole');
+        const roleFilter = document.getElementById('roleFilter');
+        const roleButtons = roleFilter.querySelectorAll('.role-filter-btn');
         const rows = document.querySelectorAll('tbody tr[data-username]');
 
         function filterTable() {
             const searchVal = searchInput.value.toLowerCase().trim();
+            const roleVal = roleInput.value.toLowerCase().trim();
             let visibleCount = 0;
 
             rows.forEach(row => {
                 const username = row.dataset.username || '';
                 const employee = row.dataset.employee || '';
+                const role = row.dataset.role || '';
 
-                const matches = username.includes(searchVal) || employee.includes(searchVal);
+                const matchesSearch = username.includes(searchVal) || employee.includes(searchVal);
+                const matchesRole = roleVal === '' || role.toLowerCase() === roleVal;
 
-                row.style.display = matches ? '' : 'none';
-                if (matches) visibleCount++;
+                if (matchesSearch && matchesRole) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
             });
 
             const emptyRow = document.getElementById('emptyRow');
@@ -141,5 +160,13 @@
         }
 
         searchInput.addEventListener('input', filterTable);
+        roleButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                roleButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                roleInput.value = btn.dataset.value;
+                filterTable();
+            });
+        });
     </script>
 }

@@ -201,7 +201,36 @@ namespace TM_PE.Pages.Manager.PerformanceReport
                 .Concat(Encoding.UTF8.GetBytes(csv.ToString()))
                 .ToArray();
 
+            await NotifyAdminsOfGeneratedReportAsync();
+
             return File(bytes, "text/csv", fileName);
+        }
+
+        // Export CSV is the one deliberate "produce a report" action on this
+        // page - OnGetAsync itself re-runs on every plain page view/filter
+        // change (see the "Generate Report" button comment above), so hooking
+        // a notification there would fire on casual browsing instead of an
+        // actual export.
+        private async Task NotifyAdminsOfGeneratedReportAsync()
+        {
+            var generatedBy = HttpContext.Session.GetString("AuthEmployeeName") ?? "A manager";
+            var message = $"{generatedBy} generated a performance report for {PeriodLabel} — {DepartmentLabel()}.";
+
+            var adminIds = await _context.Employees
+                .Where(e => e.RoleType == RoleType.Admin && e.IsActive)
+                .Select(e => e.EmployeeId)
+                .ToListAsync();
+
+            foreach (var adminId in adminIds)
+            {
+                NotificationHelper.Notify(_context, adminId, message,
+                    "/Manager/PerformanceReport/Index", "bi-file-earmark-text");
+            }
+
+            if (adminIds.Any())
+            {
+                await _context.SaveChangesAsync();
+            }
         }
 
         private string DepartmentLabel()

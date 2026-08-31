@@ -64,8 +64,9 @@
     </div>
 </div>
 
+<partial name="_RestrictionModal" model="(string?)null" />
+
 <form method="post" id="evalForm">
-    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
     <input type="hidden" id="selectedRoleInput" name="SelectedRole" value="@Model.SelectedRole" />
 
     <div class="row g-4">
@@ -176,7 +177,7 @@
                         <div class="dropdown">
                             <button type="button" class="btn status-dropdown-btn dropdown-toggle w-100 text-start" id="employeeDropdownBtn"
                                     data-bs-toggle="dropdown" aria-expanded="false">
-                                @(selectedEmployee != null ? $"{selectedEmployee.FullName} ({selectedEmployee.RoleType})" : "Select an employee...")
+                                @(selectedEmployee != null ? selectedEmployee.FullName : "Select an employee...")
                             </button>
                             <ul class="dropdown-menu status-dropdown-menu w-100" id="employeeDropdownMenu" aria-labelledby="employeeDropdownBtn">
                                 <li><a class="dropdown-item @(selectedEmployee == null ? "active" : "")" href="#" data-value="">Select an employee...</a></li>
@@ -192,7 +193,7 @@
                                            data-cancelled="@s.Cancelled"
                                            data-rejected="@s.RejectedActivities"
                                            data-overdue="@s.OverdueTasks">
-                                            @emp.FullName (@emp.RoleType)
+                                            @emp.FullName
                                         </a>
                                     </li>
                                 }

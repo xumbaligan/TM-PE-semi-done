@@ -57,12 +57,22 @@ namespace TM_PE.Model
             if (ids.Count == 0) return stats;
 
             // ---------- Job tickets ----------
+            // A ticket belongs to a period if its deadline (DateOfCompletion)
+            // falls inside it, OR - for one that's actually done - if it was
+            // finished (DateCompleted) inside it. Deadline-only used to miss a
+            // ticket that was, say, due in July but not actually finished
+            // until August: it would vanish from both months' stats entirely
+            // instead of counting toward the one it was really completed in.
             var ticketAssignments = await context.JobTicketAssignments
                 .Include(a => a.JobTicket)
                 .Where(a => ids.Contains(a.EmployeeID) && a.JobTicket != null
-                    && (periodStart == null || (a.JobTicket!.DateOfCompletion != null
-                        && a.JobTicket.DateOfCompletion.Value.Date >= periodStart.Value.Date
-                        && a.JobTicket.DateOfCompletion.Value.Date <= periodEnd!.Value.Date)))
+                    && (periodStart == null || (
+                        (a.JobTicket!.DateOfCompletion != null
+                            && a.JobTicket.DateOfCompletion.Value.Date >= periodStart.Value.Date
+                            && a.JobTicket.DateOfCompletion.Value.Date <= periodEnd!.Value.Date)
+                        || (a.JobTicket!.DateCompleted != null
+                            && a.JobTicket.DateCompleted.Value.Date >= periodStart.Value.Date
+                            && a.JobTicket.DateCompleted.Value.Date <= periodEnd!.Value.Date))))
                 .ToListAsync();
 
             var ticketIds = ticketAssignments.Select(a => a.JobTicketID).Distinct().ToList();
@@ -146,12 +156,21 @@ namespace TM_PE.Model
             }
 
             // ---------- Office tasks ----------
+            // Same reasoning as the job ticket period test above: a task
+            // belongs to a period if it's due inside it, OR - for one that's
+            // actually done - if it was finished (DateCompleted) inside it,
+            // so a task completed in a different month than its due date
+            // still counts toward the month it was really finished in
+            // instead of disappearing from every period's stats.
             var taskAssignments = await context.TaskAssignments
                 .Include(a => a.OfficeTask)
                 .Where(a => ids.Contains(a.EmployeeID) && a.OfficeTask != null
-                    && (periodStart == null
-                        || (a.OfficeTask!.DueDate.Date >= periodStart.Value.Date
-                            && a.OfficeTask.DueDate.Date <= periodEnd!.Value.Date)))
+                    && (periodStart == null || (
+                        (a.OfficeTask!.DueDate.Date >= periodStart.Value.Date
+                            && a.OfficeTask.DueDate.Date <= periodEnd!.Value.Date)
+                        || (a.OfficeTask!.DateCompleted != null
+                            && a.OfficeTask.DateCompleted.Value.Date >= periodStart.Value.Date
+                            && a.OfficeTask.DateCompleted.Value.Date <= periodEnd!.Value.Date))))
                 .ToListAsync();
 
             var taskIds = taskAssignments.Select(a => a.OfficeTaskID).Distinct().ToList();

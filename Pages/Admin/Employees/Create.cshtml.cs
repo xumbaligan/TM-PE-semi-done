@@ -27,12 +27,8 @@ public class CreateModel : PageModel
         var namePattern = new System.Text.RegularExpressions.Regex(@"^[A-Za-z\s'-]+$");
         var emailPattern = new System.Text.RegularExpressions.Regex(@"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,6}$");
 
-        // Allowed email domains
-        var allowedDomains = new[]
-        {
-    "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
-    "icloud.com", "live.com", "msn.com", "mail.com"
-};
+        // Allowed email domains - Gmail only
+        var allowedDomains = new[] { "gmail.com" };
 
         if (!ModelState.IsValid)
         {
@@ -76,7 +72,7 @@ public class CreateModel : PageModel
             {
                 ModelState.AddModelError(
                     "Employee.Email",
-                    $"Email domain '@{domain}' is not allowed."
+                    $"Email domain '@{domain}' is not allowed. Only @gmail.com addresses are accepted."
                 );
             }
         }

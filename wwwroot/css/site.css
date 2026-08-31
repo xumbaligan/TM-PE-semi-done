@@ -37,6 +37,17 @@ body {
     font-family: 'Segoe UI', sans-serif;
 }
 
+/* Bootstrap sets its own monospace stack on these by default (e.g. the
+   <code> username cell on Admin > User Management) - pull them back onto
+   the site's one font family so weight (via font-weight/fw-*) is the only
+   thing that ever varies, never the typeface itself. */
+code,
+kbd,
+pre,
+samp {
+    font-family: inherit;
+}
+
 /*
    Every native <select>/.form-select in the system - status filters on
    Manager > Job Tickets/Office Tasks, the Period/Employee selects on
@@ -1057,16 +1068,19 @@ select,
 }
 
 /* --- Account Overview: icon tile + label/value pairs --- */
+/* Matches the Dashboard's .stat-icon/.icon-palette-* tiles exactly (same
+   gradient, size, radius, glyph size) so an account page's icons read as
+   the same component instead of a similar-but-not-quite one. */
 .account-info-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
-    background: linear-gradient(135deg, #31055d, #47076f);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #020236, #31055d, #47076f);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     flex-shrink: 0;
 }
 
@@ -1883,6 +1897,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .vm-table > tbody > tr:last-child > td {
         border-bottom: 0;
     }
+
+/* Row hidden because it's off the current page (see wwwroot/js/table-pagination.js).
+   Kept as its own !important class, separate from a page's own filter which
+   hides rows via plain style.display or Bootstrap's .d-none, so pagination
+   never has to guess whether a row's display:none came from itself or from
+   the filter when it rebuilds. */
+.tf-page-hidden {
+    display: none !important;
+}
 
 /* Prev/Next control appended below any table (see wwwroot/js/table-pagination.js)
    once its tbody has more rows than fit on one page - keeps a long table from

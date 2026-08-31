@@ -96,16 +96,6 @@
                             <div class="account-label">Department</div>
                             <div class="account-value account-value-caps">@(emp.Department?.DepartmentName ?? "—")</div>
                         </div>
-                        @* Kept alongside the account status above - the two are set
-                           independently, and only the account one is toggled here. *@
-                        <div class="col-md-6">
-                            <div class="account-label">Employee Status</div>
-                            <div>
-                                <span class="status-badge @(emp.IsActive ? "status-badge-active" : "status-badge-inactive")">
-                                    @(emp.IsActive ? "Active" : "Inactive")
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             }

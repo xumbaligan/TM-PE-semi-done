@@ -21,7 +21,7 @@
 
 <form method="post" id="ticketForm">
 
-    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <partial name="_RestrictionModal" model="(string?)null" />
 
     <!-- Read-only meta strip: ticket number + date created + assigned by -->
     <div class="tf-meta-card mb-4">
@@ -173,14 +173,14 @@
                 <span asp-validation-for="JobTicket.FiberPlan" class="text-danger small"></span>
             </div>
 
-            <div class="col-md-6 d-none" id="descriptionGroup">
+            <div class="col-md-6 d-none d-flex flex-column" id="descriptionGroup">
                 <label class="tf-label" asp-for="JobTicket.Description">
                     Description <span class="tf-required">*</span>
                 </label>
 
                 <textarea asp-for="JobTicket.Description"
                           id="descriptionInput"
-                          class="form-control"
+                          class="form-control flex-grow-1"
                           rows="4"
                           maxlength="500"
                           placeholder="Describe the job"></textarea>
@@ -188,7 +188,7 @@
                 <span asp-validation-for="JobTicket.Description" class="text-danger small"></span>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6" id="serviceDateGroup">
                 <label class="tf-label" id="serviceDateLabel" asp-for="JobTicket.ServiceDate">
                     Date of Installation <span class="tf-required">*</span>
                 </label>
@@ -202,26 +202,31 @@
                        required />
 
                 <span asp-validation-for="JobTicket.ServiceDate" class="text-danger small"></span>
+
+                <!-- Moved here (below Date of Job, next to Description) by JS
+                     for job types with no Fiber Plan - see applyJobType() -
+                     out of the DOM's original spot marked by #dueDateAnchor below. -->
+                <div class="mb-2" id="dueDateWrap" style="max-width:440px;">
+                    <label class="tf-label" asp-for="JobTicket.DateOfCompletion">
+                        Due Date <span class="tf-required">*</span>
+                    </label>
+
+                    <input asp-for="JobTicket.DateOfCompletion"
+                           type="date"
+                           id="dateOfCompletionInput"
+                           min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                           value="@(Model.JobTicket.DateOfCompletion?.ToString("yyyy-MM-dd"))"
+                           class="form-control"
+                           required />
+
+                    <span asp-validation-for="JobTicket.DateOfCompletion" class="text-danger small"></span>
+                </div>
             </div>
         </div>
 
-        <div class="mb-2" style="max-width:440px;">
-            <label class="tf-label" asp-for="JobTicket.DateOfCompletion">
-                Due Date <span class="tf-required">*</span>
-            </label>
+        <div id="dueDateAnchor"></div>
 
-            <input asp-for="JobTicket.DateOfCompletion"
-                   type="date"
-                   id="dateOfCompletionInput"
-                   min="@DateTime.Now.ToString("yyyy-MM-dd")"
-                   value="@(Model.JobTicket.DateOfCompletion?.ToString("yyyy-MM-dd"))"
-                   class="form-control"
-                   required />
-
-            <span asp-validation-for="JobTicket.DateOfCompletion" class="text-danger small"></span>
-        </div>
-
-        <div class="tf-hint">
+        <div class="tf-hint" id="serviceDateHint">
             <i class="bi bi-info-circle"></i>
             <span>
                 The deadline for this job to be finished. If this date passes and the job
@@ -370,6 +375,28 @@
                 const descriptionInput = document.getElementById('descriptionInput');
                 const serviceDateLabel = document.getElementById('serviceDateLabel');
                 const serviceDateInput = document.getElementById('serviceDateInput');
+                const serviceDateGroup = document.getElementById('serviceDateGroup');
+                const dueDateWrap = document.getElementById('dueDateWrap');
+                const dueDateAnchor = document.getElementById('dueDateAnchor');
+
+                // A type with no Fiber Plan (Repair/Inspection/Maintenance) moves
+                // Due Date up under Date of Job, beside Description, instead of
+                // its own full-width row below - the description textarea's
+                // flex-grow-1 (see #descriptionGroup) then stretches to match
+                // this taller column so the two align. Installation (or no type
+                // picked yet) keeps Due Date in its original spot, marked by the
+                // empty #dueDateAnchor placeholder left behind there.
+                function positionDueDate(hasFiberPlan) {
+                    if (hasFiberPlan) {
+                        dueDateAnchor.parentNode.insertBefore(dueDateWrap, dueDateAnchor);
+                        dueDateWrap.style.maxWidth = '440px';
+                        dueDateWrap.classList.remove('mt-3');
+                    } else {
+                        serviceDateGroup.appendChild(dueDateWrap);
+                        dueDateWrap.style.maxWidth = '';
+                        dueDateWrap.classList.add('mt-3');
+                    }
+                }
 
                 // Client Info (Full Name / Primary / Secondary) — only collected for
                 // non-Maintenance jobs. Switching to Maintenance clears whatever was typed.
@@ -405,6 +432,7 @@
 
                 function applyJobType() {
                     const type = jobTypeSelect.value;
+                    positionDueDate(type === 'Installation' || !type);
                     if (type === 'Installation') {
                         fiberPlanGroup.classList.remove('d-none');
                         descriptionGroup.classList.add('d-none');

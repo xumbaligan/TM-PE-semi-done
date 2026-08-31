@@ -300,6 +300,19 @@ namespace TM_PE.Pages.Manager.JobTickets
                 // needing to be picked up again, same as any other Pending job.
                 ticket.Status = JobTicketStatuses.Pending;
                 ticket.Remarks = null;
+
+                var assignedTechnicianIds = await _context.JobTicketAssignments
+                    .Where(a => a.JobTicketID == ticket.JobTicketID)
+                    .Select(a => a.EmployeeID)
+                    .ToListAsync();
+
+                foreach (var technicianId in assignedTechnicianIds)
+                {
+                    NotificationHelper.Notify(_context, technicianId,
+                        $"Job ticket {ticket.TicketNumber} was rescheduled to {JobTicket.ServiceDate:MMM d, yyyy}.",
+                        $"/FieldTechnician/Details/{ticket.JobTicketID}",
+                        "bi-calendar-event");
+                }
             }
 
             // The leader can only be re-designated while the ticket was Pending/
