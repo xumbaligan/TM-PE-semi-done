@@ -19,6 +19,8 @@
         @{
             string currentPath = Context.Request.Path.Value ?? "/";
             bool IsActive(string path) => currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+            bool isPerformanceRecords = IsActive("/FieldTechnician/PerformanceRecords");
+            bool isJobOrders = IsActive("/FieldTechnician") && !isPerformanceRecords;
             string employeeName = Context.Session.GetString("AuthEmployeeName") ?? "";
             string roleType = Context.Session.GetString("AuthRoleType") ?? "";
             string initials = string.Join("", employeeName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0])));
@@ -27,8 +29,8 @@
             <div class="d-flex align-items-center mb-1"><img src="~/images/login/orb.png" alt="" class="sidebar-logo-orb" /><img src="~/images/login/pakonek-wordmark.png" alt="Pakonek" class="sidebar-wordmark" /></div>
 
             <nav class="nav flex-column">
-                <a class="nav-link text-white @(IsActive("/FieldTechnician/Index") ? "active" : "")" asp-page="/FieldTechnician/Index"><i class="bi bi-tools"></i> Job Orders</a>
-                <a class="nav-link text-white @(IsActive("/FieldTechnician/PerformanceRecords") ? "active" : "")" asp-page="/FieldTechnician/PerformanceRecords"><i class="bi bi-award"></i> My Performance Records</a>
+                <a class="nav-link text-white @(isJobOrders ? "active" : "")" asp-page="/FieldTechnician/Index"><i class="bi bi-tools"></i> Job Orders</a>
+                <a class="nav-link text-white @(isPerformanceRecords ? "active" : "")" asp-page="/FieldTechnician/PerformanceRecords"><i class="bi bi-award"></i> My Performance Records</a>
             </nav>
 
             <div class="mt-auto pt-3">

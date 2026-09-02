@@ -174,8 +174,6 @@ namespace TM_PE.Pages.Manager.WorkLoadMonitoring
                     .ToList();
                 var pendingActivities = assignedActivities.Count(a => a.Status != "Approved");
 
-                var avgScore = assignedTasks.Any() ? Math.Round(assignedTasks.Average(t => t.Score), 1) : 0;
-
                 // Simple, transparent weighting: an active task counts more than a
                 // pending activity since it carries more responsibility.
                 var points = (activeTasks * 2) + pendingActivities + (overdueTasks * 2);
@@ -196,7 +194,6 @@ namespace TM_PE.Pages.Manager.WorkLoadMonitoring
                     CompletedTasks = completedTasks,
                     TotalTasks = assignedTasks.Count,
                     PendingActivities = pendingActivities,
-                    AvgScore = avgScore,
                     WorkloadPoints = points,
                     WorkloadLevel = level
                 };
@@ -292,7 +289,6 @@ namespace TM_PE.Pages.Manager.WorkLoadMonitoring
             public int CompletedTasks { get; set; }
             public int TotalTasks { get; set; }
             public int PendingActivities { get; set; }
-            public decimal AvgScore { get; set; }
             public int WorkloadPoints { get; set; }
             public string WorkloadLevel { get; set; } = "Light";
         }

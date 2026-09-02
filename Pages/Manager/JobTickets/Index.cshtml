@@ -13,7 +13,7 @@
 <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <div class="search-input-group flex-grow-1" style="max-width:480px;">
         <i class="bi bi-search"></i>
-        <input name="search" id="liveSearch" value="@Model.Search" placeholder="Search by leader, job type, ticket #, or client..." />
+        <input name="search" id="liveSearch" value="@Model.Search" placeholder="Search by technician, job type, ticket #, or client..." />
     </div>
     @{
         var statusOptions = new[] { "Pending", "In Progress", "Reschedule Request", "Completed", "Completed Late", "Cancelled", "Rescheduled", "Overdue" };
@@ -33,7 +33,7 @@
     </div>
     <input type="hidden" name="status" id="liveStatus" value="@Model.StatusFilter" />
     <a asp-page="Create" class="btn btn-navy ms-auto">
-        <i class="bi bi-plus-lg"></i> Create New
+        <i class="bi bi-plus-lg"></i> Create New JobTicket
     </a>
 </form>
 
@@ -65,7 +65,9 @@
             @foreach (var item in Model.JobTicket)
             {
                 var leader = item.Assignments?.FirstOrDefault(a => a.IsLeader)?.Employee;
+                var assigneeNames = item.Assignments?.Where(a => a.Employee != null).Select(a => a.Employee!.FullName.ToLower()) ?? Enumerable.Empty<string>();
                 <tr data-leader="@(leader?.FullName.ToLower() ?? "")"
+                    data-assignees="@string.Join("|", assigneeNames)"
                     data-jobtype="@item.JobType.ToLower()"
                     data-ticketid="@item.TicketNumber.ToLower()"
                     data-status="@item.DisplayStatus.ToLower()">
@@ -430,13 +432,13 @@
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const leader = row.dataset.leader || '';
+                const assignees = row.dataset.assignees || '';
                 const jobType = row.dataset.jobtype || '';
                 const ticketId = row.dataset.ticketid || '';
                 const client = row.dataset.client || '';
                 const status = row.dataset.status || '';
 
-                const matchesSearch = leader.includes(searchVal) || jobType.includes(searchVal)
+                const matchesSearch = assignees.includes(searchVal) || jobType.includes(searchVal)
                     || ticketId.includes(searchVal) || client.includes(searchVal);
                 const matchesStatus = statusVal === '' || status === statusVal;
 

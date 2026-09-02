@@ -3,6 +3,24 @@
 @{
     ViewData["Title"] = "Employees";
     Layout = "_Admin";
+
+    string RoleBadgeClass(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.FieldTechnician => "role-badge-field-technician",
+        TM_PE.Model.RoleType.OfficeStaff => "role-badge-office-staff",
+        TM_PE.Model.RoleType.Manager => "role-badge-manager",
+        TM_PE.Model.RoleType.Admin => "role-badge-admin",
+        _ => "role-badge-office-staff"
+    };
+
+    string RoleLabel(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.FieldTechnician => "Field Technician",
+        TM_PE.Model.RoleType.OfficeStaff => "Office Staff",
+        TM_PE.Model.RoleType.Manager => "Manager",
+        TM_PE.Model.RoleType.Admin => "Admin",
+        _ => rt.ToString()
+    };
 }
 
 <div class="mb-3">
@@ -69,8 +87,8 @@
                     </td>
                     <td>@e.Department?.DepartmentName</td>
                     <td>
-                        <span class="badge rounded-pill @(e.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "role-badge-office-staff" : "role-badge-field-technician")">
-                            @(e.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "Office Staff" : "Field Technician")
+                        <span class="badge rounded-pill @RoleBadgeClass(e.RoleType)">
+                            @RoleLabel(e.RoleType)
                         </span>
                     </td>
                     <td>@e.HiredAt.ToString("MM/dd/yyyy")</td>
