@@ -36,8 +36,8 @@
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New User Account</a>
 </form>
 
-<div class="table-responsive wlm-card">
-    <table class="table table-hover wlm-table wlm-table-fixed mb-0 align-middle">
+<div class="table-responsive wlm-card tf-cardify">
+    <table class="table table-hover wlm-table wlm-table-fixed mb-0 align-middle tf-mc-table">
         <thead>
             <tr>
                 <th style="width:15%">Username</th>
@@ -52,13 +52,13 @@
         <tbody>
             @if (!Model.Accounts.Any())
             {
-                <tr id="emptyRow">
+                <tr id="emptyRow" class="tf-mc-empty">
                     <td colspan="7" class="text-center text-muted py-4">No user accounts yet.</td>
                 </tr>
             }
             else
             {
-                <tr id="emptyRow" style="display:none;">
+                <tr id="emptyRow" class="tf-mc-empty" style="display:none;">
                     <td colspan="7" class="text-center text-muted py-4">No user accounts found</td>
                 </tr>
                 @foreach (var a in Model.Accounts)
@@ -66,8 +66,8 @@
                     <tr data-username="@a.Username.ToLower()"
                         data-employee="@((a.Employee?.FullName ?? "").ToLower())"
                         data-role="@(a.Employee?.RoleType.ToString() ?? "")">
-                        <td><code class="username-text">@a.Username</code></td>
-                        <td>
+                        <td class="tf-mc-sub"><code class="username-text">@a.Username</code></td>
+                        <td class="tf-mc-title">
                             @if (a.Employee != null)
                             {
                                 <div class="d-flex align-items-center gap-2">
@@ -82,7 +82,7 @@
                                 <span class="text-muted">—</span>
                             }
                         </td>
-                        <td>
+                        <td class="tf-mc-badge">
                             @if (a.Employee != null)
                             {
                                 <span class="badge rounded-pill @RoleBadgeClass(a.Employee.RoleType)">
@@ -94,9 +94,9 @@
                                 <span class="text-muted">—</span>
                             }
                         </td>
-                        <td class="text-muted">@a.DateCreated.ToString("MMM d, yyyy")</td>
-                        <td class="text-muted">@(a.LastLogin.HasValue ? a.LastLogin.Value.ToString("MMM d, yyyy h:mm tt") : "Never")</td>
-                        <td>
+                        <td class="text-muted tf-mc-hide">@a.DateCreated.ToString("MMM d, yyyy")</td>
+                        <td class="text-muted tf-mc-hide">@(a.LastLogin.HasValue ? a.LastLogin.Value.ToString("MMM d, yyyy h:mm tt") : "Never")</td>
+                        <td class="tf-mc-badge">
                             @if (a.IsActive)
                             {
                                 <span class="status-badge status-badge-active">Active</span>
@@ -106,9 +106,9 @@
                                 <span class="status-badge status-badge-inactive">Disabled</span>
                             }
                         </td>
-                        <td class="text-end">
+                        <td class="text-end tf-mc-action">
                             <a class="btn btn-sm btn-outline-navy" asp-page="Details" asp-route-id="@a.UserAccountID">
-                                <i class="bi bi-eye"></i> View
+                                <i class="bi bi-eye tf-mc-icon-full"></i><span class="tf-mc-label"> View</span><i class="bi bi-chevron-right tf-mc-chevron"></i>
                             </a>
                         </td>
                     </tr>

@@ -119,8 +119,8 @@
             }
 
             list.innerHTML = `
-                <div class="table-responsive wlm-card">
-                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+                <div class="table-responsive wlm-card tf-cardify">
+                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
                     <thead>
                         <tr>
                             <th style="width:32%">Name</th>
@@ -137,7 +137,7 @@
                                 : '<span class="status-badge status-badge-inactive">Inactive</span>';
                             const roleClass = e.Role === 'Office Staff' ? 'role-badge-office-staff' : 'role-badge-field-technician';
                             return `<tr>
-                                <td>
+                                <td class="tf-mc-title">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="wlm-avatar">
                                             ${initials}
@@ -145,9 +145,9 @@
                                         <strong>${e.FullName}</strong>
                                     </div>
                                 </td>
-                                <td class="text-muted">${e.Email}</td>
-                                <td><span class="badge rounded-pill ${roleClass}">${e.Role}</span></td>
-                                <td>${statusBadge}</td>
+                                <td class="text-muted tf-mc-hide">${e.Email}</td>
+                                <td class="tf-mc-badge"><span class="badge rounded-pill ${roleClass}">${e.Role}</span></td>
+                                <td class="tf-mc-badge">${statusBadge}</td>
                             </tr>`;
                         }).join('')}
                     </tbody>

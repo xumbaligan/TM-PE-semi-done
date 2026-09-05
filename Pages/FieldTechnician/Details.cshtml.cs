@@ -59,6 +59,18 @@ namespace TM_PE.Pages.FieldTechnician
         public string? PendingStatus { get; set; }
         public string? PendingRemarks { get; set; }
 
+        // The current, not-yet-saved cycle's submissions - i.e. JobTicket.Submissions
+        // filtered down for display. Deliberately kept SEPARATE from
+        // JobTicket.Submissions itself (never reassign that navigation property to a
+        // filtered subset): JobTicketID is a required relationship, so EF Core
+        // interprets any submission missing from JobTicket.Submissions after such a
+        // reassignment as orphaned and DELETES it outright the next time
+        // SaveChangesAsync runs on this context (e.g. from JobTicketOverdueChecker
+        // below) - even though it's still validly archived under a SubmissionHistory
+        // entry. That silently wiped out every archived submission for a ticket the
+        // moment its Details page was reloaded.
+        public List<JobTicketSubmission> CurrentSubmissions { get; set; } = new();
+
         // ---------------------------------------------------------------
         // LOAD
         // ---------------------------------------------------------------
@@ -113,7 +125,9 @@ namespace TM_PE.Pages.FieldTechnician
             // Only the current, not-yet-saved cycle's submissions belong in the
             // active list; ones archived under a History of Submission entry (or
             // an older manager-triggered reschedule) show under that history instead.
-            ticket.Submissions = ticket.Submissions
+            // Filtered into CurrentSubmissions rather than reassigned onto
+            // ticket.Submissions itself - see that property's doc comment for why.
+            CurrentSubmissions = ticket.Submissions
                 .Where(s => s.RescheduleHistoryID == null && s.SubmissionHistoryID == null)
                 .OrderByDescending(s => s.DateSubmitted)
                 .ToList();

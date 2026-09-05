@@ -344,7 +344,7 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
         </p>
 
         <div class="table-responsive">
-            <table class="table vm-table wlm-table-fixed align-middle">
+            <table class="table vm-table wlm-table-fixed align-middle tf-mc-table">
                 <thead>
                     <tr>
                         <th style="width:22%">Status</th>
@@ -358,18 +358,18 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
                     @foreach (var h in Model.JobTicket.SubmissionHistory)
                     {
                         <tr>
-                            <td>
+                            <td class="tf-mc-badge">
                                 <span class="vm-status @historyBadgeClass(h.Status)">@h.Status</span>
                             </td>
-                            <td class="text-nowrap fw-bold">@actorLabel(h)</td>
-                            <td class="text-truncate" style="max-width:260px;">
+                            <td class="text-nowrap fw-bold tf-mc-title">@actorLabel(h)</td>
+                            <td class="text-truncate tf-mc-hide" style="max-width:260px;">
                                 @(string.IsNullOrWhiteSpace(h.Remarks) ? "—" : h.Remarks)
                             </td>
-                            <td class="text-nowrap">@h.DateChanged.ToString("M/d/yyyy h:mm tt")</td>
-                            <td class="text-end">
+                            <td class="text-nowrap tf-mc-hide">@h.DateChanged.ToString("M/d/yyyy h:mm tt")</td>
+                            <td class="text-end tf-mc-action">
                                 <button type="button" class="vm-btn-sm w-auto"
                                         data-bs-toggle="modal" data-bs-target="#historyModal-@h.JobTicketSubmissionHistoryID">
-                                    <i class="bi bi-eye"></i> View
+                                    <i class="bi bi-eye tf-mc-icon-full"></i><span class="tf-mc-label"> View</span><i class="bi bi-chevron-right tf-mc-chevron"></i>
                                 </button>
                             </td>
                         </tr>
@@ -516,10 +516,10 @@ else if (!string.IsNullOrWhiteSpace(Model.JobTicket.Remarks))
         </form>
     }
 
-    @if (Model.JobTicket.Submissions != null && Model.JobTicket.Submissions.Any())
+    @if (Model.CurrentSubmissions != null && Model.CurrentSubmissions.Any())
     {
         <div class="row g-3">
-            @foreach (var sub in Model.JobTicket.Submissions)
+            @foreach (var sub in Model.CurrentSubmissions)
             {
                 var ext = System.IO.Path.GetExtension(sub.FileName);
                 var isImage = TM_PE.Pages.FieldTechnician.DetailsModel.ImageExtensions.Contains(ext);

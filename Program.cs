@@ -59,7 +59,7 @@ using (var scope = app.Services.CreateScope())
             var adminEmployee = new TM_PE.Model.Employee
             {
                 FullName = "System Administrator",
-                Email = "admin@pakonek.local",
+                Email = "admin@gmail.com",
                 RoleType = TM_PE.Model.RoleType.Admin,
                 DepartmentId = department.DepartmentId,
                 IsActive = true,

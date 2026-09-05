@@ -24,27 +24,27 @@
     </div>
 </form>
 
-<div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table wlm-table-fixed wlm-table-row-lg mb-0">
+<div class="table-responsive wlm-card tf-cardify">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed wlm-table-row-lg mb-0 tf-mc-table">
         <thead>
             <tr>
                 <th style="width:20%">Criteria</th>
-                <th style="width:20%">Description</th>
+                <th style="width:25%">Description</th>
                 <th style="width:20%">Role Type</th>
                 <th style="width:20%">Weight</th>
-                <th style="width:20%">Status</th>
+                <th style="width:10%">Status</th>
             </tr>
         </thead>
         <tbody>
             @if (!Model.Items.Any())
             {
-                <tr id="emptyRow">
+                <tr id="emptyRow" class="tf-mc-empty">
                     <td colspan="5" class="text-center text-muted py-4">No criteria defined</td>
                 </tr>
             }
             else
             {
-                <tr id="emptyRow" style="display:none;">
+                <tr id="emptyRow" class="tf-mc-empty" style="display:none;">
                     <td colspan="5" class="text-center text-muted py-4">No criteria defined</td>
                 </tr>
             }
@@ -54,15 +54,15 @@
                 <tr data-name="@c.CriteriaName.ToLower()"
                     data-description="@(c.Description?.ToLower() ?? "")"
                     data-role="@c.RoleType.ToString().ToLower()">
-                    <td><strong>@c.CriteriaName</strong></td>
-                    <td><span class="text-muted small">@c.Description</span></td>
-                    <td>
+                    <td class="tf-mc-title"><strong>@c.CriteriaName</strong></td>
+                    <td class="tf-mc-hide"><span class="text-muted small">@c.Description</span></td>
+                    <td class="tf-mc-badge">
                         <span class="badge rounded-pill @(c.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "role-badge-office-staff" : "role-badge-field-technician")">
                             @(c.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "Office Staff" : "Field Technician")
                         </span>
                     </td>
-                    <td><span class="weight-text">@c.Weight.ToString("0.##")%</span></td>
-                    <td>
+                    <td class="tf-mc-sub"><span class="weight-text">@c.Weight.ToString("0.##")%</span></td>
+                    <td class="tf-mc-badge">
                         @if (c.IsActive)
                         {
                             <span class="status-badge status-badge-active">Active</span>

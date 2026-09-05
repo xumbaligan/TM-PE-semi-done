@@ -227,6 +227,50 @@
     </div>
 }
 
+@* ===================== SUBMITTED PHOTOS / FILES ===================== *@
+@* Files the field technician leader has uploaded for the CURRENT status
+   update - i.e. not yet archived under a Ticket History entry because the
+   leader hasn't pressed Save on FieldTechnician/Details yet. View/download
+   only; uploading and removing files is the leader's job, not the manager's. *@
+@if (Model.CurrentSubmissions != null && Model.CurrentSubmissions.Any())
+{
+    <div class="vm-card mb-3">
+        <div class="vm-card-label mb-1">Submitted Photos / Files</div>
+        <p class="tf-section-sub mb-3">
+            Uploaded by the field technician leader for the update currently in progress &mdash;
+            not yet reflected in Ticket History below.
+        </p>
+
+        <div class="row g-3">
+            @foreach (var sub in Model.CurrentSubmissions)
+            {
+                var ext = System.IO.Path.GetExtension(sub.FileName);
+                var isImage = TM_PE.Pages.Manager.JobTickets.DetailsModel.ImageExtensions.Contains(ext);
+                <div class="col-md-3 col-sm-4 col-6">
+                    <div class="vm-file-card">
+                        @if (isImage)
+                        {
+                            <img src="~/@sub.FilePath" class="vm-file-thumb" alt="@sub.FileName" />
+                        }
+                        else
+                        {
+                            <div class="vm-file-thumb-placeholder"><i class="bi bi-file-earmark-text"></i></div>
+                        }
+                        <div class="p-2">
+                            <div class="vm-file-name text-truncate" title="@sub.FileName">@sub.FileName</div>
+                            <div class="vm-file-meta">By @(sub.Employee?.FullName ?? "—")</div>
+                            <div class="vm-file-meta">@sub.DateSubmitted.ToString("M/d/yyyy h:mm tt")</div>
+                            <a asp-page-handler="Download" asp-route-submissionId="@sub.JobTicketSubmissionID" class="vm-btn-sm mt-2">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
 @* ===================== TICKET HISTORY ===================== *@
 @{
     Func<string, string> historyBadgeClass = s => s switch

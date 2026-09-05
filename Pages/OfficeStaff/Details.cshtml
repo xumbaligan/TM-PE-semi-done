@@ -135,7 +135,7 @@
     </p>
 
     <div class="table-responsive">
-        <table class="table vm-table wlm-table-fixed align-middle">
+        <table class="table vm-table wlm-table-fixed align-middle tf-mc-table">
             <thead>
                 <tr>
                     <th style="width:27%">Activity</th>
@@ -143,6 +143,7 @@
                     <th style="width:22%">Submission</th>
                     <th style="width:12%">History</th>
                     <th style="width:25%">Feedback</th>
+                    <th class="d-none">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -171,13 +172,13 @@
                         var canRemove = canUpload && submission != null && submission.Status == "Pending Review";
 
                         <tr>
-                            <td>
+                            <td class="tf-mc-title">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="vm-num-badge">@activityIndex</span>
                                     <span class="fw-bold">@activity.ActivityName</span>
                                 </div>
                             </td>
-                            <td>
+                            <td class="tf-mc-badge">
                                 <span class="vm-status @statusBadgeClass">@activity.Status</span>
                                 @if (activity.Status == "Rejected" && activity.RejectionCount > 0)
                                 {
@@ -187,7 +188,7 @@
                                 }
                             </td>
 
-                            <td>
+                            <td class="tf-mc-hide">
                                 <div class="d-flex align-items-center gap-2">
                                     @if (submission != null)
                                     {
@@ -233,7 +234,7 @@
                                 </div>
                             </td>
 
-                            <td>
+                            <td class="tf-mc-hide">
                                 @if (history.Any())
                                 {
                                     <button type="button" class="vm-btn-sm w-auto" data-bs-toggle="modal" data-bs-target="#historyModal-@activity.ActivityID">
@@ -246,8 +247,23 @@
                                 }
                             </td>
 
-                            <td class="text-muted">
+                            <td class="text-muted tf-mc-hide">
                                 @(string.IsNullOrWhiteSpace(activity.FeedBack) ? "—" : activity.FeedBack)
+                            </td>
+
+                            @* Mobile-card-only "View" action - the desktop table already shows
+                               everything (including its own History button) inline above, so this
+                               column stays hidden entirely at desktop widths (d-md-none) and only
+                               appears once the table collapses into cards below 768px, matching the
+                               My Assigned Tasks index table's mobile behavior. The modal it opens
+                               (below) is the one place all of an activity's info - submission,
+                               feedback, and full rejection history - comes together in one view,
+                               since the standalone History button disappears on mobile too. *@
+                            <td class="d-table-cell d-md-none tf-mc-action">
+                                <button type="button" class="vm-btn-sm w-auto" data-bs-toggle="modal" data-bs-target="#viewModal-@activity.ActivityID"
+                                        aria-label="View @activity.ActivityName">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
                             </td>
                         </tr>
                     }
@@ -271,8 +287,11 @@
     </div>
 </div>
 
-@* ===================== HISTORY OF SUBMISSION MODALS ===================== *@
-@* One per activity, placed outside the table to keep markup valid. *@
+@* ===================== HISTORY OF SUBMISSION MODALS (desktop) ===================== *@
+@* One per activity, placed outside the table to keep markup valid. Opened by
+   the standalone "History" button in the table above, which only shows at
+   desktop widths - on mobile that column is hidden and its content instead
+   lives inside the unified "View" modal below. *@
 @if (Model.OfficeTask.Activities != null)
 {
     @foreach (var activity in Model.OfficeTask.Activities)
@@ -282,6 +301,186 @@
         {
             <partial name="_ActivitySubmissionHistoryModal" model="new TM_PE.Pages.Shared.ActivitySubmissionHistoryViewModel { Activity = activity, Attempts = history }" />
         }
+    }
+}
+
+@* ===================== ACTIVITY "VIEW" MODALS (mobile card view) ===================== *@
+@* One per activity, placed outside the table to keep markup valid. Opened
+   only from the mobile-card "View" chevron above (hidden at desktop widths,
+   where all of this is already visible inline in the table) - so this is the
+   one place all of an activity's info comes together: status, submission,
+   feedback, and the full rejection history that used to live in its own
+   separate History button/modal. *@
+@if (Model.OfficeTask.Activities != null && Model.OfficeTask.Activities.Any())
+{
+    var viewModalIndex = 0;
+    @foreach (var activity in Model.OfficeTask.Activities)
+    {
+        viewModalIndex++;
+        var statusBadgeClass = activity.Status switch
+        {
+            "Approved" => "vm-status-success",
+            "Rejected" => "vm-status-danger",
+            "Submitted" => "vm-status-info",
+            _ => "vm-status-pending"
+        };
+        Model.LatestSubmissions.TryGetValue(activity.ActivityID, out var submission);
+        var history = Model.SubmissionHistory.GetValueOrDefault(activity.ActivityID) ?? new List<TM_PE.Model.ActivitySubmission>();
+
+        var isMine = activity.AssignedEmployeeID == Model.CurrentEmployee.EmployeeId;
+        var isClaimedByOther = !soleAssignee && activity.AssignedEmployeeID.HasValue && !isMine;
+        var canUpload = activity.Status != "Approved" && (soleAssignee || activity.AssignedEmployeeID == null || isMine);
+        var canRemove = canUpload && submission != null && submission.Status == "Pending Review";
+
+        // Same rule _ActivitySubmissionHistoryModal uses: only rejected attempts
+        // are worth reviewing here - an Approved one is already reflected by the
+        // activity's own current state, and Pending Review is the in-progress
+        // attempt already shown above as the current Submission.
+        var rejectedAttempts = history.Where(a => a.Status == "Rejected").ToList();
+        var reviewedBy = rejectedAttempts.FirstOrDefault(a => a.ReviewedByEmployee != null)?.ReviewedByEmployee?.FullName;
+
+        <div class="modal fade" id="viewModal-@activity.ActivityID" tabindex="-1"
+             aria-labelledby="viewModalLabel-@activity.ActivityID" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+                <div class="modal-content vm-content">
+
+                    <div class="modal-header vm-header">
+                        <div class="vm-header-icon"><i class="bi bi-card-checklist"></i></div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="vm-title" id="viewModalLabel-@activity.ActivityID">@activity.ActivityName</div>
+                            <div class="vm-subtitle">Activity @viewModalIndex</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <hr class="vm-header-rule" />
+
+                    <div class="modal-body vm-body">
+
+                        <div class="vm-card mb-3">
+                            <div class="vm-label">Status</div>
+                            <span class="vm-status @statusBadgeClass">@activity.Status</span>
+                            @if (activity.Status == "Rejected" && activity.RejectionCount > 0)
+                            {
+                                <div class="vm-file-meta mt-1">
+                                    Rejected @(activity.RejectionCount == 1 ? "1 attempt" : $"{activity.RejectionCount} attempts")
+                                </div>
+                            }
+                        </div>
+
+                        <div class="vm-card mb-3">
+                            <div class="vm-card-label mb-2">Submission</div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                @if (submission != null)
+                                {
+                                    <div class="vm-pill py-1 px-2">
+                                        <a asp-page-handler="Download" asp-route-submissionId="@submission.SubmissionID"
+                                           class="text-truncate text-decoration-none" style="max-width:180px;" title="@submission.FileName">
+                                            @submission.FileName
+                                        </a>
+                                        @if (canRemove)
+                                        {
+                                            <form method="post" asp-page-handler="RemoveSubmission" class="m-0 p-0 lh-1"
+                                                  onsubmit="return confirm('Remove this uploaded file? You will need to upload again.');">
+                                                <input type="hidden" name="submissionId" value="@submission.SubmissionID" />
+                                                <input type="hidden" name="officeTaskId" value="@Model.OfficeTask.OfficeTaskID" />
+                                                <button type="submit" class="tf-chip-remove" title="Remove file">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="vm-value">No File</span>
+                                }
+
+                                @if (canUpload)
+                                {
+                                    <form method="post" asp-page-handler="UploadSubmission" enctype="multipart/form-data" class="m-0 p-0">
+                                        <input type="hidden" name="activityId" value="@activity.ActivityID" />
+                                        <input type="hidden" name="officeTaskId" value="@Model.OfficeTask.OfficeTaskID" />
+                                        <label class="vm-btn-sm w-auto mb-0" style="cursor:pointer;" title="Upload your submission">
+                                            <i class="bi bi-upload"></i>
+                                            <input type="file" name="submissionFile" class="d-none" onchange="this.form.submit()" />
+                                        </label>
+                                    </form>
+                                }
+                                else if (isClaimedByOther)
+                                {
+                                    <span class="tf-empty-msg">Already claimed by another assignee</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="vm-card mb-3">
+                            <div class="vm-card-label mb-2">Feedback</div>
+                            <div class="vm-text">@(string.IsNullOrWhiteSpace(activity.FeedBack) ? "—" : activity.FeedBack)</div>
+                        </div>
+
+                        <div class="vm-card">
+                            <div class="vm-card-label mb-2">History of Submission</div>
+                            <div class="vm-label">Reviewed By</div>
+                            <div class="vm-value mb-2">@(reviewedBy ?? "—")</div>
+
+                            @if (!rejectedAttempts.Any())
+                            {
+                                <span class="tf-empty-msg">No rejected submissions.</span>
+                            }
+                            else
+                            {
+                                @* wlm-table-fixed is deliberately NOT used here - it forces
+                                   width:100%, which on a narrow phone screen squeezes all 5
+                                   columns down until the text wraps and overlaps between rows.
+                                   A fixed min-width instead lets the table stay at a readable
+                                   size and overflow sideways inside .table-responsive's own
+                                   horizontal scrollbar, exactly like a normal desktop table
+                                   just panned into view. *@
+                                <div class="table-responsive">
+                                    <table class="table vm-table align-middle mb-0" style="min-width:640px; table-layout:fixed;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:18%">File</th>
+                                                <th style="width:18%">Submitted By</th>
+                                                <th style="width:18%">Submitted On</th>
+                                                <th style="width:28%">Feedback</th>
+                                                <th style="width:18%">Reviewed On</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var attempt in rejectedAttempts)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <a asp-page-handler="Download" asp-route-submissionId="@attempt.SubmissionID"
+                                                           class="small text-truncate d-inline-block" style="max-width:150px;" title="@attempt.FileName">
+                                                            @attempt.FileName
+                                                        </a>
+                                                    </td>
+                                                    <td class="small">
+                                                        @(attempt.Employee?.FullName ?? "—")
+                                                        <div class="text-danger" style="font-size:.7rem;">Rejected</div>
+                                                    </td>
+                                                    <td class="small text-nowrap text-muted">@attempt.DateSubmitted.ToString("M/d/yyyy h:mm tt")</td>
+                                                    <td class="small" style="max-width:220px;">@(string.IsNullOrWhiteSpace(attempt.Feedback) ? "—" : attempt.Feedback)</td>
+                                                    <td class="small text-nowrap text-muted">@(attempt.DateReviewed?.ToString("M/d/yyyy h:mm tt") ?? "—")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer vm-footer">
+                        <button type="button" class="vm-btn-close" data-bs-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     }
 }
 

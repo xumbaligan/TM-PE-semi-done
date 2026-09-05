@@ -20,6 +20,17 @@
         background-color: var(--bs-body-bg, #fff);
         z-index: 1;
     }
+
+    /* Below 768px each row becomes its own full-width card (see site.css's
+       tf-mc- rules), so the fixed-height mini-scrollbar these two summary
+       tables use on desktop would just clip the card list instead of the
+       table - let the cards flow with the page like everywhere else. */
+    @@media (max-width: 767.98px) {
+        .wlm-summary-scroll {
+            max-height: none;
+            overflow-y: visible;
+        }
+    }
 </style>
 
 <div class="mb-3">
@@ -53,8 +64,8 @@
         }
         else
         {
-            <div class="table-responsive wlm-card">
-                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+            <div class="table-responsive wlm-card tf-cardify">
+                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
                     <thead>
                         <tr>
                             <th style="width:30%">Technicians</th>
@@ -67,7 +78,7 @@
                         @foreach (var t in Model.TechnicianTickets)
                         {
                             <tr>
-                                <td>
+                                <td class="tf-mc-title">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="wlm-avatar">
                                             @(string.Join("", t.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
@@ -75,8 +86,8 @@
                                         <strong>@t.FullName</strong>
                                     </div>
                                 </td>
-                                <td class="fw-bold">@t.DepartmentName</td>
-                                <td class="text-center">
+                                <td class="fw-bold tf-mc-hide">@t.DepartmentName</td>
+                                <td class="text-center tf-mc-badge">
                                     @if (t.ActiveTicketCount > 0)
                                     {
                                         <span class="count-badge count-badge-active">@t.ActiveTicketCount</span>
@@ -86,14 +97,14 @@
                                         <span class="text-muted">0</span>
                                     }
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center tf-mc-actions">
                                     <button type="button" class="btn btn-sm btn-outline-navy technician-view-btn"
                                             data-bs-toggle="modal" data-bs-target="#technicianModal"
                                             data-name="@t.FullName"
                                             data-department="@t.DepartmentName"
                                             data-active="@t.ActiveTicketCount"
                                             data-tickets="@System.Text.Json.JsonSerializer.Serialize(t.Tickets)">
-                                        <i class="bi bi-eye"></i> View
+                                        <i class="bi bi-eye"></i><span class="tf-mc-label"> View</span>
                                     </button>
                                 </td>
                             </tr>
@@ -112,8 +123,8 @@
         }
         else
         {
-            <div class="table-responsive wlm-card">
-                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+            <div class="table-responsive wlm-card tf-cardify">
+                <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
                     <thead>
                         <tr>
                             <th style="width:30%">Staff</th>
@@ -126,7 +137,7 @@
                         @foreach (var s in Model.StaffTasks)
                         {
                             <tr>
-                                <td>
+                                <td class="tf-mc-title">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="wlm-avatar">
                                             @(string.Join("", s.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
@@ -134,8 +145,8 @@
                                         <strong>@s.FullName</strong>
                                     </div>
                                 </td>
-                                <td class="fw-bold">@s.DepartmentName</td>
-                                <td class="text-center">
+                                <td class="fw-bold tf-mc-hide">@s.DepartmentName</td>
+                                <td class="text-center tf-mc-badge">
                                     @if (s.ActiveTaskCount > 0)
                                     {
                                         <span class="count-badge count-badge-active">@s.ActiveTaskCount</span>
@@ -145,14 +156,14 @@
                                         <span class="text-muted">0</span>
                                     }
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center tf-mc-actions">
                                     <button type="button" class="btn btn-sm btn-outline-navy staff-view-btn"
                                             data-bs-toggle="modal" data-bs-target="#staffModal"
                                             data-name="@s.FullName"
                                             data-department="@s.DepartmentName"
                                             data-active="@s.ActiveTaskCount"
                                             data-tasks="@System.Text.Json.JsonSerializer.Serialize(s.Tasks)">
-                                        <i class="bi bi-eye"></i> View
+                                        <i class="bi bi-eye"></i><span class="tf-mc-label"> View</span>
                                     </button>
                                 </td>
                             </tr>
@@ -165,7 +176,7 @@
 
     @* ===================== View 3: Employee Workload Summary ===================== *@
     <div class="tab-pane fade" id="summary-pane" role="tabpanel" aria-labelledby="summary-tab">
-        <div class="wlm-card p-3 mb-3">
+        <div class="wlm-card p-3 mb-3 tf-cardify">
             <h6 class="fw-bold text-uppercase mb-3" style="color:#020236;">Office Staff Workload</h6>
             @if (!Model.Workload.Any())
             {
@@ -174,7 +185,7 @@
             else
             {
                 <div class="table-responsive wlm-summary-scroll">
-                    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+                    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
                         <thead>
                             <tr>
                                 <th style="width:16%">Employee</th>
@@ -206,7 +217,7 @@
                                 var barPercent = Math.Min(100, w.WorkloadPoints * 10);
 
                                 <tr>
-                                    <td>
+                                    <td class="tf-mc-title">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="wlm-avatar">
                                                 @(string.Join("", w.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
@@ -214,9 +225,9 @@
                                             <strong>@w.FullName</strong>
                                         </div>
                                     </td>
-                                    <td class="fw-bold">@w.DepartmentName</td>
-                                    <td class="text-center">@w.ActiveTasks</td>
-                                    <td class="text-center">
+                                    <td class="fw-bold tf-mc-hide">@w.DepartmentName</td>
+                                    <td class="text-center tf-mc-sub">@w.ActiveTasks</td>
+                                    <td class="text-center tf-mc-badge">
                                         @if (w.OverdueTasks > 0)
                                         {
                                             <span class="count-badge count-badge-danger">@w.OverdueTasks</span>
@@ -226,9 +237,9 @@
                                             <span class="text-muted">0</span>
                                         }
                                     </td>
-                                    <td class="text-center">@w.CompletedTasks</td>
-                                    <td class="text-center">@w.PendingActivities</td>
-                                    <td>
+                                    <td class="text-center tf-mc-hide">@w.CompletedTasks</td>
+                                    <td class="text-center tf-mc-hide">@w.PendingActivities</td>
+                                    <td class="tf-mc-badge">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="progress flex-grow-1" style="height:8px;">
                                                 <div class="progress-bar @barClass" style="width:@(barPercent)%"></div>
@@ -244,7 +255,7 @@
             }
         </div>
 
-        <div class="wlm-card p-3">
+        <div class="wlm-card p-3 tf-cardify">
             <h6 class="fw-bold text-uppercase mb-3" style="color:#020236;">Field Technician Workload</h6>
             @if (!Model.TechnicianWorkload.Any())
             {
@@ -253,7 +264,7 @@
             else
             {
                 <div class="table-responsive wlm-summary-scroll">
-                    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+                    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
                         <thead>
                             <tr>
                                 <th style="width:18%">Technician</th>
@@ -282,7 +293,7 @@
                                 var barPercent = Math.Min(100, w.WorkloadPoints * 10);
 
                                 <tr>
-                                    <td>
+                                    <td class="tf-mc-title">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="wlm-avatar">
                                                 @(string.Join("", w.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
@@ -290,9 +301,9 @@
                                             <strong>@w.FullName</strong>
                                         </div>
                                     </td>
-                                    <td class="fw-bold">@w.DepartmentName</td>
-                                    <td class="text-center">@w.ActiveTickets</td>
-                                    <td class="text-center">
+                                    <td class="fw-bold tf-mc-hide">@w.DepartmentName</td>
+                                    <td class="text-center tf-mc-sub">@w.ActiveTickets</td>
+                                    <td class="text-center tf-mc-badge">
                                         @if (w.OverdueTickets > 0)
                                         {
                                             <span class="count-badge count-badge-danger">@w.OverdueTickets</span>
@@ -302,8 +313,8 @@
                                             <span class="text-muted">0</span>
                                         }
                                     </td>
-                                    <td class="text-center">@w.CompletedTickets</td>
-                                    <td>
+                                    <td class="text-center tf-mc-hide">@w.CompletedTickets</td>
+                                    <td class="tf-mc-badge">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="progress flex-grow-1" style="height:8px;">
                                                 <div class="progress-bar @barClass" style="width:@(barPercent)%"></div>
@@ -461,9 +472,11 @@
                     }
 
                     tickets.forEach(t => {
-                        const statusClass = t.Status === 'In Progress'
-                            ? 'vm-status-info'
-                            : 'vm-status-pending';
+                        const statusClass = t.Status === 'Overdue'
+                            ? 'vm-status-danger'
+                            : t.Status === 'In Progress'
+                                ? 'vm-status-info'
+                                : 'vm-status-pending';
                         const serviceDate = new Date(t.ServiceDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
                         const dueDate = t.DueDate
                             ? new Date(t.DueDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })

@@ -43,28 +43,28 @@
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Employee</a>
 </form>
 
-<div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+<div class="table-responsive wlm-card tf-cardify">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
         <thead>
             <tr>
-                <th style="width:18%">Name</th>
+                <th style="width:20%">Name</th>
                 <th style="width:18%">Department</th>
                 <th style="width:18%">Role</th>
                 <th style="width:18%">Date Hired</th>
-                <th style="width:18%">Status</th>
+                <th style="width:10%">Status</th>
                 <th class="text-end" style="width:10%">Actions</th>
             </tr>
         </thead>
         <tbody>
             @if (!Model.Employees.Any())
             {
-                <tr id="emptyRow">
+                <tr id="emptyRow" class="tf-mc-empty">
                     <td colspan="6" class="text-center text-muted py-4">No employees found</td>
                 </tr>
             }
             else
             {
-                <tr id="emptyRow" style="display:none;">
+                <tr id="emptyRow" class="tf-mc-empty" style="display:none;">
                     <td colspan="6" class="text-center text-muted py-4">No employees found</td>
                 </tr>
             }
@@ -74,25 +74,25 @@
                 <tr data-name="@e.FullName.ToLower()"
                     data-email="@e.Email.ToLower()"
                     data-role="@e.RoleType.ToString()">
-                    <td>
+                    <td class="tf-mc-title">
                         <div class="d-flex align-items-center gap-2">
                             <div class="wlm-avatar">
                                 @(string.Join("", e.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
                             </div>
                             <div class="d-flex flex-column">
                                 <strong>@e.FullName</strong>
-                                <small class="text-muted">@e.Email</small>
+                                <small class="text-muted tf-mc-sub">@e.Email</small>
                             </div>
                         </div>
                     </td>
-                    <td>@e.Department?.DepartmentName</td>
-                    <td>
+                    <td class="tf-mc-hide">@e.Department?.DepartmentName</td>
+                    <td class="tf-mc-badge">
                         <span class="badge rounded-pill @RoleBadgeClass(e.RoleType)">
                             @RoleLabel(e.RoleType)
                         </span>
                     </td>
-                    <td>@e.HiredAt.ToString("MM/dd/yyyy")</td>
-                    <td>
+                    <td class="tf-mc-hide">@e.HiredAt.ToString("MM/dd/yyyy")</td>
+                    <td class="tf-mc-badge">
                         @if (e.IsActive)
                         {
                             <span class="status-badge status-badge-active">Active</span>
@@ -102,7 +102,7 @@
                             <span class="status-badge status-badge-inactive">Inactive</span>
                         }
                     </td>
-                    <td class="text-end">
+                    <td class="text-end tf-mc-action">
                         <a class="btn btn-sm btn-outline-navy" asp-page="Edit" asp-route-id="@e.EmployeeId">
                             <i class="bi bi-pencil"></i>
                         </a>

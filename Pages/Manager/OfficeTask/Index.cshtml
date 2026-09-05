@@ -56,8 +56,8 @@ else if (Model.ActivityFilter == "rejected")
     </div>
 }
 
-<div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+<div class="table-responsive wlm-card tf-cardify">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
         <thead>
             <tr>
                 <th style="width:8%">Task #</th>
@@ -73,13 +73,13 @@ else if (Model.ActivityFilter == "rejected")
         <tbody>
             @if (!Model.OfficeTask.Any())
             {
-                <tr id="emptyRow">
+                <tr id="emptyRow" class="tf-mc-empty">
                     <td colspan="8" class="text-center text-muted py-4">No tasks found</td>
                 </tr>
             }
             else
             {
-                <tr id="emptyRow" style="display:none;">
+                <tr id="emptyRow" class="tf-mc-empty" style="display:none;">
                     <td colspan="8" class="text-center text-muted py-4">No tasks found</td>
                 </tr>
             }
@@ -90,19 +90,19 @@ else if (Model.ActivityFilter == "rejected")
                     data-taskid="@item.TaskNumber.ToLower()"
                     data-taskname="@item.TaskName.ToLower()"
                     data-status="@item.DisplayStatus.ToLower()">
-                    <td class="text-muted">
+                    <td class="text-muted tf-mc-sub">
                         @item.TaskNumber
                     </td>
 
-                    <td>
-                        <div class="fw-semibold">@item.TaskName</div>
+                    <td class="tf-mc-through">
+                        <div class="fw-semibold tf-mc-title">@item.TaskName</div>
                         @if (!string.IsNullOrWhiteSpace(item.Description))
                         {
-                            <div class="text-muted small">@item.Description</div>
+                            <div class="text-muted small tf-mc-hide">@item.Description</div>
                         }
                     </td>
 
-                    <td>
+                    <td class="tf-mc-hide">
                         @if (item.Assignments != null && item.Assignments.Any())
                         {
                     @string.Join(", ", item.Assignments
@@ -115,13 +115,13 @@ else if (Model.ActivityFilter == "rejected")
                         }
                     </td>
 
-                    <td>
+                    <td class="tf-mc-hide">
                         <span class="fw-semibold" style="color:#020236;">
                             @(item.Activities?.Count(a => a.Status == "Approved") ?? 0)/@(item.Activities?.Count ?? 0)
                         </span>
                     </td>
 
-                    <td>
+                    <td class="tf-mc-badge">
                         @{
                             var badgeClass = item.DisplayStatus switch
                             {
@@ -137,7 +137,7 @@ else if (Model.ActivityFilter == "rejected")
                         </span>
                     </td>
 
-                    <td>
+                    <td class="tf-mc-hide">
                         <div class="d-flex align-items-center gap-2">
                             <div class="progress flex-grow-1" style="height:6px;">
                                 <div class="progress-bar progress-bar-brand" role="progressbar"
@@ -151,11 +151,11 @@ else if (Model.ActivityFilter == "rejected")
                         </div>
                     </td>
 
-                    <td class="text-muted">
+                    <td class="text-muted tf-mc-hide">
                         @item.DueDate.ToString("M/d/yyyy")
                     </td>
 
-                    <td class="text-end">
+                    <td class="text-end tf-mc-actions">
                         <button type="button" class="btn btn-sm btn-outline-navy" title="View"
                                 data-bs-toggle="modal" data-bs-target="#viewModal-@item.OfficeTaskID">
                             <i class="bi bi-eye"></i>

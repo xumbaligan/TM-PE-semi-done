@@ -20,6 +20,18 @@ namespace TM_PE.Pages.Manager.JobTickets
 
         public Model.JobTicket JobTicket { get; set; } = default!;
 
+        // The current, not-yet-saved cycle's submissions - i.e. JobTicket.Submissions
+        // filtered down for display. Deliberately kept SEPARATE from
+        // JobTicket.Submissions itself (never reassign that navigation property to a
+        // filtered subset): JobTicketID is a required relationship, so EF Core
+        // interprets any submission missing from JobTicket.Submissions after such a
+        // reassignment as orphaned and DELETES it outright the next time
+        // SaveChangesAsync runs on this context (e.g. from JobTicketOverdueChecker
+        // below) - even though it's still validly archived under a SubmissionHistory
+        // entry. That silently wiped out every archived submission for a ticket the
+        // moment its Details page was reloaded.
+        public List<TM_PE.Model.JobTicketSubmission> CurrentSubmissions { get; set; } = new();
+
         [TempData]
         public string? ErrorMessage { get; set; }
 
@@ -37,6 +49,7 @@ namespace TM_PE.Pages.Manager.JobTickets
 
             var ticket = await _context.JobTickets
                 .Include(t => t.Assignments).ThenInclude(a => a.Employee)
+                .Include(t => t.Submissions).ThenInclude(s => s.Employee)
                 .Include(t => t.RescheduleHistory).ThenInclude(h => h.ArchivedSubmissions)
                 .Include(t => t.SubmissionHistory).ThenInclude(h => h.ArchivedSubmissions)
                 .Include(t => t.SubmissionHistory).ThenInclude(h => h.ActorEmployee)
@@ -51,6 +64,17 @@ namespace TM_PE.Pages.Manager.JobTickets
             // Overdue is purely time-based, so re-check it every time the page is
             // opened rather than relying on whatever was last saved.
             await JobTicketOverdueChecker.RefreshAsync(_context, new[] { ticket });
+
+            // Only the current, not-yet-saved cycle's submissions belong here -
+            // same filter FieldTechnician/Details uses - since anything archived
+            // under a Ticket History or Reschedule History entry already shows
+            // there instead. Filtered into CurrentSubmissions rather than
+            // reassigned onto ticket.Submissions itself - see that property's
+            // doc comment for why.
+            CurrentSubmissions = ticket.Submissions
+                .Where(s => s.RescheduleHistoryID == null && s.SubmissionHistoryID == null)
+                .OrderByDescending(s => s.DateSubmitted)
+                .ToList();
 
             ticket.RescheduleHistory = ticket.RescheduleHistory
                 .OrderByDescending(h => h.DateChanged)

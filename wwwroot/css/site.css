@@ -1011,12 +1011,12 @@ select,
         color: #020236;
     }
 
-    .status-dropdown-menu .dropdown-item:hover,
-    .status-dropdown-menu .dropdown-item:focus,
-    .status-dropdown-menu .dropdown-item.active {
-        background: #47076f;
-        color: #fff;
-    }
+        .status-dropdown-menu .dropdown-item:hover,
+        .status-dropdown-menu .dropdown-item:focus,
+        .status-dropdown-menu .dropdown-item.active {
+            background: #47076f;
+            color: #fff;
+        }
 
 /* ===================== Report charts ===================== */
 /* Chart.js needs a sized, positioned parent to render into. */
@@ -2726,4 +2726,266 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background: #47076f;
     margin-top: .35rem;
     flex-shrink: 0;
+}
+
+/* ============ Mobile card list: Field Technician / Office Staff index ============ */
+/*
+   Field Technician > Job Orders and Office Staff > My Assigned Tasks are
+   seven-column tables. That reads fine on a laptop, but on a phone the
+   same table either scrolls sideways inside .table-responsive or squeezes
+   every column down to a couple of characters. Below 768px the exact same
+   <table> is re-laid-out as a stack of tap-through cards instead - one
+   card per row, with the row's most identifying value as a heading, its
+   status/role pills beside it, its reference number underneath, and the
+   existing "View" link as the chevron on the right.
+
+   This is a restyle only. No markup was added or removed beyond hook
+   classes and a second <i> for the chevron: same rows, same order, same
+   links to the same Details pages, so the pages' filtering and
+   wwwroot/js/table-pagination.js (which hides <tr>s via .tf-page-hidden
+   and appends its nav after the whole .wlm-card) keep working untouched,
+   and every rule below lives inside the media query so the desktop table
+   is byte-for-byte what it was.
+
+   768px rather than the 992px used by the sidebar: between the two the
+   sidebar is already off-canvas, so the table has the full window width
+   and still fits comfortably.
+*/
+
+/* The chevron is a mobile-only affordance - the desktop button keeps its
+   eye icon and "View" label, so this stays hidden outside the card layout. */
+.tf-mc-chevron {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+
+    /* Each row becomes its own card, so the wrapper that used to draw the
+       one big bordered box around the whole table steps back and becomes
+       a plain container. */
+    .tf-cardify {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+        /* There is no wide table left to scroll, and overflow:auto would
+           clip the cards' drop shadows along the wrapper's edges. Some
+           Manager tables put table-responsive and tf-cardify on the same
+           element rather than nesting them, so both forms are covered. */
+        .tf-cardify .table-responsive,
+        .tf-cardify.table-responsive {
+            overflow: visible;
+        }
+
+    /* "You don't have any assigned ... yet" is the one thing still shown
+       when there are no rows, so it keeps a card of its own rather than
+       floating on the bare page background. */
+    .tf-empty-state {
+        background: #fff;
+        border: 1px solid rgba(2,2,54,.10);
+        border-radius: 14px;
+        box-shadow: 0 2px 6px rgba(2,2,54,.08);
+    }
+
+    .tf-mc-table,
+    .tf-mc-table > tbody {
+        display: block;
+        width: 100%;
+    }
+
+        /* Column headings have nothing to head once each row is a card - the
+       values are self-describing (a job type, a status pill, a reference
+       number) or are on the Details page. */
+        .tf-mc-table > thead {
+            display: none;
+        }
+
+        .tf-mc-table > tbody > tr {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .4rem .5rem;
+            /* Anchor for the chevron, which is taken out of flow below so it
+           stays centred against the card however tall the card grows. */
+            position: relative;
+            width: 100%;
+            padding: .95rem 3rem .95rem 1.05rem;
+            margin-bottom: .85rem;
+            background: #fff;
+            border: 1px solid rgba(2,2,54,.10);
+            border-radius: 14px;
+            box-shadow: 0 2px 6px rgba(2,2,54,.08);
+        }
+
+            .tf-mc-table > tbody > tr:last-child {
+                margin-bottom: 0;
+            }
+
+            /* Cells stop behaving as table cells. Where each value lands is decided
+       by the order/flex properties below, not by DOM order, so the desktop
+       column order is free to stay exactly as it is - e.g. Field Technician
+       keeps Job Order in column 1 while the card shows Job Type first.
+       !important on padding is what overrides the .ps-3/.pe-3 utilities the
+       first and last cells carry for the desktop table. */
+            .tf-mc-table > tbody > tr > td {
+                display: block;
+                width: auto;
+                padding: 0 !important;
+                border: 0;
+                background: transparent;
+            }
+
+                /* Secondary columns - dates, who assigned it, progress, activity
+           counts. Dropped from the card rather than crammed into it: the
+           chevron opens the Details page, which shows all of them in full. */
+                .tf-mc-table > tbody > tr > td.tf-mc-hide {
+                    display: none;
+                }
+
+                /* A cell whose *children* are the card's items rather than the cell
+           itself - Office Staff's first cell holds both the task name and
+           the TSK- number, and those two need to land on different lines of
+           the card with the status pill in between. display:contents lets
+           them join the card's flex layout individually. */
+                .tf-mc-table > tbody > tr > td.tf-mc-through {
+                    display: contents;
+                }
+
+    /* The card's headline: job type on Field Technician, task name on
+       Office Staff. !important overrides Bootstrap's .fw-semibold on the
+       Office Staff task name, which is itself declared !important. */
+    .tf-mc-title {
+        order: 1;
+        font-size: 1.5rem;
+        font-weight: 800 !important;
+        color: #020236;
+        line-height: 1.1;
+    }
+
+    /* Status and role pills sit inline after the headline, in DOM order. */
+    .tf-mc-badge {
+        order: 2;
+    }
+
+    /* The reference number (JOB-�/TSK-�). flex-basis:100% forces a line
+       break before it, so it always starts the card's second line whether
+       the row carried one pill or two. !important overrides .text-muted and
+       .small on the Office Staff variant. */
+    .tf-mc-sub {
+        order: 3;
+        flex: 1 0 100%;
+        font-size: .92rem !important;
+        font-weight: 600;
+        color: #020236 !important;
+    }
+
+    /* Pills hug their own label here instead of holding the 5.25rem minimum
+       that keeps the desktop Status column aligned, and read as words rather
+       than shouted caps now that there is no dense grid to scan. */
+    .tf-mc-table .status-badge {
+        min-width: 0;
+        padding: .32rem .7rem;
+        font-size: .78rem;
+        text-transform: none;
+        letter-spacing: 0;
+        border: 1px solid rgba(2,2,54,.18);
+    }
+
+    .tf-mc-table .badge {
+        padding: .38rem .75rem;
+        font-size: .78rem;
+    }
+
+    /* Same link, same destination - just presented as the row's chevron.
+       Pulled out of the flex flow and centred vertically against the card;
+       the card's 3rem right padding is what reserves the space for it. */
+    .tf-mc-table > tbody > tr > td.tf-mc-action {
+        position: absolute;
+        top: 50%;
+        right: .4rem;
+        transform: translateY(-50%);
+    }
+
+    .tf-mc-table .tf-mc-action .btn {
+        /* Generous padding keeps this a comfortable ~44px tap target even
+           though the glyph itself is small. */
+        padding: .5rem .6rem;
+        border: 0;
+        background: transparent;
+        color: #020236;
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+        .tf-mc-table .tf-mc-action .btn:hover,
+        .tf-mc-table .tf-mc-action .btn:focus {
+            background: transparent;
+            color: #020236;
+        }
+
+    /* Swap the button's contents: eye + "View" out, chevron in. The <a>
+       itself, and its aria-label, are unchanged. */
+    .tf-mc-table .tf-mc-icon-full,
+    .tf-mc-table .tf-mc-label {
+        display: none;
+    }
+
+    .tf-mc-table .tf-mc-chevron {
+        display: inline-block;
+    }
+
+    /* Manager tables carry two independent actions per row - a View button
+       that opens a Bootstrap modal, plus a conditional Edit link - rather
+       than a single navigational link, so there's no one href to turn into
+       a chevron. Both stay as icon-only buttons, stacked in the same corner
+       the single-action chevron occupies. */
+    .tf-mc-table > tbody > tr > td.tf-mc-actions {
+        position: absolute;
+        top: 50%;
+        right: .4rem;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .1rem;
+    }
+
+        .tf-mc-table .tf-mc-actions .btn {
+            padding: .45rem .55rem;
+            border: 0;
+            background: transparent;
+            color: #020236;
+            font-size: 1.05rem;
+            line-height: 1;
+        }
+
+            .tf-mc-table .tf-mc-actions .btn:hover,
+            .tf-mc-table .tf-mc-actions .btn:focus {
+                background: transparent;
+                color: #020236;
+            }
+
+    /* tf-mc-hide also drops a nested secondary line - e.g. an email under a
+       name, or a description under a task name - not just a whole column,
+       since a Manager row's headline cell often carries both in one <td>. */
+    .tf-mc-table .tf-mc-hide {
+        display: none;
+    }
+
+    /* Manager tables render "no results" as a <tr class="tf-mc-empty"> inside
+       tbody, rather than a <div> outside the table, so the live-filter JS can
+       still find and toggle it as a sibling of the data rows (some by #id).
+       It already gets the same card chrome from the generic tr rule above -
+       this just centers the message instead of shrink-wrapping to the text. */
+    .tf-mc-table > tbody > tr.tf-mc-empty {
+        justify-content: center;
+    }
+
+        .tf-mc-table > tbody > tr.tf-mc-empty > td {
+            width: 100%;
+            text-align: center;
+        }
 }

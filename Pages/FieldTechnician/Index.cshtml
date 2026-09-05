@@ -12,17 +12,17 @@
 </div>
 <hr class="page-divider" />
 
-<div class="wlm-card">
+<div class="wlm-card tf-cardify">
     <div class="card-body p-0">
 
         @if (!Model.AssignedJobOrders.Any())
         {
-            <div class="p-4 text-muted text-center">You don't have any assigned job orders yet.</div>
+            <div class="p-4 text-muted text-center tf-empty-state">You don't have any assigned job orders yet.</div>
         }
         else
         {
             <div class="table-responsive">
-            <table class="table align-middle wlm-table wlm-table-fixed mb-0">
+            <table class="table align-middle wlm-table wlm-table-fixed mb-0 tf-mc-table">
                 <thead>
                     <tr>
                         <th class="ps-3" style="width:15%">Job Order</th>
@@ -50,14 +50,14 @@
                         var isLeader = Model.LeaderOn.Contains(ticket.JobTicketID);
 
                         <tr>
-                            <td class="ps-3">
+                            <td class="ps-3 tf-mc-sub">
                                 <div class="fw-semibold">@ticket.TicketNumber</div>
                             </td>
-                            <td>@ticket.JobType</td>
-                            <td>@ticket.ServiceDate.ToString("M/d/yyyy")</td>
-                            <td><span class="status-badge @badgeClass">@ticket.DisplayStatus</span></td>
-                            <td class="text-muted">@(ticket.AssignedByEmployee?.FullName ?? "—")</td>
-                            <td>
+                            <td class="tf-mc-title">@ticket.JobType</td>
+                            <td class="tf-mc-hide">@ticket.ServiceDate.ToString("M/d/yyyy")</td>
+                            <td class="tf-mc-badge"><span class="status-badge @badgeClass">@ticket.DisplayStatus</span></td>
+                            <td class="text-muted tf-mc-hide">@(ticket.AssignedByEmployee?.FullName ?? "—")</td>
+                            <td class="tf-mc-badge">
                                 @if (isLeader)
                                 {
                                     <span class="badge rounded-pill role-badge-office-staff">Leader</span>
@@ -67,9 +67,10 @@
                                     <span class="badge bg-light text-dark border">Member</span>
                                 }
                             </td>
-                            <td class="text-end pe-3">
-                                <a asp-page="./Details" asp-route-id="@ticket.JobTicketID" class="btn btn-sm btn-outline-navy">
-                                    <i class="bi bi-eye"></i> View
+                            <td class="text-end pe-3 tf-mc-action">
+                                <a asp-page="./Details" asp-route-id="@ticket.JobTicketID" class="btn btn-sm btn-outline-navy"
+                                   aria-label="View @ticket.TicketNumber">
+                                    <i class="bi bi-eye tf-mc-icon-full"></i><span class="tf-mc-label"> View</span><i class="bi bi-chevron-right tf-mc-chevron"></i>
                                 </a>
                             </td>
                         </tr>

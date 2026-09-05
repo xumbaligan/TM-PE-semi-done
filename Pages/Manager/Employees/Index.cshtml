@@ -3,6 +3,24 @@
 @{
     ViewData["Title"] = "Employees";
     Layout = "_Layout";
+
+    string RoleBadgeClass(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.FieldTechnician => "role-badge-field-technician",
+        TM_PE.Model.RoleType.OfficeStaff => "role-badge-office-staff",
+        TM_PE.Model.RoleType.Manager => "role-badge-manager",
+        TM_PE.Model.RoleType.Admin => "role-badge-admin",
+        _ => "role-badge-office-staff"
+    };
+
+    string RoleLabel(TM_PE.Model.RoleType rt) => rt switch
+    {
+        TM_PE.Model.RoleType.FieldTechnician => "Field Technician",
+        TM_PE.Model.RoleType.OfficeStaff => "Office Staff",
+        TM_PE.Model.RoleType.Manager => "Manager",
+        TM_PE.Model.RoleType.Admin => "Admin",
+        _ => rt.ToString()
+    };
 }
 
 <div class="mb-3">
@@ -24,27 +42,27 @@
     </div>
 </form>
 
-<div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+<div class="table-responsive wlm-card tf-cardify">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
         <thead>
             <tr>
                 <th style="width:20%">Name</th>
                 <th style="width:20%">Department</th>
                 <th style="width:20%">Role</th>
                 <th style="width:20%">Date Hired</th>
-                <th style="width:20%">Status</th>
+                <th style="width:10%">Status</th>
             </tr>
         </thead>
         <tbody>
             @if (!Model.Employees.Any())
             {
-                <tr id="emptyRow">
+                <tr id="emptyRow" class="tf-mc-empty">
                     <td colspan="5" class="text-center text-muted py-4">No employees found</td>
                 </tr>
             }
             else
             {
-                <tr id="emptyRow" style="display:none;">
+                <tr id="emptyRow" class="tf-mc-empty" style="display:none;">
                     <td colspan="5" class="text-center text-muted py-4">No employees found</td>
                 </tr>
             }
@@ -54,25 +72,25 @@
                 <tr data-name="@e.FullName.ToLower()"
                     data-email="@e.Email.ToLower()"
                     data-role="@e.RoleType.ToString()">
-                    <td>
+                    <td class="tf-mc-title">
                         <div class="d-flex align-items-center gap-2">
                             <div class="wlm-avatar">
                                 @(string.Join("", e.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
                             </div>
                             <div class="d-flex flex-column">
                                 <strong>@e.FullName</strong>
-                                <small class="text-muted">@e.Email</small>
+                                <small class="text-muted tf-mc-sub">@e.Email</small>
                             </div>
                         </div>
                     </td>
-                    <td>@e.Department?.DepartmentName</td>
-                    <td>
-                        <span class="badge rounded-pill @(e.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "role-badge-office-staff" : "role-badge-field-technician")">
-                            @(e.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "Office Staff" : "Field Technician")
+                    <td class="tf-mc-hide">@e.Department?.DepartmentName</td>
+                    <td class="tf-mc-badge">
+                        <span class="badge rounded-pill @RoleBadgeClass(e.RoleType)">
+                            @RoleLabel(e.RoleType)
                         </span>
                     </td>
-                    <td>@e.HiredAt.ToString("MM/dd/yyyy")</td>
-                    <td>
+                    <td class="tf-mc-hide">@e.HiredAt.ToString("MM/dd/yyyy")</td>
+                    <td class="tf-mc-badge">
                         @if (e.IsActive)
                         {
                             <span class="status-badge status-badge-active">Active</span>

@@ -168,9 +168,9 @@
 </div>
 
 @* ===================== Report table ===================== *@
-<div class="wlm-card">
+<div class="wlm-card tf-cardify">
     <div class="table-responsive">
-        <table class="table table-hover align-middle wlm-table wlm-table-fixed mb-0">
+        <table class="table table-hover align-middle wlm-table wlm-table-fixed mb-0 tf-mc-table">
             <thead>
                 <tr>
                     <th style="width:36%">Employee Name</th>
@@ -183,7 +183,7 @@
             <tbody>
                 @if (!Model.Rows.Any())
                 {
-                    <tr>
+                    <tr class="tf-mc-empty">
                         <td colspan="5" class="text-center text-muted py-4">
                             No employees match the current filters.
                         </td>
@@ -195,7 +195,7 @@
                     {
                         var ratingClass = TM_PE.Model.EvaluationScoring.RatingBadgeClass(r.Rating);
                         <tr>
-                            <td>
+                            <td class="tf-mc-title">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="wlm-avatar">
                                         @(string.Join("", r.EmployeeName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
@@ -203,7 +203,7 @@
                                     <strong>@r.EmployeeName</strong>
                                 </div>
                             </td>
-                            <td>
+                            <td class="tf-mc-badge">
                                 @if (r.RoleType == TM_PE.Model.RoleType.FieldTechnician)
                                 {
                                     <span class="badge rounded-pill role-badge-field-technician">Field Technician</span>
@@ -213,8 +213,8 @@
                                     <span class="badge rounded-pill role-badge-office-staff">Office Staff</span>
                                 }
                             </td>
-                            <td class="fw-bold">@r.DepartmentName</td>
-                            <td class="text-center">
+                            <td class="fw-bold tf-mc-hide">@r.DepartmentName</td>
+                            <td class="text-center tf-mc-sub">
                                 @if (r.Appraisals == 0)
                                 {
                                     <span class="text-muted">—</span>
@@ -224,7 +224,7 @@
                                     <span class="fw-semibold">@r.AverageScore.ToString("0.##")</span>
                                 }
                             </td>
-                            <td>
+                            <td class="tf-mc-badge">
                                 @if (r.Appraisals == 0)
                                 {
                                     <span class="text-muted small">Not yet evaluated</span>

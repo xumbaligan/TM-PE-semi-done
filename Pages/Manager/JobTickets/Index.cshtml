@@ -37,8 +37,8 @@
     </a>
 </form>
 
-<div class="table-responsive wlm-card">
-    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0">
+<div class="table-responsive wlm-card tf-cardify">
+    <table class="table align-middle table-hover wlm-table wlm-table-fixed mb-0 tf-mc-table">
         <thead>
             <tr>
                 <th style="width:18%">Task Number</th>
@@ -52,13 +52,13 @@
         <tbody>
             @if (!Model.JobTicket.Any())
             {
-                <tr id="emptyRow">
+                <tr id="emptyRow" class="tf-mc-empty">
                     <td colspan="7" class="text-center text-muted py-4">No job tickets yet.</td>
                 </tr>
             }
             else
             {
-                <tr id="emptyRow" style="display:none;">
+                <tr id="emptyRow" class="tf-mc-empty" style="display:none;">
                     <td colspan="7" class="text-center text-muted py-4">No job tickets found</td>
                 </tr>
             }
@@ -71,9 +71,9 @@
                     data-jobtype="@item.JobType.ToLower()"
                     data-ticketid="@item.TicketNumber.ToLower()"
                     data-status="@item.DisplayStatus.ToLower()">
-                    <td class="text-muted">@item.TicketNumber</td>
-                    <td class="fw-semibold" style="color:#020236;">@item.JobType</td>
-                    <td>
+                    <td class="text-muted tf-mc-sub">@item.TicketNumber</td>
+                    <td class="fw-semibold tf-mc-title" style="color:#020236;">@item.JobType</td>
+                    <td class="tf-mc-hide">
                         @if (leader != null)
                         {
                             <div class="d-flex align-items-center gap-2">
@@ -88,7 +88,7 @@
                             <span class="text-muted">—</span>
                         }
                     </td>
-                    <td>
+                    <td class="tf-mc-badge">
                         @{
                             var badgeClass = item.DisplayStatus switch
                             {
@@ -105,8 +105,8 @@
                             @item.DisplayStatus
                         </span>
                     </td>
-                    <td style="color:#020236;">@item.ServiceDate.ToString("M/d/yyyy")</td>
-                    <td class="text-end">
+                    <td class="tf-mc-hide" style="color:#020236;">@item.ServiceDate.ToString("M/d/yyyy")</td>
+                    <td class="text-end tf-mc-actions">
                         <button type="button" class="btn btn-sm btn-outline-navy" title="View"
                                 data-bs-toggle="modal" data-bs-target="#viewModal-@item.JobTicketID">
                             <i class="bi bi-eye"></i>

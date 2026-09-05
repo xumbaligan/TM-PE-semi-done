@@ -25,9 +25,9 @@
     <a class="btn btn-navy ms-auto" asp-page="Create"><i class="bi bi-plus-lg"></i> New Evaluation</a>
 </form>
 
-<div class="wlm-card">
+<div class="wlm-card tf-cardify">
     <div class="table-responsive">
-        <table class="table table-hover wlm-table wlm-table-fixed mb-0 align-middle">
+        <table class="table table-hover wlm-table wlm-table-fixed mb-0 align-middle tf-mc-table">
             <thead>
                 <tr>
                     <th style="width:15%">Employee</th>
@@ -43,13 +43,13 @@
             <tbody>
                 @if (!Model.Evaluations.Any())
                 {
-                    <tr id="emptyRow">
+                    <tr id="emptyRow" class="tf-mc-empty">
                         <td colspan="8" class="text-center text-muted py-4">No performance evaluations found</td>
                     </tr>
                 }
                 else
                 {
-                    <tr id="emptyRow" style="display:none;">
+                    <tr id="emptyRow" class="tf-mc-empty" style="display:none;">
                         <td colspan="8" class="text-center text-muted py-4">No performance evaluations found</td>
                     </tr>
                     @foreach (var e in Model.Evaluations)
@@ -60,7 +60,7 @@
                         <tr data-employee="@((e.Employee?.FullName ?? "").ToLower())"
                             data-evaluator="@e.EvaluatorName.ToLower()"
                             data-status="@e.EvaluationStatus.ToString().ToLower()">
-                            <td>
+                            <td class="tf-mc-title">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="wlm-avatar">
                                         @(string.Join("", (e.Employee?.FullName ?? "-").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(n => char.ToUpper(n[0]))))
@@ -69,22 +69,22 @@
                                         <strong>@(e.Employee?.FullName ?? "-")</strong>
                                         @if (e.Employee != null)
                                         {
-                                            <small class="text-muted">
+                                            <small class="text-muted tf-mc-sub">
                                                 @(e.Employee.RoleType == TM_PE.Model.RoleType.OfficeStaff ? "Office Staff" : "Field Technician")
                                             </small>
                                         }
                                     </div>
                                 </div>
                             </td>
-                            <td>@e.EvaluationPeriod</td>
-                            <td>@e.EvaluatorName</td>
-                            <td>@e.EvaluationDate.ToString("MMM d, yyyy")</td>
-                            <td>
+                            <td class="tf-mc-hide">@e.EvaluationPeriod</td>
+                            <td class="tf-mc-hide">@e.EvaluatorName</td>
+                            <td class="tf-mc-hide">@e.EvaluationDate.ToString("MMM d, yyyy")</td>
+                            <td class="tf-mc-hide">
                                 <partial name="_Stars" model="e.OverallStars" />
                                 <div class="text-muted small">@e.OverallRating</div>
                             </td>
-                            <td>@e.OverallScore.ToString("0.##") / 4</td>
-                            <td>
+                            <td class="tf-mc-hide">@e.OverallScore.ToString("0.##") / 4</td>
+                            <td class="tf-mc-badge">
                                 @if (e.EvaluationStatus == TM_PE.Model.EvaluationStatus.Finalized)
                                 {
                                     <span class="status-badge status-badge-active">Finalized</span>
@@ -94,7 +94,7 @@
                                     <span class="status-badge status-badge-inactive">Draft</span>
                                 }
                             </td>
-                            <td class="text-end text-nowrap">
+                            <td class="text-end text-nowrap tf-mc-actions">
                                 <button type="button" class="btn btn-sm btn-outline-navy view-evaluation-btn"
                                         data-bs-toggle="modal" data-bs-target="#evaluationModal"
                                         data-employee="@(e.Employee?.FullName ?? "-")"
