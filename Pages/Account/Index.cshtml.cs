@@ -59,7 +59,7 @@ namespace TM_PE.Pages.Account
 
             if (string.IsNullOrWhiteSpace(NewPassword) || !Regex.IsMatch(NewPassword, UsernamePolicy.PasswordPattern))
             {
-                Error = "New password must be 8-10 digits (numbers only).";
+                Error = UsernamePolicy.PasswordRuleMessage;
                 return Page();
             }
 

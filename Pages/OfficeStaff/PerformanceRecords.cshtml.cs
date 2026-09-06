@@ -97,5 +97,123 @@ namespace TM_PE.Pages.OfficeStaff
 
             return Page();
         }
+
+        // ---------------------------------------------------------------
+        // Called via AJAX when the employee clicks one of the summary
+        // tiles above. Mirrors Manager/PerformanceEvaluation/Create's own
+        // OnGetRecordsAsync, but the employee is always read from session -
+        // never a query-string/posted id - so an office staff can only ever
+        // drill into their own office tasks, and the result is never
+        // period-bound since Stats above is an all-time snapshot.
+        //
+        // metric is one of: completed, ontime, rejected, overdue -
+        // matching whichever tile was clicked.
+        public async Task<IActionResult> OnGetRecordsAsync(string metric)
+        {
+            var employeeId = HttpContext.Session.GetInt32("CurrentEmployeeId");
+            if (employeeId == null)
+            {
+                return new JsonResult(Array.Empty<RecordItem>());
+            }
+
+            var assignments = await _context.TaskAssignments
+                .Include(a => a.OfficeTask).ThenInclude(t => t!.Activities)
+                .Where(a => a.EmployeeID == employeeId.Value && a.OfficeTask != null)
+                .ToListAsync();
+
+            var activityIds = assignments.SelectMany(a => a.OfficeTask!.Activities).Select(x => x.ActivityID).ToList();
+            var latestSubs = await _context.ActivitySubmissions
+                .Where(s => activityIds.Contains(s.ActivityID))
+                .OrderByDescending(s => s.DateSubmitted)
+                .GroupBy(s => s.ActivityID)
+                .Select(g => g.First())
+                .ToDictionaryAsync(s => s.ActivityID, s => s);
+
+            var items = new List<RecordItem>();
+
+            foreach (var a in assignments)
+            {
+                var t = a.OfficeTask!;
+                bool matches = metric switch
+                {
+                    "completed" => string.Equals(t.Status, "Completed", StringComparison.OrdinalIgnoreCase),
+                    "ontime" => string.Equals(t.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(t.Status, "Overdue", StringComparison.OrdinalIgnoreCase),
+                    "rejected" => t.Activities.Any(x => x.AssignedEmployeeID == employeeId.Value && x.Status == "Rejected"),
+                    "overdue" => string.Equals(t.Status, "Overdue", StringComparison.OrdinalIgnoreCase),
+                    _ => false
+                };
+                if (!matches) continue;
+
+                string? onTime = null;
+                if (metric == "ontime")
+                {
+                    if (string.Equals(t.Status, "Overdue", StringComparison.OrdinalIgnoreCase))
+                    {
+                        onTime = "No";
+                    }
+                    else
+                    {
+                        var finishedOn = t.Activities
+                            .Select(x => latestSubs.TryGetValue(x.ActivityID, out var s) ? s.DateSubmitted.Date : (DateTime?)null)
+                            .Where(d => d.HasValue)
+                            .Select(d => d!.Value)
+                            .DefaultIfEmpty(t.DueDate.Date)
+                            .Max();
+                        onTime = finishedOn <= t.DueDate.Date ? "Yes" : "No";
+                    }
+                }
+
+                items.Add(new RecordItem
+                {
+                    Type = "Office Task",
+                    Number = t.TaskNumber,
+                    Title = t.TaskName,
+                    Status = t.DisplayStatus,
+                    DateLabel = t.DueDate.ToString("M/d/yyyy"),
+                    SortDate = t.DueDate,
+                    OnTime = onTime,
+                    Activities = t.Activities.Select(x => new ActivityDetail
+                    {
+                        ActivityName = x.ActivityName,
+                        Status = x.Status,
+                        Feedback = string.IsNullOrWhiteSpace(x.FeedBack) ? null : x.FeedBack,
+                        Files = latestSubs.TryGetValue(x.ActivityID, out var sub)
+                            ? new List<RecordFile> { new RecordFile { FileName = sub.FileName, FilePath = sub.FilePath } }
+                            : new List<RecordFile>()
+                    }).ToList()
+                });
+            }
+
+            return new JsonResult(items.OrderByDescending(i => i.SortDate).ToList());
+        }
+
+        public class RecordItem
+        {
+            public string Type { get; set; } = string.Empty;
+            public string Number { get; set; } = string.Empty;
+            public string Title { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+            public string? DateLabel { get; set; }
+            public string? OnTime { get; set; }
+            public List<ActivityDetail> Activities { get; set; } = new();
+
+            [System.Text.Json.Serialization.JsonIgnore]
+            public DateTime SortDate { get; set; }
+        }
+
+        public class ActivityDetail
+        {
+            public string ActivityName { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+            public string? Feedback { get; set; }
+            public List<RecordFile> Files { get; set; } = new();
+        }
+
+        public class RecordFile
+        {
+            public string FileName { get; set; } = string.Empty;
+            public string FilePath { get; set; } = string.Empty;
+        }
     }
 }

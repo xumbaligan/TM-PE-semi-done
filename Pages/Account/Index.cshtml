@@ -137,20 +137,18 @@
                 <div class="mb-3">
                     <label class="account-form-label" asp-for="NewPassword">New Password</label>
                     <div class="account-input-group">
-                        <input type="password" asp-for="NewPassword" maxlength="10" inputmode="numeric"
-                               pattern="\d{8,10}" autocomplete="new-password" />
+                        <input type="password" asp-for="NewPassword" maxlength="8" autocomplete="new-password" />
                         <button type="button" data-password-toggle="NewPassword" tabindex="-1" aria-label="Show password">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
-                    <div class="account-form-hint">8-10 digits, numbers only.</div>
+                    <div class="account-form-hint">Any characters, up to 8 characters.</div>
                 </div>
 
                 <div class="mb-4">
                     <label class="account-form-label" asp-for="ConfirmNewPassword">Confirm New Password</label>
                     <div class="account-input-group">
-                        <input type="password" asp-for="ConfirmNewPassword" maxlength="10" inputmode="numeric"
-                               pattern="\d{8,10}" autocomplete="new-password" />
+                        <input type="password" asp-for="ConfirmNewPassword" maxlength="8" autocomplete="new-password" />
                         <button type="button" data-password-toggle="ConfirmNewPassword" tabindex="-1" aria-label="Show password">
                             <i class="bi bi-eye"></i>
                         </button>

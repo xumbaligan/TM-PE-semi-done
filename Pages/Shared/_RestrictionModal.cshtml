@@ -21,10 +21,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                @if (!string.IsNullOrWhiteSpace(Model))
-                {
-                    <p class="mb-0">@Model</p>
-                }
+                <p class="mb-0" id="tfRestrictionModalMessage" style="@(string.IsNullOrWhiteSpace(Model) ? "display:none;" : "")">@Model</p>
                 <div asp-validation-summary="All" class="text-danger mb-0"></div>
             </div>
             <div class="modal-footer border-0 pt-0">
@@ -49,4 +46,19 @@
             new bootstrap.Modal(modalEl).show();
         }
     });
+
+    // Reusable so any page including this partial can show the same modal for
+    // client-side validation messages instead of a plain browser alert().
+    window.showRestrictionModal = function (message) {
+        var modalEl = document.getElementById('tfRestrictionModal');
+        if (!modalEl) { alert(message); return; }
+
+        var msgEl = document.getElementById('tfRestrictionModalMessage');
+        if (msgEl) {
+            msgEl.textContent = message;
+            msgEl.style.display = '';
+        }
+
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    };
 </script>

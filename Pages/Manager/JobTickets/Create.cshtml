@@ -775,22 +775,22 @@
                     // instead, same as the technician/leader checks below.
                     if (!jobTypeSelect.value) {
                         e.preventDefault();
-                        alert('Please select a job type.');
+                        showRestrictionModal('Please select a job type.');
                         return;
                     }
                     if (fiberPlanSelect.hasAttribute('required') && !fiberPlanSelect.value) {
                         e.preventDefault();
-                        alert('Please select a fiber plan.');
+                        showRestrictionModal('Please select a fiber plan.');
                         return;
                     }
                     if (addedEmployees.size < 2) {
                         e.preventDefault();
-                        alert('Please assign at least 2 field technicians.');
+                        showRestrictionModal('Please assign at least 2 field technicians.');
                         return;
                     }
                     if (!leaderHidden.value) {
                         e.preventDefault();
-                        alert('Please choose a leader among the assigned field technicians.');
+                        showRestrictionModal('Please choose a leader among the assigned field technicians.');
                     }
                 });
             })();

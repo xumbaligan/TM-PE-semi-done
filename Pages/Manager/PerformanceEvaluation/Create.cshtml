@@ -787,7 +787,7 @@
             document.querySelectorAll('#statTiles .eval-stat').forEach(function (tile) {
                 tile.addEventListener('click', async function () {
                     if (!employeeSelect.value) {
-                        alert('Please select an employee first.');
+                        showRestrictionModal('Please select an employee first.');
                         return;
                     }
 

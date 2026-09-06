@@ -303,7 +303,7 @@
             if (approveBtn) {
                 approveBtn.addEventListener('click', function () {
                     if (!hasSubmission) {
-                        alert(`"${activityName}" cannot be approved until the employee attaches a file.`);
+                        showRestrictionModal(`"${activityName}" cannot be approved until the employee attaches a file.`);
                         return;
                     }
                     stage('Approved');
@@ -313,11 +313,11 @@
             if (rejectBtn) {
                 rejectBtn.addEventListener('click', function () {
                     if (!hasSubmission) {
-                        alert(`"${activityName}" cannot be rejected until the employee attaches a file.`);
+                        showRestrictionModal(`"${activityName}" cannot be rejected until the employee attaches a file.`);
                         return;
                     }
                     if (!feedbackInput.value.trim()) {
-                        alert(`"${activityName}" was rejected, so feedback is required.`);
+                        showRestrictionModal(`"${activityName}" was rejected, so feedback is required.`);
                         return;
                     }
                     stage('Rejected');
@@ -343,7 +343,7 @@
 
             if (errors.length > 0) {
                 e.preventDefault();
-                alert(errors.join('\n'));
+                showRestrictionModal(errors.join(' '));
             }
         });
     })();

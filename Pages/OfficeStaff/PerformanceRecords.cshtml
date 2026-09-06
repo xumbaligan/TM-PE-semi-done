@@ -55,7 +55,7 @@
 
     @* ===================== Summary tiles ===================== *@
     <div class="col-lg-5">
-        <div class="row g-3">
+        <div class="row g-3" id="statTiles">
             <div class="col-6">
                 <div class="eval-stat eval-stat-primary d-flex align-items-start gap-2">
                     <div class="stat-icon icon-palette-primary"><i class="bi bi-clipboard-check"></i></div>
@@ -65,8 +65,13 @@
                     </div>
                 </div>
             </div>
+            @* Office task tiles below are clickable - same drill-down pattern as
+               Manager > Performance Evaluation's stat tiles - but always scoped
+               server-side to this logged-in employee's own tasks (see
+               PerformanceRecordsModel.OnGetRecordsAsync), never another
+               employee's. *@
             <div class="col-6">
-                <div class="eval-stat eval-stat-success d-flex align-items-start gap-2">
+                <div class="eval-stat eval-stat-success d-flex align-items-start gap-2" id="statTile-completed" data-metric="completed">
                     <div class="stat-icon icon-palette-success"><i class="bi bi-check2-circle"></i></div>
                     <div class="overflow-hidden">
                         <div class="stat-label">Completed Job/Task</div>
@@ -75,7 +80,7 @@
                 </div>
             </div>
             <div class="col-6">
-                <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2">
+                <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2" id="statTile-ontime" data-metric="ontime">
                     <div class="stat-icon icon-palette-warning"><i class="bi bi-clock-history"></i></div>
                     <div class="overflow-hidden">
                         <div class="stat-label">On-time Rate</div>
@@ -84,7 +89,7 @@
                 </div>
             </div>
             <div class="col-6">
-                <div class="eval-stat eval-stat-danger d-flex align-items-start gap-2">
+                <div class="eval-stat eval-stat-danger d-flex align-items-start gap-2" id="statTile-rejected" data-metric="rejected">
                     <div class="stat-icon icon-palette-danger"><i class="bi bi-hand-thumbs-down"></i></div>
                     <div class="overflow-hidden">
                         <div class="stat-label">Rejected Activities</div>
@@ -95,7 +100,7 @@
             @* The mockup only had room for four tiles; Cancelled is the fifth
                metric this page has always shown, so it keeps its own row. *@
             <div class="col-6">
-                <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2">
+                <div class="eval-stat eval-stat-warning d-flex align-items-start gap-2" id="statTile-overdue" data-metric="overdue">
                     <div class="stat-icon icon-palette-warning"><i class="bi bi-exclamation-triangle"></i></div>
                     <div class="overflow-hidden">
                         <div class="stat-label">Overdue Task</div>
@@ -257,6 +262,51 @@
     </div>
 </div>
 
+@* ===================== Modal: stat tile drill-down list ===================== *@
+<div class="modal fade" id="recordsModal" tabindex="-1" aria-labelledby="recordsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recordsModalLabel">Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table align-middle table-sm">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>Type</th>
+                                <th>Id no.</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th id="recordsOnTimeHeader" class="d-none">On Time</th>
+                                <th id="recordsActionHeader" class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===================== Modal: one record's remarks / uploaded file(s) ===================== *@
+<div class="modal fade" id="recordDetailModal" tabindex="-1" aria-labelledby="recordDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recordDetailModalLabel">Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="recordDetailBody">
+            </div>
+        </div>
+    </div>
+</div>
+
 <partial name="_EvaluationModal" />
 
 @section Scripts {
@@ -292,6 +342,166 @@
 
             wireStatusDropdown('yearDropdownBtn', yearFilter, { onChange: applyFilters });
             wireStatusDropdown('periodDropdownBtn', periodFilter, { onChange: applyFilters });
+        })();
+
+        // ---- Stat tile drill-down (Completed / On-time / Rejected / Overdue) ----
+        // Same pattern as Manager > Performance Evaluation's stat tiles, minus the
+        // employee picker - the clicked tile always drills into this logged-in
+        // employee's own office tasks (see PerformanceRecordsModel.OnGetRecordsAsync).
+        (function () {
+            const recordsModalEl = document.getElementById('recordsModal');
+            const recordsModal = new bootstrap.Modal(recordsModalEl);
+            const recordsModalLabel = document.getElementById('recordsModalLabel');
+            const recordsTableBody = document.getElementById('recordsTableBody');
+            const recordsOnTimeHeader = document.getElementById('recordsOnTimeHeader');
+            const recordsActionHeader = document.getElementById('recordsActionHeader');
+
+            const recordDetailModalEl = document.getElementById('recordDetailModal');
+            const recordDetailModal = new bootstrap.Modal(recordDetailModalEl);
+            const recordDetailModalLabel = document.getElementById('recordDetailModalLabel');
+            const recordDetailBody = document.getElementById('recordDetailBody');
+
+            const metricLabels = {
+                completed: 'Completed Job/Task',
+                ontime: 'On-time Rate',
+                rejected: 'Rejected Activities',
+                overdue: 'Overdue Task'
+            };
+
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+            function isImageFile(fileName) {
+                const ext = (fileName.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+                return imageExtensions.includes(ext);
+            }
+            function fileUrl(filePath) {
+                return '/' + String(filePath).replace(/\\/g, '/').replace(/^\/+/, '');
+            }
+            function renderFile(file) {
+                const url = fileUrl(file.filePath);
+                if (isImageFile(file.fileName)) {
+                    return `<a href="${url}" target="_blank" rel="noopener" class="d-inline-block me-2 mb-2">
+                        <img src="${url}" alt="${file.fileName}" style="width:100px;height:100px;object-fit:cover;border-radius:.375rem;border:1px solid #dee2e6;" />
+                    </a>`;
+                }
+                return `<a href="${url}" target="_blank" rel="noopener" class="d-inline-flex align-items-center gap-1 me-2 mb-2 btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-file-earmark-arrow-down"></i> ${file.fileName}
+                </a>`;
+            }
+
+            let currentRecords = [];
+
+            function badgeClassFor(status) {
+                switch (status) {
+                    case 'Completed': return 'bg-success-subtle text-success';
+                    case 'Completed Late': return 'bg-warning-subtle text-warning-emphasis';
+                    case 'In Progress': return 'bg-info-subtle text-info';
+                    case 'Cancelled': return 'bg-danger-subtle text-danger';
+                    case 'Rescheduled':
+                    case 'Reschedule Request': return 'bg-warning-subtle text-warning-emphasis';
+                    case 'Overdue': return 'bg-danger-subtle text-danger-emphasis';
+                    case 'Rejected': return 'bg-danger-subtle text-danger';
+                    default: return 'bg-secondary-subtle text-secondary';
+                }
+            }
+
+            function renderRecordsTable(metric) {
+                recordsTableBody.innerHTML = '';
+                recordsOnTimeHeader.classList.toggle('d-none', metric !== 'ontime');
+                recordsActionHeader.classList.remove('d-none');
+
+                if (currentRecords.length === 0) {
+                    const colspan = (metric === 'ontime' ? 1 : 0) + 5;
+                    recordsTableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-muted text-center py-3">No records found.</td></tr>`;
+                    if (window.TFPagination) window.TFPagination.init(recordsTableBody.closest('table'));
+                    return;
+                }
+
+                currentRecords.forEach(function (item, index) {
+                    const tr = document.createElement('tr');
+                    let onTimeCell = '';
+                    if (metric === 'ontime') {
+                        const onTimeClass = item.onTime === 'Yes' ? 'text-success' : 'text-danger';
+                        onTimeCell = `<td class="${onTimeClass} fw-semibold">${item.onTime ?? '—'}</td>`;
+                    }
+                    tr.innerHTML = `
+                        <td>${item.type}</td>
+                        <td class="text-muted">${item.number}</td>
+                        <td>${item.title}</td>
+                        <td><span class="badge rounded-pill ${badgeClassFor(item.status)} px-2 py-1">${item.status}</span></td>
+                        <td class="text-muted">${item.dateLabel ?? '—'}</td>
+                        ${onTimeCell}
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-link text-secondary p-1 record-view-btn" data-index="${index}" title="View">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    `;
+                    recordsTableBody.appendChild(tr);
+                });
+
+                if (window.TFPagination) window.TFPagination.init(recordsTableBody.closest('table'));
+            }
+
+            function showRecordDetail(item) {
+                recordDetailModalLabel.textContent = `${item.type} ${item.number}`;
+
+                const activitiesHtml = (item.activities && item.activities.length)
+                    ? item.activities.map(function (a) {
+                        const filesHtml = a.files && a.files.length
+                            ? a.files.map(renderFile).join('')
+                            : '<span class="text-muted small">No uploaded file.</span>';
+                        return `
+                            <div class="border rounded p-3 mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="fw-semibold">${a.activityName}</div>
+                                    <span class="badge rounded-pill ${badgeClassFor(a.status)} px-2 py-1">${a.status}</span>
+                                </div>
+                                <div class="text-muted small mb-1">Feedback</div>
+                                <div class="mb-2">${a.feedback ?? '<span class="text-muted">No feedback.</span>'}</div>
+                                <div class="text-muted small mb-1">Uploaded File</div>
+                                <div>${filesHtml}</div>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<span class="text-muted">No activities recorded.</span>';
+                recordDetailBody.innerHTML = activitiesHtml;
+
+                recordsModal.hide();
+                recordDetailModal.show();
+            }
+
+            recordDetailModalEl.addEventListener('hidden.bs.modal', function () {
+                recordsModal.show();
+            });
+
+            recordsTableBody.addEventListener('click', function (e) {
+                const btn = e.target.closest('.record-view-btn');
+                if (!btn) return;
+                const item = currentRecords[parseInt(btn.dataset.index, 10)];
+                if (item) showRecordDetail(item);
+            });
+
+            document.querySelectorAll('#statTiles .eval-stat[data-metric]').forEach(function (tile) {
+                tile.addEventListener('click', async function () {
+                    const metric = tile.dataset.metric;
+                    const params = new URLSearchParams({ handler: 'Records', metric: metric });
+
+                    recordsModalLabel.textContent = metricLabels[metric] || 'Records';
+                    recordsTableBody.innerHTML = '<tr><td colspan="6" class="text-muted text-center py-3">Loading...</td></tr>';
+                    recordsModal.show();
+
+                    try {
+                        const response = await fetch(window.location.pathname + '?' + params.toString(), {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        currentRecords = response.ok ? await response.json() : [];
+                    } catch {
+                        currentRecords = [];
+                    }
+
+                    renderRecordsTable(metric);
+                });
+            });
         })();
     </script>
 }

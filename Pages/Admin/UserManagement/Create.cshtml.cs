@@ -20,7 +20,7 @@ namespace TM_PE.Pages.Admin.UserManagement
         [BindProperty]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        // Employees who don't already have a user account — one account per
+        // Employees who don't already have a user account ï¿½ one account per
         // employee.
         public List<Employee> EmployeeList { get; set; } = new();
 
@@ -44,7 +44,7 @@ namespace TM_PE.Pages.Admin.UserManagement
             if (string.IsNullOrWhiteSpace(Password) ||
                 !System.Text.RegularExpressions.Regex.IsMatch(Password, UsernamePolicy.PasswordPattern))
             {
-                ModelState.AddModelError(nameof(Password), "Password must be 8-10 digits (numbers only).");
+                ModelState.AddModelError(nameof(Password), UsernamePolicy.PasswordRuleMessage);
             }
             else if (Password != ConfirmPassword)
             {
@@ -57,7 +57,7 @@ namespace TM_PE.Pages.Admin.UserManagement
                 return Page();
             }
 
-            // Username is fixed and derived server-side — never trust a
+            // Username is fixed and derived server-side ï¿½ never trust a
             // client-supplied value for it.
             var username = UsernamePolicy.BuildUsername(employee);
 

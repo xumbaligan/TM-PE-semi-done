@@ -97,5 +97,138 @@ namespace TM_PE.Pages.FieldTechnician
 
             return Page();
         }
+
+        // ---------------------------------------------------------------
+        // Called via AJAX when the technician clicks one of the summary
+        // tiles above. Mirrors Manager/PerformanceEvaluation/Create's own
+        // OnGetRecordsAsync, but the employee is always read from session -
+        // never a query-string/posted id - so a technician can only ever
+        // drill into their own job tickets, and the result is never
+        // period-bound since Stats above is an all-time snapshot.
+        //
+        // metric is one of: completed, ontime, rescheduled, cancelled -
+        // matching whichever tile was clicked.
+        public async Task<IActionResult> OnGetRecordsAsync(string metric)
+        {
+            var employeeId = HttpContext.Session.GetInt32("CurrentFieldTechnicianId");
+            if (employeeId == null)
+            {
+                return new JsonResult(Array.Empty<RecordItem>());
+            }
+
+            var assignments = await _context.JobTicketAssignments
+                .Include(a => a.JobTicket).ThenInclude(t => t!.RescheduleHistory)
+                .Where(a => a.EmployeeID == employeeId.Value && a.JobTicket != null)
+                .ToListAsync();
+
+            var ticketIds = assignments.Select(a => a.JobTicketID).ToList();
+
+            var completionDates = await _context.JobTicketSubmissionHistories
+                .Where(h => ticketIds.Contains(h.JobTicketID) && h.Status == JobTicketStatuses.Completed)
+                .GroupBy(h => h.JobTicketID)
+                .Select(g => new { JobTicketID = g.Key, FinishedOn = g.Max(h => h.DateChanged) })
+                .ToDictionaryAsync(x => x.JobTicketID, x => x.FinishedOn);
+
+            // Same reasoning as Manager/PerformanceEvaluation/Create's own
+            // OnGetRecordsAsync: whichever History of Submission entry
+            // actually recorded the terminal status change (or, for a
+            // reschedule, the most recent Reschedule History entry) - not
+            // every file ever uploaded across every status change.
+            var terminalProofFiles = (await _context.JobTicketSubmissionHistories
+                    .Include(h => h.ArchivedSubmissions)
+                    .Where(h => ticketIds.Contains(h.JobTicketID)
+                        && (h.Status == JobTicketStatuses.Completed || h.Status == JobTicketStatuses.Cancelled))
+                    .ToListAsync())
+                .GroupBy(h => (h.JobTicketID, h.Status))
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(h => h.DateChanged).First().ArchivedSubmissions);
+
+            var latestRescheduleProofFiles = (await _context.JobTicketRescheduleHistories
+                    .Include(h => h.ArchivedSubmissions)
+                    .Where(h => ticketIds.Contains(h.JobTicketID))
+                    .ToListAsync())
+                .GroupBy(h => h.JobTicketID)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(h => h.DateChanged).First().ArchivedSubmissions);
+
+            var items = new List<RecordItem>();
+
+            foreach (var a in assignments)
+            {
+                var t = a.JobTicket!;
+                bool matches = metric switch
+                {
+                    "completed" => t.Status == JobTicketStatuses.Completed,
+                    "ontime" => t.Status == JobTicketStatuses.Completed || t.Status == JobTicketStatuses.Overdue,
+                    "rescheduled" => t.Status is JobTicketStatuses.Rescheduled or JobTicketStatuses.RescheduleRequest
+                        || t.RescheduleHistory.Any(),
+                    "cancelled" => t.Status == JobTicketStatuses.Cancelled,
+                    _ => false
+                };
+                if (!matches) continue;
+
+                string? onTime = null;
+                if (metric == "ontime")
+                {
+                    if (t.Status == JobTicketStatuses.Overdue)
+                    {
+                        onTime = "No";
+                    }
+                    else
+                    {
+                        var finishedOn = completionDates.TryGetValue(t.JobTicketID, out var d)
+                            ? d.Date
+                            : t.DateOfCompletion!.Value.Date;
+                        onTime = finishedOn <= t.DateOfCompletion!.Value.Date ? "Yes" : "No";
+                    }
+                }
+
+                items.Add(new RecordItem
+                {
+                    Type = "Job Ticket",
+                    Number = t.TicketNumber,
+                    Title = t.JobType,
+                    Status = t.DisplayStatus,
+                    DateLabel = t.DateOfCompletion?.ToString("M/d/yyyy"),
+                    SortDate = t.DateOfCompletion ?? DateTime.MinValue,
+                    OnTime = onTime,
+                    Remarks = string.IsNullOrWhiteSpace(t.Remarks) ? null : t.Remarks,
+                    Files = (metric == "rescheduled"
+                            ? latestRescheduleProofFiles.TryGetValue(t.JobTicketID, out var rescheduleSubs) ? rescheduleSubs : null
+                            : terminalProofFiles.TryGetValue((t.JobTicketID, t.Status), out var terminalSubs) ? terminalSubs : null)
+                        is { } proofSubs
+                        ? proofSubs
+                            .OrderByDescending(s => s.DateSubmitted)
+                            .Select(s => new RecordFile { FileName = s.FileName, FilePath = s.FilePath })
+                            .ToList()
+                        : new List<RecordFile>()
+                });
+            }
+
+            return new JsonResult(items.OrderByDescending(i => i.SortDate).ToList());
+        }
+
+        public class RecordItem
+        {
+            public string Type { get; set; } = string.Empty;
+            public string Number { get; set; } = string.Empty;
+            public string Title { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+            public string? DateLabel { get; set; }
+            public string? OnTime { get; set; }
+            public string? Remarks { get; set; }
+            public List<RecordFile> Files { get; set; } = new();
+
+            [System.Text.Json.Serialization.JsonIgnore]
+            public DateTime SortDate { get; set; }
+        }
+
+        public class RecordFile
+        {
+            public string FileName { get; set; } = string.Empty;
+            public string FilePath { get; set; } = string.Empty;
+        }
     }
 }

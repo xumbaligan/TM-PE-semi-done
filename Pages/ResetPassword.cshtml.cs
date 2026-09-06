@@ -10,7 +10,7 @@ namespace TM_PE.Pages
     // Step 3 of Forgot Password: only reachable once VerifyCodeModel has
     // confirmed the emailed code, which sets PwReset_VerifiedEmployeeId in
     // session - there's no other way in. Sets a brand new password for that
-    // account (same 8-10 digit numeric rule Admin > User Management uses),
+    // account (same max-8-character rule Admin > User Management uses),
     // then sends the visitor back to Login to sign in with it; this page
     // never signs anyone in itself.
     public class ResetPasswordModel : PageModel
@@ -75,7 +75,7 @@ namespace TM_PE.Pages
 
             if (!Regex.IsMatch(NewPassword ?? "", UsernamePolicy.PasswordPattern))
             {
-                ErrorMessage = "Password must be 8-10 digits, numbers only.";
+                ErrorMessage = UsernamePolicy.PasswordRuleMessage;
                 return Page();
             }
 

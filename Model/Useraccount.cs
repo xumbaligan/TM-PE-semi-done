@@ -45,8 +45,10 @@ namespace TM_PE.Model
     {
         public const string CompanyName = "Pakonek";
 
-        // 8-10 digit numeric password, matching the "8-10 digit" restriction.
-        public const string PasswordPattern = @"^\d{8,10}$";
+        // Any character allowed (letters, digits, symbols), up to 8 characters long.
+        public const string PasswordPattern = @"^[\s\S]{1,8}$";
+
+        public const string PasswordRuleMessage = "Password must be at most 8 characters.";
 
         public static string RoleInitial(RoleType role) => role switch
         {
