@@ -21,6 +21,7 @@ namespace TM_PE.Migrations
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     RoleType = table.Column<string>(type: "nvarchar(50)", nullable: false),
                     Weight = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    MetricType = table.Column<string>(type: "nvarchar(50)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -36,6 +37,7 @@ namespace TM_PE.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DepartmentName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    RoleType = table.Column<string>(type: "nvarchar(50)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
                 },
@@ -59,52 +61,6 @@ namespace TM_PE.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "tbl_jobticket",
-                columns: table => new
-                {
-                    JobTicketID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TicketNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    JobType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ClientFullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PrimaryNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    SecondaryNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    FiberPlan = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ServiceDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DateOfCompletion = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LocationAddress = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    NearestLandmark = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Remarks = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tbl_jobticket", x => x.JobTicketID);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "tbl_officetask",
-                columns: table => new
-                {
-                    OfficeTaskID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TaskNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    TaskName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Progress = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Score = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tbl_officetask", x => x.OfficeTaskID);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "tbl_employees",
                 columns: table => new
                 {
@@ -125,6 +81,173 @@ namespace TM_PE.Migrations
                         column: x => x.DepartmentId,
                         principalTable: "tbl_departments",
                         principalColumn: "DepartmentId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tbl_jobticket",
+                columns: table => new
+                {
+                    JobTicketID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TicketNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    JobType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ClientFullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PrimaryNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    SecondaryNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    FiberPlan = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ServiceDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateOfCompletion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DateCompleted = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    AssignedByEmployeeID = table.Column<int>(type: "int", nullable: true),
+                    LocationAddress = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    NearestLandmark = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Remarks = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tbl_jobticket", x => x.JobTicketID);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticket_tbl_employees_AssignedByEmployeeID",
+                        column: x => x.AssignedByEmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tbl_notifications",
+                columns: table => new
+                {
+                    NotificationID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    Icon = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tbl_notifications", x => x.NotificationID);
+                    table.ForeignKey(
+                        name: "FK_tbl_notifications_tbl_employees_EmployeeID",
+                        column: x => x.EmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tbl_officetask",
+                columns: table => new
+                {
+                    OfficeTaskID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TaskNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    TaskName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateCompleted = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    AssignedByEmployeeID = table.Column<int>(type: "int", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Progress = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Score = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tbl_officetask", x => x.OfficeTaskID);
+                    table.ForeignKey(
+                        name: "FK_tbl_officetask_tbl_employees_AssignedByEmployeeID",
+                        column: x => x.AssignedByEmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tbl_performanceevaluation",
+                columns: table => new
+                {
+                    EvaluationID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    EvaluatorName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    EvaluationPeriodMonth = table.Column<int>(type: "int", nullable: false),
+                    EvaluationPeriodYear = table.Column<int>(type: "int", nullable: false),
+                    EvaluationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    OverallScore = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    OverallRating = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    GeneralFeedback = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    EvaluationStatus = table.Column<string>(type: "nvarchar(20)", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tbl_performanceevaluation", x => x.EvaluationID);
+                    table.ForeignKey(
+                        name: "FK_tbl_performanceevaluation_tbl_employees_EmployeeID",
+                        column: x => x.EmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tbl_useraccount",
+                columns: table => new
+                {
+                    UserAccountID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PasswordSalt = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LastLogin = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tbl_useraccount", x => x.UserAccountID);
+                    table.ForeignKey(
+                        name: "FK_tbl_useraccount_tbl_employees_EmployeeID",
+                        column: x => x.EmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tbl_jobticketassignment",
+                columns: table => new
+                {
+                    JobTicketAssignmentID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    JobTicketID = table.Column<int>(type: "int", nullable: false),
+                    EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    IsLeader = table.Column<bool>(type: "bit", nullable: false),
+                    AssignedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tbl_jobticketassignment", x => x.JobTicketAssignmentID);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticketassignment_tbl_employees_EmployeeID",
+                        column: x => x.EmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticketassignment_tbl_jobticket_JobTicketID",
+                        column: x => x.JobTicketID,
+                        principalTable: "tbl_jobticket",
+                        principalColumn: "JobTicketID",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -162,72 +285,24 @@ namespace TM_PE.Migrations
                     JobTicketID = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Remarks = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    DateChanged = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    DateChanged = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ActorEmployeeID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_tbl_jobticketsubmissionhistory", x => x.JobTicketSubmissionHistoryID);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticketsubmissionhistory_tbl_employees_ActorEmployeeID",
+                        column: x => x.ActorEmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_tbl_jobticketsubmissionhistory_tbl_jobticket_JobTicketID",
                         column: x => x.JobTicketID,
                         principalTable: "tbl_jobticket",
                         principalColumn: "JobTicketID",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "tbl_jobticketassignment",
-                columns: table => new
-                {
-                    JobTicketAssignmentID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    JobTicketID = table.Column<int>(type: "int", nullable: false),
-                    EmployeeID = table.Column<int>(type: "int", nullable: false),
-                    IsLeader = table.Column<bool>(type: "bit", nullable: false),
-                    AssignedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tbl_jobticketassignment", x => x.JobTicketAssignmentID);
-                    table.ForeignKey(
-                        name: "FK_tbl_jobticketassignment_tbl_employees_EmployeeID",
-                        column: x => x.EmployeeID,
-                        principalTable: "tbl_employees",
-                        principalColumn: "EmployeeId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_tbl_jobticketassignment_tbl_jobticket_JobTicketID",
-                        column: x => x.JobTicketID,
-                        principalTable: "tbl_jobticket",
-                        principalColumn: "JobTicketID",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "tbl_performanceevaluation",
-                columns: table => new
-                {
-                    EvaluationID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeID = table.Column<int>(type: "int", nullable: false),
-                    EvaluatorName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    EvaluationPeriod = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    EvaluationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    OverallScore = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
-                    OverallRating = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    GeneralRemarks = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    EvaluationStatus = table.Column<string>(type: "nvarchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tbl_performanceevaluation", x => x.EvaluationID);
-                    table.ForeignKey(
-                        name: "FK_tbl_performanceevaluation_tbl_employees_EmployeeID",
-                        column: x => x.EmployeeID,
-                        principalTable: "tbl_employees",
-                        principalColumn: "EmployeeId",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -239,6 +314,7 @@ namespace TM_PE.Migrations
                     ActivityName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     FeedBack = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RejectionCount = table.Column<int>(type: "int", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     AssignedEmployeeID = table.Column<int>(type: "int", nullable: true),
                     OfficeTaskID = table.Column<int>(type: "int", nullable: false)
@@ -287,109 +363,6 @@ namespace TM_PE.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "tbl_useraccount",
-                columns: table => new
-                {
-                    UserAccountID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeID = table.Column<int>(type: "int", nullable: false),
-                    Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PasswordSalt = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastLogin = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tbl_useraccount", x => x.UserAccountID);
-                    table.ForeignKey(
-                        name: "FK_tbl_useraccount_tbl_employees_EmployeeID",
-                        column: x => x.EmployeeID,
-                        principalTable: "tbl_employees",
-                        principalColumn: "EmployeeId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "tbl_jobticketsubmission",
-                columns: table => new
-                {
-                    JobTicketSubmissionID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    JobTicketID = table.Column<int>(type: "int", nullable: false),
-                    EmployeeID = table.Column<int>(type: "int", nullable: false),
-                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateSubmitted = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    RescheduleHistoryID = table.Column<int>(type: "int", nullable: true),
-                    SubmissionHistoryID = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tbl_jobticketsubmission", x => x.JobTicketSubmissionID);
-                    table.ForeignKey(
-                        name: "FK_tbl_jobticketsubmission_tbl_employees_EmployeeID",
-                        column: x => x.EmployeeID,
-                        principalTable: "tbl_employees",
-                        principalColumn: "EmployeeId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_tbl_jobticketsubmission_tbl_jobticket_JobTicketID",
-                        column: x => x.JobTicketID,
-                        principalTable: "tbl_jobticket",
-                        principalColumn: "JobTicketID",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_tbl_jobticketsubmission_tbl_jobticketreschedulehistory_RescheduleHistoryID",
-                        column: x => x.RescheduleHistoryID,
-                        principalTable: "tbl_jobticketreschedulehistory",
-                        principalColumn: "JobTicketRescheduleHistoryID",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_tbl_jobticketsubmission_tbl_jobticketsubmissionhistory_SubmissionHistoryID",
-                        column: x => x.SubmissionHistoryID,
-                        principalTable: "tbl_jobticketsubmissionhistory",
-                        principalColumn: "JobTicketSubmissionHistoryID",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "tbl_appraisal",
-                columns: table => new
-                {
-                    AppraisalID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeID = table.Column<int>(type: "int", nullable: false),
-                    EvaluationID = table.Column<int>(type: "int", nullable: false),
-                    AppraisalDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    OverallRating = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Recommendation = table.Column<string>(type: "nvarchar(50)", nullable: false),
-                    SalaryAdjustmentRecommendation = table.Column<bool>(type: "bit", nullable: false),
-                    PromotionRecommendation = table.Column<bool>(type: "bit", nullable: false),
-                    TrainingRecommendation = table.Column<bool>(type: "bit", nullable: false),
-                    ManagerRemarks = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    AppraisalStatus = table.Column<string>(type: "nvarchar(20)", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tbl_appraisal", x => x.AppraisalID);
-                    table.ForeignKey(
-                        name: "FK_tbl_appraisal_tbl_employees_EmployeeID",
-                        column: x => x.EmployeeID,
-                        principalTable: "tbl_employees",
-                        principalColumn: "EmployeeId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_tbl_appraisal_tbl_performanceevaluation_EvaluationID",
-                        column: x => x.EvaluationID,
-                        principalTable: "tbl_performanceevaluation",
-                        principalColumn: "EvaluationID",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "tbl_evaluationresult",
                 columns: table => new
                 {
@@ -397,8 +370,9 @@ namespace TM_PE.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EvaluationID = table.Column<int>(type: "int", nullable: false),
                     CriteriaID = table.Column<int>(type: "int", nullable: false),
+                    StarRating = table.Column<decimal>(type: "decimal(2,1)", nullable: false),
                     Score = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
-                    Remarks = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Feedback = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -448,6 +422,49 @@ namespace TM_PE.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "tbl_jobticketsubmission",
+                columns: table => new
+                {
+                    JobTicketSubmissionID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    JobTicketID = table.Column<int>(type: "int", nullable: false),
+                    EmployeeID = table.Column<int>(type: "int", nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DateSubmitted = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RescheduleHistoryID = table.Column<int>(type: "int", nullable: true),
+                    SubmissionHistoryID = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tbl_jobticketsubmission", x => x.JobTicketSubmissionID);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticketsubmission_tbl_employees_EmployeeID",
+                        column: x => x.EmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticketsubmission_tbl_jobticket_JobTicketID",
+                        column: x => x.JobTicketID,
+                        principalTable: "tbl_jobticket",
+                        principalColumn: "JobTicketID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticketsubmission_tbl_jobticketreschedulehistory_RescheduleHistoryID",
+                        column: x => x.RescheduleHistoryID,
+                        principalTable: "tbl_jobticketreschedulehistory",
+                        principalColumn: "JobTicketRescheduleHistoryID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_tbl_jobticketsubmission_tbl_jobticketsubmissionhistory_SubmissionHistoryID",
+                        column: x => x.SubmissionHistoryID,
+                        principalTable: "tbl_jobticketsubmissionhistory",
+                        principalColumn: "JobTicketSubmissionHistoryID",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "tbl_activitysubmission",
                 columns: table => new
                 {
@@ -458,7 +475,10 @@ namespace TM_PE.Migrations
                     FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FilePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DateSubmitted = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Feedback = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ReviewedByEmployeeID = table.Column<int>(type: "int", nullable: true),
+                    DateReviewed = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -469,6 +489,12 @@ namespace TM_PE.Migrations
                         principalTable: "tbl_employees",
                         principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_tbl_activitysubmission_tbl_employees_ReviewedByEmployeeID",
+                        column: x => x.ReviewedByEmployeeID,
+                        principalTable: "tbl_employees",
+                        principalColumn: "EmployeeId",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_tbl_activitysubmission_tbl_taskactivity_ActivityID",
                         column: x => x.ActivityID,
@@ -488,14 +514,9 @@ namespace TM_PE.Migrations
                 column: "EmployeeID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_tbl_appraisal_EmployeeID",
-                table: "tbl_appraisal",
-                column: "EmployeeID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_tbl_appraisal_EvaluationID",
-                table: "tbl_appraisal",
-                column: "EvaluationID");
+                name: "IX_tbl_activitysubmission_ReviewedByEmployeeID",
+                table: "tbl_activitysubmission",
+                column: "ReviewedByEmployeeID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_tbl_employees_DepartmentId",
@@ -535,6 +556,11 @@ namespace TM_PE.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_tbl_jobticket_AssignedByEmployeeID",
+                table: "tbl_jobticket",
+                column: "AssignedByEmployeeID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_tbl_jobticketassignment_EmployeeID",
                 table: "tbl_jobticketassignment",
                 column: "EmployeeID");
@@ -570,9 +596,24 @@ namespace TM_PE.Migrations
                 column: "SubmissionHistoryID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_tbl_jobticketsubmissionhistory_ActorEmployeeID",
+                table: "tbl_jobticketsubmissionhistory",
+                column: "ActorEmployeeID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_tbl_jobticketsubmissionhistory_JobTicketID",
                 table: "tbl_jobticketsubmissionhistory",
                 column: "JobTicketID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_tbl_notifications_EmployeeID_IsRead",
+                table: "tbl_notifications",
+                columns: new[] { "EmployeeID", "IsRead" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_tbl_officetask_AssignedByEmployeeID",
+                table: "tbl_officetask",
+                column: "AssignedByEmployeeID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_tbl_performanceevaluation_EmployeeID",
@@ -619,9 +660,6 @@ namespace TM_PE.Migrations
                 name: "tbl_activitysubmission");
 
             migrationBuilder.DropTable(
-                name: "tbl_appraisal");
-
-            migrationBuilder.DropTable(
                 name: "tbl_evaluationresult");
 
             migrationBuilder.DropTable(
@@ -635,6 +673,9 @@ namespace TM_PE.Migrations
 
             migrationBuilder.DropTable(
                 name: "tbl_jobticketsubmission");
+
+            migrationBuilder.DropTable(
+                name: "tbl_notifications");
 
             migrationBuilder.DropTable(
                 name: "tbl_taskassignment");
@@ -661,10 +702,10 @@ namespace TM_PE.Migrations
                 name: "tbl_officetask");
 
             migrationBuilder.DropTable(
-                name: "tbl_employees");
+                name: "tbl_jobticket");
 
             migrationBuilder.DropTable(
-                name: "tbl_jobticket");
+                name: "tbl_employees");
 
             migrationBuilder.DropTable(
                 name: "tbl_departments");

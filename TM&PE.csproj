@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Migrations\" />
     <Folder Include="wwwroot\uploads\activity-submissions\" />
     <Folder Include="wwwroot\uploads\jobticket-submissions\" />
   </ItemGroup>
